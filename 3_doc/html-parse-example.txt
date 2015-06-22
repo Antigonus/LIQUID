@@ -1,0 +1,42 @@
+example from Kiselyov’s discussion of his HTML parser:
+> (html->xexp
+   (string-append
+    "<html><head><title></title><title>whatever</title></head>"
+    "<body> <a href=\"url\">link</a><p align=center>"
+    "<ul compact style=\"aa\"> <p>BLah<!-- comment <comment> -->"
+    " <i> italic <b> bold <tt> ened</i> still &lt; bold </b>"
+    "</body><P> But not done yet..."))
+
+  (*TOP* (html (head (title) (title "whatever"))
+               (body "\n"
+                     (a (@ (href "url")) "link")
+                     (p (@ (align "center"))
+                        (ul (@ (compact) (style "aa")) "\n"))
+                     (p "BLah"
+                        (*COMMENT* " comment <comment> ")
+                        " "
+                        (i " italic " (b " bold " (tt " ened")))
+                        "\n"
+                        "still < bold "))
+               (p " But not done yet...")))
+
+
+(require (planet neil/html-parsing))
+(require (planet neil/html-writing))
+
+racket@> (define h (html->xexp "<input type=\"button\" onclick=\"return toggleMe('para1')\" value=\"Toggle\">"))
+
+racket@> (xexp->html h)
+"<input type=\"button\" onclick=\"return toggleMe('para1')\" value=\"Toggle\">"
+
+...> template example
+
+(define (write-essay my-title)
+  (html-template
+    (html (head (title (% my-title)))
+          (body (h1 (% my-title))
+                (p "Kittens claw."
+                   (br)
+                   "Puppies pee.")))))
+ 
+(write-essay "All About Kittens & Puppies")

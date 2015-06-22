@@ -1,0 +1,42 @@
+2015-02-06 05:07:18 http-server start
+2015-02-06 05:07:28 start tcp session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38508)
+2015-02-06 05:07:28 GET /test/conjunction HTTP/1.1
+2015-02-06 05:07:28 end session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38508) #t #<void>
+2015-02-06 05:07:45 start tcp session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38509)
+2015-02-06 05:07:45 GET /test/conjunction?query=dblp%28%22Cali%22%2C_%2C_%2C2015%29 HTTP/1.1
+2015-02-06 05:07:51 end session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38509) #t #<void>
+06 04:20:29 http-server stop
+2015-02-06 04:20:37 http-server start
+2015-02-06 04:20:43 start tcp session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38474)
+2015-02-06 04:20:43 GET /test/webi-pred HTTP/1.1
+2015-02-06 04:20:43 end session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38474) #f #<void>
+2015-02-06 04:30:33 http-server stop
+2015-02-06 04:31:37 http-server start
+2015-02-06 04:31:42 start tcp session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38475)
+2015-02-06 04:31:42 GET /test/webi-pred HTTP/1.1
+2015-02-06 04:31:42 end session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38475) #t #<void>
+2015-02-06 04:31:53 start tcp session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38476)
+2015-02-06 04:31:53 GET /test/webi-pred?query=dblp(%22Cali%22%2C_%2C_%2C2015) HTTP/1.1
+2015-02-06 04:32:24 end session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38476) #t #<void>
+2015-02-06 04:32:59 http-server stop
+2015-02-06 04:46:00 http-server start
+2015-02-06 04:46:10 start tcp session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38507)
+2015-02-06 04:46:10 GET /test/webi-pred HTTP/1.1
+2015-02-06 04:46:10 end session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38507) #t #<void>
+2015-02-06 04:46:54 http-server stop
+080 127.0.0.1 38310) #f #<void>
+2015-02-05 05:04:34 end session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38289) #f #<void>
+2015-02-05 06:02:07 start tcp session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38317)
+2015-02-05 06:02:07 GET /test/webi-pred?query=dblp(%22Cali%22%2C_%2C_%2C2015) HTTP/1.1
+2015-02-05 06:02:27 end session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38317) #t #<void>
+2015-02-05 06:03:04 start tcp session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38318)
+2015-02-05 06:03:04 GET /server/hello HTTP/1.1
+2015-02-05 06:03:04 end session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38318) #t #<void>
+2015-02-05 06:03:30 start tcp session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38319)
+2015-02-05 06:03:30 GET /test/webi-pred HTTP/1.1
+2015-02-05 06:03:30 end session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38319) #f #<void>
+2015-02-05 06:07:14 http-server stop
+2015-02-05 06:13:37 http-server start
+2015-02-05 06:13:44 start tcp session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38320)
+2015-02-05 06:13:44 GET /test/webi-pred HTTP/1.1
+2015-02-05 06:13:44 end session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38320) #f #<void>

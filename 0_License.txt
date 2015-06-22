@@ -1,0 +1,10 @@
+
+2014-10-01 Thomas W. Lynch
+
+  The current version of certain Scheme langauge source files in this directory are being
+  released from Reasoning Technology Ltd. to Andrea Calì's project under the GNU LESSER
+  GENERAL PUBLIC LICENSE Version 3, 2007-06-29. A copy of the liscense may be found in
+  doc/lgpl-3.0.txt. The following files are affected: src/http-server-pages.rkt,
+  src/http-server.rkt, src/http-session.rkt, src/realtime.rkt, src/tcp-server.rkt,
+  src/utilities.rkt. This release does not create obligations of any type whatsoever for
+  Reasoning Technology to release other files, other versions, or to maintain these files.

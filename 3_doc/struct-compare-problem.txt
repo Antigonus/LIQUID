@@ -1,0 +1,50 @@
+
+2014-12-16T08:32:38Z twl
+
+      ;; equal? is supposed to work on structs,  see "5.5 structure comparison
+but this is only for transparent structs!
+
+      ;; but it didn't in our implementation, or somehow position is special:
+      ;; 
+      ;;   racket@tokens.rkt> (equal? (position 728 10 1) (position 728 10 1))
+      ;;   #f
+      ;;
+      ;; so here is position=?
+      ;;
+
+  updating racket does not help ..
+
+  this is really a pain because now equal? fails for tokens and source attributes,
+  forcing a new implementation for equal? for anything that uses positions..  gosh
+  here is one place where operator overloading for classes really helps.  So, now
+  we implement our new and improved .eq. which goes something like this:
+
+
+      (define (position=? p0 p1)
+        (and
+          (= (position-offset p0) (position-offset p1))
+          (= (position-line p0) (position-line p1))
+          (= (position-offset p0) (position-offset p1))
+          ))
+
+      (define (.eq. x y) ; remember FORTRAN ? ;-) .. all other varations seem to be taken
+        (cond 
+          [(and (position? x) (position? y))
+            (position=? x y)
+            ]
+          [(and (pair? x) (pair? y))
+            (and (equal? (first x) (first y)) (.eq. (rest x) (rest y)))
+              ]
+          [else
+            (equal? x y)
+            ]
+          ))
+
+...
+
+2014-12-17T04:10:42Z twl
+  .eq. did not solve the problem because the error attribute holds tokens
+  then the token print doesn't print them correctly,  this could be fixed by
+  looking for the attribute in .eq. - .eq. already needs to be repaired for attributes
+  .. but I instead I have deconstructed the position structure in source-make and
+  turned it into a list of three values.  I will keep the 

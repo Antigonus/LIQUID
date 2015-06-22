@@ -1,0 +1,373 @@
+#|
+  Copyright (C) 2014 Reasoning Technology  All Rights Reserved.
+  COMPANY CONFIDENTIAL Reaosning Technology
+
+  2015-02-04T05:38:00Z created twl
+
+  This is a simple query conjunction test page. 
+
+  Algorithm used:
+  1. scan out all predicates, fill in pattern operands.  Use webi for 
+     webi predicates, and dbi for user predicates
+  2. use conjunction on pattern operands of the same name
+  3. leave pattern operands, and the final value as info collapse boxes
+
+  Note we have test data in the database for the dbi predicates.
+  Note the psql script for setting up tearing down the test data.
+
+|#
+
+#lang racket
+
+;;--------------------------------------------------------------------------------
+;; library includes
+;;
+  (require html)
+  (require net/url)
+  (require net/url net/uri-codec)
+  (require (planet neil/html-parsing:2:0))
+  (require (planet neil/html-writing:2:0))
+  (require racket/match)
+
+  (require liquid/lynch-lib)
+  (require liquid/http-session)
+  (require liquid/http-server-pages)
+  (require liquid/htmle-lib)
+  (require liquid/tokens)
+  (require liquid/filter)
+  (require liquid/webi-lib)
+
+  (require query-parser-tokens)
+  (require "webi-dblp")
+  (require "ap-page-lib.rkt")
+  (require "ap-page-webi-pred-test-data.rkt")
+
+;;--------------------------------------------------------------------------------
+;; query extension form
+;;
+;; input: url
+;; output: htmle for a form that requests entry of a single web predicate
+;;    
+  (define (conjunction-request-form url)
+    (let*
+      (
+        [the-query (query-extension url)] ; used as default in form value
+        [the-form
+          `(
+             (form (@ 
+                     (name "input") 
+                     (method "get") 
+                     (accept-charset="UTF-8")) ; is this necessary as the document already sets it
+               (fieldset
+                 (legend "Deep Web Search query conjunction test page")
+                 "Enter a conjunctive query: "
+                 (input (@ 
+                          (type "text") 
+                          (name "query")
+                          (value ,the-query)
+                          (size "80")
+                          ))
+                 (input (@
+                          (type "submit")
+                          (value "Submit")
+                          ))
+                 ))
+             )
+          ]
+        )
+      (list the-form (if (string=? the-query "") #f the-query))
+      ))
+
+;;--------------------------------------------------------------------------------
+;; page body
+;;
+;; input: the url we arrived on the page with including query extentions if any
+;; ouptut: htmle used for rendering the page body
+;;
+;; The user is shown a form for entering a single web predicate. Upon entering a
+;; value into the blank on the form and resbumitting, we end up back on the same page,
+;; though now the query extension is on the url. (an intcdring study example for
+;; need of destructive programming patterns ... I did write this as a non-destructive
+;; code and it was a mess)
+;;
+;; When a legal query extension if found on the arrival url, we perform the query.
+;;
+;; This is a test page, not a production page.  It provides lots of information 
+;; about the query process.  We hook lots of info to an info object as we go
+;; through the code.
+;;
+;;
+
+  ;; a place to put all the info collapse boxes for the test page
+  ;;
+   (define info-htmle '())
+   (define (info-reset) (set! info-htmle '()))
+   (define (info-hook . info) (set! info-htmle (append info-htmle info)))
+
+  ;; -wi means "with info"
+  ;; input: the arrival url (i.e. the url used to get here),  an info object
+  ;; output: htmle form
+  ;;         query found on the arrival url, or #f if none found
+  ;;
+    (define (get-form-query-wi arrival-url)
+      (let*(
+             [form/query (conjunction-request-form arrival-url)]
+             [the-form-htmle (car form/query)]
+             [arrival-query (cadr form/query)]
+             )
+        (cond
+          [arrival-query
+            (let*(
+                  [arrival-query-xexp `(p , arrival-query)]
+                  [arrival-query-collapse-box-htmle (car (collapse-box-htmle "the query" arrival-query-xexp))]
+                  )
+              (info-hook arrival-query-collapse-box-htmle)
+              )
+            ]
+          )
+        (list the-form-htmle arrival-query)
+        ))
+
+  ;; input: the arrival query 
+  ;; output: parse of the arrival query
+  ;;
+    (define (parse-query-wi arrival-query)
+      (let*(
+            [parse/parse-errors (query-parser* arrival-query)]
+            [arrival-query-parse  (car parse/parse-errors)]
+            [parse-errors (cadr parse/parse-errors)]
+            [arrival-query-parse-htmle `(pre ,(->pretty-string arrival-query-parse))]
+            [parse-errors-htmle `(pre ,(->pretty-string parse-errors))]
+            [parse-collapse-box-htmle (car (collapse-box-htmle "the query parse" arrival-query-parse-htmle))]
+            [parse-errors-collapse-box-htmle (car (collapse-box-htmle "query parse errors" parse-errors-htmle))]
+            )
+        (info-hook  parse-collapse-box-htmle parse-errors-collapse-box-htmle)
+        arrival-query-parse
+        ))
+
+  ;; input: the arrival query parse
+  ;; output: the single predicate found or false
+  ;;
+    (define (get-pred-wi arrival-query-parse)
+      (let*(
+             [pred/semantic-errors (filter-webi-pred arrival-query-parse)] 
+             [pred (car pred/semantic-errors)]
+             [semantic-errors (cadr pred/semantic-errors)]
+             [semantic-errors-htmle `(pre ,(->pretty-string semantic-errors))]
+             [semantic-errors-collapse-box-htmle (car (collapse-box-htmle "semmantic errors" semantic-errors-htmle))]
+             )
+        (info-hook semantic-errors-collapse-box-htmle)
+        pred
+        ))
+
+
+  ;; webi lookup, with info
+  ;; input: the pred found in the arrival-query-parse -- this must be an webi-web pred
+  ;; output: webi broken out into components
+  ;;
+    (define (find-webi-wi pred)
+      (let*(
+             [i (find-webi-simple pred)]
+             [i-usage  (list-ref i webi:usage)]
+             [i-url    (list-ref i webi:url)]
+             [i-get    (list-ref i webi:get)]
+             [i-scrape (list-ref i webi:scrape)]
+
+             [pred-usage-mess (i-usage)]
+             [pred-usage-collapse-box-htmle (car (collapse-box-htmle "pred usage" `(p ,pred-usage-mess)))]
+             )
+        (info-hook pred-usage-collapse-box-htmle)
+        (list i i-usage i-url i-get i-scrape)
+        ))
+
+
+  ;; create url for fetching the web page, so called webi-url
+  ;; input: i-url interface from webi, pred
+  ;; output: webi-url
+  ;;
+    (define (webi-url-wi i-url pred)
+      (let*(
+             [webi-url (i-url pred)]
+             [webi-url-htmle (if webi-url `(p ,(url->string webi-url)) `(p "#f"))]
+             [webi-url-collapse-box-htmle (car (collapse-box-htmle "search url" webi-url-htmle))]
+             )
+        (info-hook webi-url-collapse-box-htmle)
+        webi-url
+        ))
+        
+  ;; fetches the page from the website
+  ;;
+  ;; input: pred, web
+  ;; output: webi-url, webi-url for display, fetch result, fetch result for display, parsed fetch result for display
+  ;;
+  ;; the fetch returns htmle .. we present this literally in using 'pre to be able to see the parse tree of the html doc
+  ;;
+    (define (fetch-page-wi i-get webi-url)
+      (let*(
+             [fetched-htmle (i-get webi-url)] ; this could take a while, note current-page-fetch-timeout
+             [fetched-htmle-collapse-box-htmle (car (collapse-box-htmle "fetched-html" (or fetched-htmle '(p "#f"))))]
+             [fetched-htmle-parse-collapse-box-htmle (car (collapse-box-htmle "fetched-html-parse" `(pre ,(->pretty-string fetched-htmle))))]
+             )
+        (info-hook fetched-htmle-collapse-box-htmle fetched-htmle-parse-collapse-box-htmle)
+        fetched-htmle
+        ))
+
+  ;; page scrape
+  ;;
+  ;; input: page fetch as htmle
+  ;; output: scrape of the htmle for use, scrape of the htmle wrapped in 'pre ready for direct rendering
+  ;;
+    (define (scrape-wi i-scrape fetched-htmle)
+      (let*(
+             [scrape-data (i-scrape fetched-htmle)]
+             [scrape-collapse-box-htmle (car (collapse-box-htmle "scrape result" `(pre ,(->pretty-string scrape-data))))]
+             )
+        (info-hook scrape-collapse-box-htmle)
+        scrape-data
+        ))
+
+     (define (page-test-webi-predicate-body arrival-url)
+       (info-reset)  ; should instead have (with-info ...) as threads are going to get messed up!!!
+
+       (match-let(
+                   [(list the-form-htmle arrival-query)  (get-form-query-wi arrival-url)]
+                   )
+
+         ;; this cond block has the side effect of setting up our info list
+         (cond
+           [arrival-query
+             (let*(
+                    [arrival-query-parse (parse-query-wi arrival-query)]
+                    [pred (get-pred-wi arrival-query-parse)]
+                    )
+               (cond
+                 [pred 
+                   (match-let*(
+                                [(list i i-usage i-url i-get i-scrape)  (find-webi-wi pred)]
+                                )
+                     (cond
+                       [(is-webi i)
+                          (let(
+                               [webi-url (webi-url-wi i-url pred)]
+                               )
+                           (cond
+                             [webi-url
+                               (let(
+                                     [fetched-htmle (fetch-page-wi i-get webi-url)]
+                                     )
+                                 (cond
+                                   [fetched-htmle
+                                     (let(
+                                           [scrape-data   (scrape-wi i-scrape fetched-htmle)]
+                                           )
+                                       (void) ; normally scrape data would go to the database
+                                       )]))]))]))]))])
+
+         ;; the page body is constructed from the form and info list
+         (let*(
+               [basic-body
+                 `(body 
+                    ,(webi-preds-usage-htmle)
+                    (br)
+                    ,the-form-htmle
+                    )
+                 ]
+               [body-with-info 
+                 (append basic-body info-htmle)
+                 ]
+                )
+           body-with-info
+           )))
+               
+;;--------------------------------------------------------------------------------
+;; this test page accepts queriest that contain a single predicate, there that
+;; predicate is a web predicate
+;;
+;; input: a parse tree
+;; output: a single web predicate or #f, an error message or #f
+;;
+  (define (filter-webi-pred the-parse)
+    (let(
+          [preds  (filter-preds the-parse)]
+          )
+      (cond
+        [(null? preds) (list '() "did not find any predicates")]
+        [(length> preds 1) (list preds "found more than one pred")]
+        [else
+          (let*(
+                 [pred (car preds)]
+                 [name (car (tok-value pred))]
+                 )
+            (cond
+              [(not (is-webi name))
+                (let(
+                      [mess
+                        (string-append
+                          "not an web predicate: \""
+                          (->pretty-string pred)
+                          "\""
+                          )
+                        ]
+                      )
+                  (list pred mess)
+                  )
+                ]
+              [else
+                (list pred #f)
+                ]
+              ))
+          ]
+        )))
+
+    (define (filter-pred-test-0)
+      (equal?
+        (filter-preds filter-pred-test-data-0)
+        filter-pred-test-data-1
+        ))
+    (test-hook filter-pred-test-0)
+      
+    (define (filter-pred-test-1)
+      (let(
+            [filter-result (filter-webi-pred filter-pred-test-data-0)]
+            )
+        (and
+          (equal?
+            (car filter-result)
+            (car filter-pred-test-data-1)
+            )
+            (not (cadr filter-result))
+          )))
+
+    (test-hook filter-pred-test-1)
+
+
+;;--------------------------------------------------------------------------------
+;;  the web page is assembled here
+;;
+;; input: tcp context, arrival url
+;; output: htmle for the webpage
+;;
+    (define (page-test-conjunction the-tcp-context arrival-url)
+      (let*
+        (
+          [header   (html-header collapse-box-script-str)]
+          [body     (xexp->html (page-test-webi-predicate-body arrival-url))]
+          [document (html-str header body)]
+          )
+        (parameterize [(current-output-port (tcp-context-out the-tcp-context))]
+          (display (http-response)) ; comment this out to see the document as text on browser page
+          (display document)
+          )
+        ))
+    
+
+;;--------------------------------------------------------------------------------
+;; provides to the worldp
+;;   this module hooks the pages and otherwise does not provide anything
+;;
+  (provide-with-trace "ap-page-conjunction"
+    page-test-conjunction
+    )
+
+;; for debug:
+;;(provide (all-defined-out))

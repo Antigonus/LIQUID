@@ -1,0 +1,364 @@
+
+2015-03-11T09:36:00Z twl
+  interesting coincidence today.
+
+  in the function column-fetch in dataplex-lib.rkt, we need to
+  fetch a row from a table by its id.  We don't actually know the
+  number of remaining columns.  It is a fetch by record id.  However,
+  we do fetch by :match, which takes a pattern, and that pattern must
+  have the proper number of '_ s in it.  We can figure this information
+  out from the shapes table, however, as luck would have it, table:match
+  has a bug where it treats as blank matches trailing unspecified values.
+  If this is fixed then column-fetch will break ..
+
+
+2015-03-09T06:14:31Z twl
+  delete dataplex needs transaction blocks
+  
+2015-03-05T05:32:54Z twl
+
+  would be cool to allow reg-exp for fields in the :match routines .. though
+  there may be a paradigm mismatch - as we were modeling match on racket
+  match rather than on reg-exp match.  Though this is only an issue for 
+  scheme data structures stored in the database.  Perhaps reg ex matching on
+  atoms, which will be strings coming out of the data base would be good.
+
+   ;;      .. should implement a higher performance 'has-semantic-citings ..
+   to use in shape-relation:delete
+
+  should organize this todo by file/module name and 'other' ...
+
+2015-03-04T07:11:41Z twl
+
+  yeah, really need to implement some syntax for named elements in lists
+  (sort of structs, or sort of hashes) and rewrite the dataplex and replace
+  the 'with' syntax which is defining a lot of values that are often not 
+  used.
+
+  (with <index-name> <field-name> <list>)
+
+  this then pulls the named field from the list
+
+  or
+ 
+  (as <type-name> <field-name> <list>)
+
+  (ref <index-name> <field-name> <list>)
+
+  (ref co-ordinates y '(10 20 30))  --> 20
+
+  then for the text use 'gen-text'  or some such function to create the list 
+
+
+2015-03-03T04:19:19Z twl
+
+  as mentioned below, we would like db-lib to have a connection resource
+  and a with connection scope, so that threads and other scopes can have
+  their own connection
+
+  also, we should have a dedicated connection to a transcript, a paraemter for
+  transcripting all calls or just dataplex calls, when this parameter is set, all calls in
+  this library should write their transaction to the transcript, or all dataplex
+  calls should write their transaction to this transcript.
+
+  the transcript code should use the base library exec and send SQL directly
+  to the transcript table.
+
+  .. in other news gosh still need to be able to nest as-transaction ...  fear
+  some parts of the library may be missing needed transaction blocks
+
+  bug in table:delete and table:match where it accepts patterns of the wrong
+  arity .. or do we want to say that unspecified values on the tail are '_' ..
+
+2015-03-02T15:06:39Z twl
+
+  yikes, table names for dataplexes should have parts separated by a character
+  not used in the table names otherwise there can be aliasing.  First reaction 
+  is to use a colon as that is what I'm using for scoping right now. .. so
+  have a rule that this separator character is not allowed in table names, or 
+  must be escaped or some such.
+
+  wonder if dataplexes should even be given names, instead just use the objects
+  give the objects names in scheme, the names can be allocated unique to a
+  dataplex namespace and only used internally
+
+  change the existing #f return values on no error, to instead be 'no-error return
+  values
+
+
+2015-02-20T11:12:09Z twl
+  need to add transcript function to tableplex, if we are to hope
+  to have repairs in case of integrity problems.  In theory we shouldn't
+  have integrity problems because the transactions are done correctly ;-)
+
+2015-02-19T08:21:12Z twl
+  really need to fix as-transaction to support nesting
+
+2015-02-05T04:46:17Z twl
+  bring all libs to ap.rkt and run their init routines. if the init routine does not
+  do anything it should still be there, so that the burden of adding init code remains
+  in the library's sand box
+
+  hook test pages in the init code, this way all the page hook messages occur together
+  at initialization
+
+  I like the test hooks occuring just under the test function definition, that way 
+  it is obvious if the test is hooked, and if the name changes it can be fixed locally.
+  Another policy would be to hook the tests in the init code or in a separate test init
+  function.
+
+  need a general hook service instead of doing every hook separately
+
+2015-02-02T13:08:33Z twl
+   this was a hack to see what a return object would look like,
+   needs to be fixed to be thread safe, especially as it is used
+   in making ap pages!
+       (info-reset)  ; should instead have (with-info ...) as threads are going to get messed up!!!
+
+2015-01-29T08:05:35Z twl
+  ap.rkt  the init errors need to be properly logged.  db logs in the
+  init routine then returns mess,  suggest all logging be done at the ap.rkt
+  level instead of in the init, thus display and logging will occur together
+
+2015-01-23T18:47:25Z twl
+  the page fetch interface routine should return something to indicate
+   a timeout when the fetch fails rather than just #f as it also returns
+   #f when not given a good url
+
+
+2015-01-23T01:01:37Z twl
+
+  in db-lib.rkt need to implement create table that accepts a 
+  list of conversion routines for read and write of records,
+  need a connect-to-table that does the same .. note we have
+  a table-exists?  so we can do create or connect.
+
+  need a pattern fetch routine so that we don't have to write
+  SQL selects, hand me a list to match, and then return all
+  records.
+
+  with semaphore and with transaction should be done separately
+  for the db connection so that as-transaction can be nested
+
+  consider automatically creating table groups with bridges
+  in create based on whether a colum is a value or a list.
+
+  in create, .. we can put the conversion λs as text into our schema
+  table of contents so that table connect can pull them out and
+  eval them ..
+
+2015-01-21T14:26:13Z twl
+  current-table-unique-id semaphore actually needs to protect the 
+  count for *all connections* to the database not just all threads.  
+  the coherency of the db will be lost if more than one process is run
+  and this is not done.  right now we only protect between threads.
+
+  also
+  in db-lib.rkt:
+  ;; right now we just count to infinity and never recycle
+  ;; probably should keep a used id list to assist with integrity checks
+  (define (dealloc-id table-name id) (void)) 
+
+
+2015-01-19T11:12:41Z twl
+  need to implement 'drop if exits' and a general cleanup routine
+  note this lists the tables int the database:
+  (db-list "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+
+  the current approach to unique counters is a bit primitive, but it does
+  use arbitrary size number embedded in text - though perhaps not necessary
+  for the prototype it is good form theoretically ..
+
+  when calling db-init a second time, is the original connection orphaned? This should
+  be checked/fixed
+
+
+2015-01-18T11:40:33Z twl
+  ** need session specific create tables so that searches by multiple users
+  don't collide.  [-- or we need a caching subsystem so apropose parts of
+  results can be shared]
+
+
+2015-01-14T01:49:20Z twl
+
+  in db-lib.rkt
+  the author-id would be unique to the author but not to the author table
+  thus we could put many different spelling options for a given author in the
+  author table, with all variations having different record ids, but having 
+  the same author id.  
+
+  do the (query-exec pgc) calls need to be guarded with mutex locks? (see db-lib.rkt)
+
+  **note we are currently using simulated threads, and all threads share the same
+  db connection
+
+2015-01-09T05:04:35Z twl
+  need to change the tokens to be the same as xexp that Neil uses for the html parser
+  then change the filters.rkt as we need only one set of filters for both.  filter on
+  (tok-has-attribute class data) or some such would return the data class values for
+  the dblp site, then.  Right now we depend on a prefix filter which is fragile should
+  the prefix change, but will do for now.
+
+  would like to have manifold-in manifold out - would be used in website-interfaces
+  instead of multiple list traversal.  Often used to sort the types of a return
+  between valid and exception cases.  see file in 5_scratch.
+
+2015-01-08T04:38:41Z twl
+  well-formed isn't done consistently ..
+
+  a well-formed token should be allowed only one value - perhsp that value is a list
+  but only one attribute called value, then we change the (first (tok-value .. to
+  (tok-value ..
+
+2015-01-06T06:45:03Z twl
+  need to add more routines to the (interface-hook),  for example a routine that
+  prints a help message for the interface.
+
+  add exception handler to page-test-single-query-body .. too much going on there
+
+  (get-webpage)  should allow for partial results ?  seems big fetches should
+  be incremental
+
+2015-01-05T06:22:23Z twl
+  dblp timeout right code needs to be finished - right now just messages the log and
+  returns nothing
+
+  should remove the custom tok-thing->string for tokens that were added because position
+  was not transparent, because now it is converted to a list when read and displays
+  just fine.  (->string) works just fine on the parse tree parts for debug purposes.
+
+  (interfaces-lookup) not 'not-found not fully implemented
+
+  adding a provide to the top of a file that is required elsewhere does not cause
+  an reload and read of the provide at the next (enter!)
+
+2015-01-04T11:05:24Z twl
+  (build-dblp-url) refuses to build url for fetching the whole of the database,
+  this should be modified, perhaps with a 'are you sure?' dialog first or something.
+
+  (build-dblp-rul) need to establish that args do not have characters that are
+  illegal for the dblp - i.e. finish (well-formed-dblp-args)
+
+  interesting personality with string->url and dblp manifest in webiste-interfaces.rkt
+  don't know if something should be done with this,  I tried changing the " "  to a "%20"
+  but string->url still turned it into a next query argument instead of putting in a space.
+              [else ; dblp puts literal space, but string->url will turn the space to a '+', the dblp parser still takes it
+                (string-append " " facet ":" arg (build-dblp-query-1 r-facets r-args))
+  should put this on the developers email list for comment
+
+2015-01-02T10:05:19Z twl
+  utilities test uses with-handlers should use concrete instead .. don't want to 
+  mess with it right now ..
+
+2014-12-30T05:41:13Z twl
+  UTF-8 is not working from the webform ..  characters appear to be ignored
+
+2014-12-29T09:47:12Z twl
+  I'm not a fan of toggles, should have some choices for collapse box, say + on the left
+  of the label and - on the right.  Push one or the other to make the text appear or
+  disappear.  collapse box also needs to have a parameter for setting the default as
+  collapsed or open.  Perhaps a style paramter would be better as it is more general.
+
+2014-12-25T09:19:04Z twl
+  need graphics interactive test hook,  interactive test should give directions for doing
+  the test then ask the test user to answer yes or no if the result was correct.
+  this style of test is used for display-lib  this style test should only be used for
+  graphics, not things that that can be calculated and checked automatically.
+
+  need to fix running and stopping of display server as part of the above.
+
+2014-12-22T10:38:32Z twl
+   in utilities.rkt, unique-get etc. need locks on unique-count-next for thread safety.
+
+2014-12-16T08:32:38Z twl
+   tokens.rkt  function .eq. should do an order indpendent check on the attributes, also
+   order dependence on token children depends on the token type ..
+
+2014-12-16T08:32:38Z twl
+   test-hook duplicate checking is not working, each (enter!) doubles up on the tests ..
+   but notice even if that worked it would not be the right behavior, as the list is points
+   to the old routine not the new one.
+
+2014-11-24T10:18:21Z twl
+  need to put pid into log file name so multiple servers don't step on each other
+  need to have a symaphor for writing the log so that multiple threads dont' step on each other
+
+2014-11-29T11:04:43Z twl
+   tests should hook with a message, so we can run them all at once, or in individual
+   files when testing the standalone
+
+2014-12-01T03:48:10Z twl
+  in query.rkt
+  (field-get) should return a list or insert an internal error due to possible multiple fields
+  with the same tag, currently it only finds the first value with the tag
+
+2014-12-02T10:43:40Z twl
+  internal errors are being logged to the webserver log, this should be changed
+  to separate log, also should go to a variable that can be displayed on the 
+  result page for the corresponding query
+
+1. lexer
+
+  2014-11-21T14:38:53Z twl
+    query-parser.rkt  lex does not correctly handle escaped quotes, i.e. \"  within a string
+
+  2014-11-24T15:04:45Z twl
+    need to catch exceptions for the lex of a number in query-parser.rkt:lexer
+    lex of other-string should get position information from the port (the lexer doesn't have it)
+
+  2014-11-29T18:15:05Z twl
+     lets keep the lexeme in the token faithful to what was scanned, so the quotes
+     should go back on a string, 'drop-end-chars can be used to remove them if
+     need be .. this will require fixing some tests, but most need to be fixed after the
+     change to tok->string anyway
+
+   2014-12-04T07:55:00Z twl
+      seems the rule-pattern which is currently grammar should be moved back to the lexer?
+      the reason it is in the parser is that currently we only look for patterns as the operands
+      of a predicate, so we invoke this rule match from rule-operand which is invoked from 
+      rule-pred
+
+2. tok->string
+
+  2014-11-26T10:28:47Z twl
+    -> the tok->string fails to recursively call sub tokens to convert, instead lets display
+      do it. display doesn't expand the positions
+
+  2014-11-29T11:04:43Z twl
+    tok->string does not write in input form, this should be changed
+  
+3. parser
+
+   2014-12-04T07:55:00Z twl 
+
+   the tree prune should traver the rest members of the operand-list to look for tokens
+   though currently we don't have lists of tokens and members so can't recognize a token
+   on sight.  thus we need to make token and member lists and implement token?  and
+   member?  from the lists
+
+   currently we have a traverse-members function with type specific entries, and thus we
+   hard code look for tokens based on the type of the holder token .. not a good approach.
+
+   
+   2014-12-08T01:05:41Z twl
+   (match) does not like our (tok) but insists instead on having (list) to match against
+   seems a define-syntax rules definition for tok would solve this problem .. for attributes
+   too 
+   
+   need to add append-attribute, (singular)  and find-attribute -- that gives an error if
+   there is already an attribute by that name - or perhaps that should be the normal behavior
+   for append-attributes ...
+
+   2014-12-10T09:09:22Z twl
+   tests need to be cleaned up, position structure should be transparent so it displays
+   turning this on will break tests,  tok->string should turn it on.  
+
+   Need sorce example definitions to use in tests, currently they are placed ad hoc
+   and are lists rather than pos structures
+   
+   tok-make-errsyn produce a tok:errsyn, but it makes another token type with an error
+   message.  seems we need a separate routine for this later use.  In general it is
+   unclear when ts are passed infor position informaiton and when they have a purpose,
+   might be better to have a position argument and a toks->position funciton called to
+   feed it in order to make the different uses clear.  Though the errsyn token keeps
+   the ts for documentation if they are present .. needs to be cleaned up
