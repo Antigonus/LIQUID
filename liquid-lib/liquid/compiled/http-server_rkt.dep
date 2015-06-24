@@ -1,1 +1,0 @@
-("6.1" ("42d48e11f81df5635ed24f93816f6303be8c027d" . "aa9850d84ffe8adc927e3b118ed3d41a8eafb860") (collects #"liquid" #"http-session.rkt") (collects #"liquid" #"http-server-pages.rkt") (collects #"liquid" #"lynch-lib.rkt") (collects #"liquid" #"tcp-server.rkt") (collects #"racket" #"runtime-config.rkt") (collects #"racket" #"main.rkt"))

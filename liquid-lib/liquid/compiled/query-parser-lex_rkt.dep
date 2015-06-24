@@ -1,1 +1,0 @@
-("6.1" ("6eaea44e4faffd7060af2f62441907196578b9b4" . "aebef632a2a511c5be81e14920aed2de263093fd") (collects #"liquid" #"query-parser-tokens.rkt") (collects #"liquid" #"tokens.rkt") (collects #"liquid" #"lynch-lib.rkt") (collects #"parser-tools" #"lex-sre.rkt") (collects #"racket" #"runtime-config.rkt") (collects #"racket" #"main.rkt") (collects #"parser-tools" #"lex.rkt"))
