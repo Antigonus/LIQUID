@@ -16,15 +16,14 @@
   (require html)
   (require net/url net/uri-codec)
   (require (planet neil/html-parsing:2:0))
+
   (require liquid/lynch-lib.rk) 
-  (require liquid/tokens.rkt)
-  (require liquid/filter.rkt)
-  (require liquid/realtime.rkt)
-
-  (require liquid/webi-lib.rkt)
-
-  (require query-parser-tokens.rkt)
-  (require query-parser-well-formed.rkt)
+  (require liquid/tokens)
+  (require liquid/filter)
+  (require liquid/realtime)
+  (require liquid/webi-lib)
+  (require liquid/query-parser-tokens)
+  (require liquid/query-parser-well-formed)
 
 ;;--------------------------------------------------------------------------------
 ;; usage message provided to interface user upon request

@@ -13,8 +13,9 @@
 ;;--------------------------------------------------------------------------------
 ;; uses these libraries
 ;;
-  (require "liquid/lynch-lib.rkt")
-  (require "liquid/tokens.rkt")
+  (require liquid/lynch-lib)
+  (require liquid/tokens)
+
   (require "keyword-1-parser-tokens.rkt")
   (require "keyword-1-parser-lex.rkt")
   (require "keyword-1-parser-framing.rkt")

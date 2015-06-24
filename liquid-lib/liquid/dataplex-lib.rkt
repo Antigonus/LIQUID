@@ -44,13 +44,13 @@
 ;; dataplex context
 ;;
 
-  (define (dataplex:namespace dataplex-name) (string-append dataplex-name "_namespace"))
+  (define (dataplex:keyspace dataplex-name) (string-append dataplex-name "_keyspace"))
 
   (define (dataplex:object-scope dataplex-name)
     (list
       'dataplex
       dataplex-name
-      (dataplex:namespace dataplex-name)
+      (dataplex:keyspace dataplex-name)
       (string-append dataplex-name "_shape_relations")
       (string-append dataplex-name "_semantic_relations")
       ))
@@ -65,7 +65,7 @@
         (append
           `(let(
                  [dataplex:name (list-ref ,dataplex-object 1)]
-                 [dataplex:namespace (list-ref ,dataplex-object 2)]
+                 [dataplex:keyspace (list-ref ,dataplex-object 2)]
                  [dataplex:shape-relations (list-ref ,dataplex-object 3)]
                  [dataplex:semantic-relations (list-ref ,dataplex-object 4)]
                  ))
@@ -75,13 +75,13 @@
   (define (syntax-with-dataplex-test-0)
     (let*(
            [a-dataplex-name (db:alloc-name)]
-           [shouldbe-the-namespace (string-append a-dataplex-name "_namespace")]
+           [shouldbe-the-keyspace (string-append a-dataplex-name "_keyspace")]
            [dataplex-object (dataplex:object-scope a-dataplex-name)] ; lexical scope of symbols, object not in db
            )
-      ;;(pretty-print shouldbe-the-namespace)
+      ;;(pretty-print shouldbe-the-keyspace)
       (with-dataplex dataplex-object
-        ;;(pretty-print dataplex:namespace)
-        (string=? dataplex:namespace shouldbe-the-namespace)
+        ;;(pretty-print dataplex:keyspace)
+        (string=? dataplex:keyspace shouldbe-the-keyspace)
         )
       ))
   (test-hook syntax-with-dataplex-test-0)
@@ -221,7 +221,7 @@
             (with-dataplex dataplex-scope
               (as-transaction
                 (table:insert (db:dataplex-directory-name) dataplex:name)
-                (db:create-namespace dataplex:namespace) ;a source of unique numbers for the dataplex
+                (db:create-keyspace dataplex:keyspace) ;a source of unique numbers for the dataplex
                 (db:create-table dataplex:shape-relations 2) ;relation name, arity
                 (db:create-table dataplex:semantic-relations 1) ;relation name
                 )
@@ -277,7 +277,7 @@
               )))
         (when (db:is-table dataplex:shape-relations) (delete-shape-relation))
         (when (db:is-table dataplex:semantic-relations) (delete-semantic-relation))
-        (db:delete-namespace dataplex:namespace)
+        (db:delete-keyspace dataplex:keyspace)
         (table:delete (db:dataplex-directory-name) dataplex:name)
         ))
 
@@ -439,7 +439,7 @@
                [else
                  (with-shape-relation shape-relation
                    (let(
-                         [new-id (namespace:alloc-number (dataplex:namespace shape-relation:owner))]
+                         [new-id (keyspace:alloc-number (dataplex:keyspace shape-relation:owner))]
                          )
                      (table:insert shape-relation:values (cons new-id a-value))
                      new-id
@@ -650,7 +650,7 @@
   ;;    should store the column count in the object, silly to go back out to the db
   ;;    to get it (table:match ..) ?  or do we need the list anyway?
   ;;
-  ;; Dataplex is needed to access the namespace, and to create object-scope for
+  ;; Dataplex is needed to access the keyspace, and to create object-scope for
   ;; shape relations.  Both could be designed around .. we could also get the dataplex
   ;; from the semantic-relation owner field, and that would even be more stable.
   ;;
@@ -665,7 +665,7 @@
             [else
               (with-dataplex dataplex
                 (let(
-                      [semantic-value-id (namespace:alloc-number dataplex:namespace)]
+                      [semantic-value-id (keyspace:alloc-number dataplex:keyspace)]
                       )
                   (define (semantic-relation:insert-1 a-value shape-relations column) ; a recursive form, i.e. iterator
                     (cond
@@ -955,7 +955,7 @@
 
     ;; clear out prior test tables, if any
     (table:delete (db:dataplex-directory-name) '("dataplex_test_1_0"))
-    (db:delete-namespace "dataplex_test_1_0_namespace")
+    (db:delete-keyspace "dataplex_test_1_0_keyspace")
     (db:delete-table* (db:tables "^dataplex_test_1_0"))
 
     ;; car build a dataplex
@@ -1013,7 +1013,7 @@
                   [dataplex-shell
                     (and
                       (null? table-list-0)
-                      (db:is-namespace name-0)
+                      (db:is-keyspace name-0)
                       (equal? table-list-1 
                         `(
                            "dataplex_test_1_0_semantic_relations"

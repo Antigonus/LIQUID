@@ -25,10 +25,10 @@
   (require liquid/http-server)
   (require liquid/http-session)
   (require liquid/db-lib)
+  (require liquid/filter-tests)
 
   (require "ap-page-webi-predicate.rkt")
   (require "ap-page-conjunction.rkt")
-  (require "filter-tests.rkt")
 
 ;;--------------------------------------------------------------------------------
 ;;

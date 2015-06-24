@@ -16,8 +16,8 @@ for creating, deleting, and using tables in a database.}
    for LISP programs that desire to have persistant relaitonal storage of data.
 
    Due to these simplications this interface might not be useful when applied to a
-   database that has been created by other means which make use of unrecognized
-   features and types.
+   database that have been created outside of this interface and make use of column
+   types and other unsupported features.
 
 
 @section{Program Level Type Interpretation}

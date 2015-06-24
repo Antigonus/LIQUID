@@ -36,9 +36,10 @@
   (require liquid/tokens)
   (require liquid/filter)
   (require liquid/webi-lib)
+  (require liquid/query-parser-tokens)
+  (require liquid/query-parser)
 
-  (require query-parser-tokens)
-  (require "webi-dblp")
+  (require "webi-dblp.rkt")
   (require "ap-page-lib.rkt")
   (require "ap-page-webi-pred-test-data.rkt")
 

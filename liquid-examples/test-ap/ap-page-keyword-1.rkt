@@ -27,7 +27,7 @@
   (require liquid/webi-lib)
 
   (require keyworld-1-tokens)
-  (require "webi-dblp")
+  (require "webi-dblp.rkt")
   (require "ap-page-lib.rkt")
   (require "ap-page-webi-pred-test-data.rkt")
 

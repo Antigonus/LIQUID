@@ -19,8 +19,9 @@
 ;; uses these libraries
 ;;
   (require parser-tools/lex) ; for the position structure
-  (require "liquid/lynch-lib.rkt")
-  (require "liquid/tokens.rkt")
+
+  (require liquid/lynch-lib)
+  (require liquid/tokens)
 
 ;;--------------------------------------------------------------------------------
 ;; tokens

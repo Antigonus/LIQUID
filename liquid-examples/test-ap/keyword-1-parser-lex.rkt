@@ -17,8 +17,9 @@
   (require parser-tools/lex)
   (require (prefix-in lex: parser-tools/lex-sre))
 
-  (require "lynch/lynch-lib.rkt")
-  (require "lynch/tokens.rkt")
+  (require liquid/lynch-lib)
+  (require liquid/tokens)
+
   (require "keyword-1-tokens.rkt")
 
  

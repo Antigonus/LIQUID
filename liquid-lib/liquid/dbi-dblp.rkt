@@ -87,9 +87,9 @@
           ;;(pretty-print transaction)
           (as-transaction 
             (sql:exec* create-citation-schema-work-query)
-            (db:create-namespace table-publication)
-            (db:create-namespace table-author)
-            (db:create-namespace table-bridge)
+            (db:create-keyspace table-publication)
+            (db:create-keyspace table-author)
+            (db:create-keyspace table-bridge)
             )
           ))))
 
@@ -107,7 +107,7 @@
             )
         (as-transaction
           (for-each db:delete-table tables)
-          (for-each db:delete-namespace tables)
+          (for-each db:delete-keyspace tables)
           ))))
 
 
@@ -125,7 +125,7 @@
           )
       (let(
             [publication-id (get-publication-id-1 table-publication venue type year)]
-            [new-publication-id  (namespace:alloc-number table-publication)]
+            [new-publication-id  (keyspace:alloc-number table-publication)]
             )
         (cond
           [publication-id 'publication-exists]
@@ -186,7 +186,7 @@
     (with-citation-tables schema-name
       (let(
             [author-id (get-author-id-1 table-author new-author)] ; returns false if author not found
-            [new-author-id  (namespace:alloc-number table-author)]
+            [new-author-id  (keyspace:alloc-number table-author)]
             )
         (cond
           [author-id author-id]
@@ -240,7 +240,7 @@
     (with-citation-tables schema-name
       (let(
             [author-ids (get-authors-for-publication-1 table-bridge publication-id)]
-            [new-bridge-id  (namespace:alloc-number table-bridge)]
+            [new-bridge-id  (keyspace:alloc-number table-bridge)]
             )
         (cond
           [(member author-id author-ids) 'bridge-exists]

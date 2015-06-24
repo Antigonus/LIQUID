@@ -18,18 +18,19 @@
   (require html)
   (require net/url net/uri-codec)
   (require (planet neil/html-parsing:2:0))
-  (require liquid/lynch-lib.rkt) 
-  (require liquid/tokens.rkt)
-  (require liquid/filter.rkt)
-  (require liquid/realtime.rkt)
 
-  (require liquid/webi-lib.rkt)
+  (require liquid/lynch-lib) 
+  (require liquid/tokens)
+  (require liquid/filter)
+  (require liquid/realtime)
+  (require liquid/webi-lib)
+  (require liquid/query-parser-tokens)
+  (require liquid/query-parser-well-formed)
+  (require liquid/dbi-dblp)
+
   (require "webi-dblp-scrape-test-data-0.rkt")
   (require "webi-dblp-scrape-test-data-1.rkt")
 
-  (require query-parser-tokens.rkt)
-  (require query-parser-well-formed.rkt)
-  (require "dbi-dblp.rkt")
 
 ;;--------------------------------------------------------------------------------
 ;; webi-dblp-usage

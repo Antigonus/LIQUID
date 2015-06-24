@@ -5,15 +5,15 @@
                      liquid/db-lib
                      ))
 
-@title{LIQUID -- Framework for Developing Deep Web Search Programs and Servers}
+@title{LIQUID library}
 
 @author["Thomas Walker Lynch"]
 
-@table-of-contents[]
+Useful functions for developing theoretical deep web search engines.
 
-@include-section{db-lib.scrbl}
-@include-section{http-server.scrbl}
-@include-section{query-parser.scrbl}
-@include-section{realtime.scrbl}
-@include-section{tokens.scrbl}
+
+@table-of-contents[]
+@include-section{liquid-guide.scrbl}
+@include-section{liquid-reference.scrbl}
+
 

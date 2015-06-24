@@ -28,19 +28,19 @@
     numerics, but we sometimes don't like built in database numerics, and furthermore mixing
     them would be a bit confusing.
 
-  3. namespaces
+  3. keyspaces
 
-    Namespace names for tables are the same as the name of the table.  This is in part a
+    Kamespace names for tables are the same as the name of the table.  This is in part a
     contract with the programmer.
 
     Allocators are used to create unique ids for table rows, for creating temporary
-    variables names within a namespace, for making unique values when testing, etc.
-    (namespace:alloc-number namespace) gives a unique number in that namespace, and (alloc-a-name
-    namespace) gives a unique name.  These values are unique in context of the database.
+    variables names within a keyspace, for making unique values when testing, etc.
+    (keyspace:alloc-number keyspace) gives a unique number in that keyspace, and (alloc-a-name
+    keyspace) gives a unique name.  These values are unique in context of the database.
     See (unique-to-session-number) and (unique-to-session-name) for unique values within a
     session. Note, unique numbers to the session may not be unique to the database.
 
-    We reserve the namespace 'unique_to_db' for global allocation. 
+    We reserve the keyspace 'unique_to_db' for global allocation. 
 
   -- 
     in sql queries be sure to double quote table names, and to single quote values
@@ -90,7 +90,7 @@
         (cond
           [(not (db:is-table "table_allocator_overhead")) 
             (allocator-create)
-            (db:create-namespace "unique_to_db") ; puts row in allocator_overhead for a db global unique count
+            (db:create-keyspace "unique_to_db") ; puts row in allocator_overhead for a db global unique count
             ]
           [(current-db-log) "db-lib-init"]
           )
@@ -297,7 +297,7 @@
 
 
 ;;--------------------------------------------------------------------------------
-;; db persistent unique numbers within a namespace
+;; db persistent unique numbers within a keyspace
 ;;
 ;;  here id stands for id number
 ;;
@@ -312,14 +312,14 @@
     (sql:exec  "drop table table_allocator_overhead")
     )
 
-  (define (get-counter namespace); helper function
+  (define (get-counter keyspace); helper function
     (let(
           [counter-text
             (sql:maybe-value 
               (string-append
                 "select counter from table_allocator_overhead"
                 " where name = "
-                (with-squotes namespace)
+                (with-squotes keyspace)
                 ))
             ]
           )
@@ -328,21 +328,21 @@
         [else (string->number counter-text)]
         )))
           
-  ;; it is an error for namespace not to already exist in the allocator_overhead table
-  (define (update-counter namespace new-value); helper function
+  ;; it is an error for keyspace not to already exist in the allocator_overhead table
+  (define (update-counter keyspace new-value); helper function
     (sql:exec
       (string-append
         "update table_allocator_overhead set counter = "
         (with-squotes (number->string new-value))
         " where name = "
-        (with-squotes namespace)
+        (with-squotes keyspace)
         )))
 
-  ;; upon car call to namespace:alloc-number on a new namespace it returns the number 1
-  (define (namespace:alloc-number namespace)
+  ;; upon car call to keyspace:alloc-number on a new keyspace it returns the number 1
+  (define (keyspace:alloc-number keyspace)
     (with-semaphore (current-db-allocator-semaphore)
       (let(
-            [count (get-counter namespace)]
+            [count (get-counter keyspace)]
             )
         (cond
           [(not count) #f]
@@ -350,7 +350,7 @@
             (let(
                   [next-count (++ count)]
                   )
-              (update-counter namespace next-count)
+              (update-counter keyspace next-count)
               next-count
               )
             ]
@@ -358,42 +358,42 @@
 
   ;; right now we just count to infinity and never recycle
   ;; probably should keep a used id list to assist with integrity checks
-  (define (namespace:dealloc-number namespace id) (void)) 
+  (define (keyspace:dealloc-number keyspace id) (void)) 
 
-  (define (db:create-namespace namespace)
+  (define (db:create-keyspace keyspace)
     (sql:exec
       (string-append
         "insert into table_allocator_overhead values"
         "("
-        (with-squotes namespace)
+        (with-squotes keyspace)
         ", '0' )"
         )))
 
-  (define (db:delete-namespace namespace)
+  (define (db:delete-keyspace keyspace)
     (sql:exec
       (string-append 
         "delete from table_allocator_overhead where name ="
         " "
-        (with-squotes namespace)
+        (with-squotes keyspace)
         )))
 
-  (define (db:is-namespace namespace)
+  (define (db:is-keyspace keyspace)
     (boolify
       (sql:maybe-value
-        "select name from table_allocator_overhead where name = 'dataplex_test_1_0_namespace'"
+        "select name from table_allocator_overhead where name = 'dataplex_test_1_0_keyspace'"
         )))
 
-  (define (namespace-alloc-test-0)
+  (define (keyspace-alloc-test-0)
     (let(
           [name (db:alloc-name)]
           )
-      (db:create-namespace name)
+      (db:create-keyspace name)
       (let(
-            [n1 (namespace:alloc-number name)]
-            [n2 (namespace:alloc-number name)]
-            [n3 (namespace:alloc-number name)]
+            [n1 (keyspace:alloc-number name)]
+            [n2 (keyspace:alloc-number name)]
+            [n3 (keyspace:alloc-number name)]
             )
-        (db:delete-namespace name)
+        (db:delete-keyspace name)
         (and
           (> n1 0)
           (> n2 0)
@@ -402,14 +402,14 @@
           (≠ n1 n3)
           (≠ n2 n3)
           ))))
-    (test-hook namespace-alloc-test-0)
+    (test-hook keyspace-alloc-test-0)
 
 ;;--------------------------------------------------------------------------------
 ;; global db persistent unique number/name service
 ;;
 ;;   used for creating temporaries in testing etc.
 ;;
-;;   note service above for db persistent unique ids within a namespace
+;;   note service above for db persistent unique ids within a keyspace
 ;;
 ;;   programmers should not make identifiers of the form "unique_to_db_name-[0-9]+"
 ;;   one would think that wouldn't be a very strong programming constraint ...
@@ -417,7 +417,7 @@
 ;;   analogous to session-unique service in lynch-lib.rkt, but 
 ;;   for the life of the db instead of the session
 ;;
-  (define (db:alloc-number) (namespace:alloc-number "unique_to_db"))
+  (define (db:alloc-number) (keyspace:alloc-number "unique_to_db"))
   (define (db:alloc-name) (string-append "unique_to_db_name_" (number->string (db:alloc-number))))
 
   (define (db:alloc-name-test-0)
@@ -435,9 +435,9 @@
 
   #|
     ; lists all user defined objects matching rx
-    ; allow path names to support namespaces
+    ; allow path names to support keyspaces
     (define (db:ls [rx #f])) 
-    (define (db:with-namespace [rx #f]) ...) ; a sort of 'cd'
+    (define (db:with-keyspace [rx #f]) ...) ; a sort of 'cd'
     (define (db:with [rx #f]) ..)  ; limit view for scoped ls to just the selected objects
 
     in general want a db:object to be returned by the create calls,
@@ -840,28 +840,26 @@
       transaction:commit
       transaction:rollback
 
-    ; need instead a list of multfolds owned by session or some such
-    db:tables  ; lists all tables in the db
-    db:is-table ; is a particular table in the db
 
-    db:alloc-number
-    db:alloc-name
-
-    db:create-namespace
-    db:delete-namespace
-    db:is-namespace
-
-    namespace:alloc-number
-    namespace:dealloc-number
-
-    column-list
-    db:create-table
-    db:delete-table
-    db:delete-table*
-    table:insert
-    table:insert*
-    table:delete
-    table:match
+    ;; db-lib interface
+    ;;
+      column-list
+      db:alloc-name
+      db:alloc-number
+      db:create-keyspace
+      db:create-table
+      db:delete-keyspace
+      db:delete-table
+      db:delete-table*
+      db:is-keyspace
+      db:is-table ; is a particular table in the db
+      db:tables  ; lists all tables in the db
+      keyspace:alloc-number
+      keyspace:dealloc-number
+      table:delete
+      table:insert
+      table:insert*
+      table:match
 
     )
 

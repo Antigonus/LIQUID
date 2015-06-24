@@ -1,15 +1,18 @@
-;;--------------------------------------------------------------------------------
-;; tests for filter.rkt 
-;;   2015-05-25T08:53:03Z created twl
-;;
-;; These tests are here because they make use of query-parser.rkt
-;;
+#|
+  tests for filter.rkt 
+    2015-05-25T08:53:03Z created twl
+
+  These tests are here because they make use of query-parser.rkt
+|#
+#lang racket
 
 ;;--------------------------------------------------------------------------------
 ;; uses these libraries
 ;;
-  (require "liquid/lynch-lib.rkt")
-  (require "liquid/filter.rkt")
+  (require "lynch-lib.rkt")
+  (require "filter.rkt")
+  (require "query-parser.rkt")
+  (require "tokens.rkt")
 
 ;;--------------------------------------------------------------------------------
 ;;
