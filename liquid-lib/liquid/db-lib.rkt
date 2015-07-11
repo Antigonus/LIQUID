@@ -417,8 +417,16 @@
 ;;   analogous to session-unique service in lynch-lib.rkt, but 
 ;;   for the life of the db instead of the session
 ;;
+;;   deallocation, when implemented, should have two modes, one where the names
+;;   are reused, for production, and ones where they can be tested to makes sure they
+;;   haven't been reused - the testing stuff is not implemented.
+;;
   (define (db:alloc-number) (keyspace:alloc-number "unique_to_db"))
   (define (db:alloc-name) (string-append "unique_to_db_name_" (number->string (db:alloc-number))))
+
+  (define (db:dealloc-number number) (keyspace:dealloc-number "unique_to_db" number))
+  (define (db:dealloc-name name) (void)); move it to the end of the infinite queue ..
+
 
   (define (db:alloc-name-test-0)
     (let(

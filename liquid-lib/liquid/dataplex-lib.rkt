@@ -1099,12 +1099,16 @@
       db:is-dataplex-name*
 
       db:find-dataplex ; given name returns object
+      db:find-dataplex*
 
       db:is-dataplex
       db:is-dataplex*
  
       db:create-dataplex
+      db:create-dataplex*
+
       db:delete-dataplex
+      db:delete-dataplex*
 
     ;; affect the dataplex
     ;;

@@ -3,150 +3,121 @@
                      racket/contract/base
                      ))               
 
-@title[#:tag "db-lib"]{db-lib reference}
+@title[#:tag "db-lib-reference"]{db-lib}
 
-@section{as-transaction}
+@defmodule[liquid/db-lib]
 
-        (as-transaction body ...)
+@defform[(as-transaction body ...)]
 
-        This provides a scoped context for a transaction block.
+        Context for a transaction.  The transaction begins when the context
+        is entered, and ends upon leaving the context.  @racket[body] may be any LISP
+        form, including those which do not invoke db-lib.
 
-        (There is a current a bug affecting nesting of transactions blocks having to do with
-        locking out other threads on the same connection ... priority issue, may hang when
-        nested)
-
-@section{column-list}
-
-@section{db:alloc-name}
-
-  Like db:alloc-number, but returns a unique string instead of a number.
+        Entering a transaction blocks the current connection from
+        being used in other threads.  See also, @secref{with-connection}.
 
 
-@section{db:alloc-number}
+@defproc[(db:alloc-name) string?]
 
-        (db:alloc-number)
+  Within the database context, returns a string which this function has never returned before,
+  or a string which was legally deallocated using @racket[db:dealloc-name]. 
 
-  Either, a) returns a number not ever issued by this function before against the contextual
-  database, even across sessions, or b) it returns a number that was issued before by this
-  function, but was deallocated, and has not been issued since.
+@defproc[(db:dealloc-name [name string?]) void?]
 
-  [Case b) can be turned off by setting xxx option, in the current implementation it is off.]
-
-  See also db:create-keyspace.  Note that @racketmodname[liquid/db-lib] reserves the
-  keyspace 'unique_to_db' to support this function, and the related function
-  db:alloc-name.
-
-@section{db:create-keyspace}
+  Currently this is ignored, but in the future deallocating a name might make it available
+  for allocation once again.
 
 
-@section{db:create-table}
+@defproc[(db:alloc-number) number?]
 
-        (db:create-table name column-count)
+  Within the database context, returns a number which this function has never returned before,
+  or returns a number that has been deallocated.
 
-        Accepts a name and a column count, then creates a table in the database with that name
-        and number of columns, or throws an exception.   Returns nothing.
+   
+@defproc[(db:dealloc-number [n number?]) void?]
+
+  Makes @racket[number] available for allocation once again.
+
+  In the future there will be a mode that when invoked will make deallocating a number which
+  was never allocatd an error, and we will have a another function for checking if an allocation
+  is valid.
+
+
+@defproc[(db:create-keyspace [keyspace string?]) void?]
+
+  Declares that the string @racket[keyspace] is a keyspace.  Once a keyspace is declared unique
+  keys maybe allocated from it.
+
+  I'm not sure what happens if one tries to declare the same keyspace twice.
+
+@defproc[(db:create-table [name string?] [column-count number?]) void?]
+
+        Accepts a name and a column count, then creates a table in the database given this name
+        and having that number of columns, or throws an exception.   Returns nothing.
 
         An exception will occur if the name already exists in the contextual database. [This
-        behavior is set to change to no exception in future versions.]
+        behavior should change in future versions.]
 
-@section{db:delete-keyspace}
+@defproc[(db:delete-keyspace [keyspace string?]) void?]
 
-@section{db:delete-table}
+   Un-declares a keyspace.
 
-@section{db:delete-table*}
+@defproc[(db:delete-table [table-name string?] ...) void?]
+@defproc[(db:delete-table* [table-names (listof string?)]) void?]
 
-@section{db:is-keyspace}
-
-@section{db:is-table}
-
-        (db:is-table table-name)
-
-        Accepts a table name, returns a Boole.
+   Drops one or more tables from the database.
 
 
+@defproc[(db:is-keyspace [name string?]) boolean?]
 
-@section{db:tables}
+        Whether @racket[name] is a keyspace.
 
-      (db:tables [rx #f])
+@defproc[(db:is-table [name string?]) boolean?]
 
-      Accepts an optional regular expression. Returns a list of matching table names, or if there
-      is no regular expression, returns all the table names in the database.
-
-@section{db:table db:table*}
-
-        (db:delete-table . ts)  (db:delete-table* ts)
-
-        Deletes the named tables.  The table names are literal.
+        Whether @racket[name] is a table.
 
 
-@section{keyspace:alloc-number}
+@defproc[(db:tables [rx regexp? #f]) (listof string?)]
 
-      @defproc[
-        (keyspace:alloc-number [keyspace string?]) number?
-        ]{
-        Accepts a keyspace and returns a unique number within that keyspace.  See also db:create-keyspace.
-        }
+      Lists tables in the database.  If the regular expression is omitted or set to #f then it lists
+      all the tables.
 
 
-  See lynch-lib's (unique-to-session-number) and (unique-to-session-name) for unique values within a
-  session. Note, unique numbers to the session may not be unique to the database.
+@defproc[(keyspace:alloc-number [keyspace string?]) number?]
+
+      Returns a number unique within the specified keyspace.  I.e. adds a new number to the keyspace.
 
 
-@section{keyspace:dealloc-number}
+@defproc[(keyspace:dealloc-number [keyspace string?] [key number?]) void?]
 
-        (keyspace:dealloc-number keyspace id)
-
-
-@section{The sql: Functions}
-
-These are wrappers for the underlying db library.  They only difference is that they act on the
-contextual connection. The * versions take lists, the others take variable parameters lists.  These are intended
-to be used only as work workarounds.  In a later version they may go away.
-
-      sql:exec
-      sql:exec*
-      sql:value
-      sql:value*
-      sql:maybe-value
-      sql:maybe-value*
-      sql:row
-      sql:row*
-      sql:rows
-      sql:rows*
-      sql:list
-      sql:list*
-
-      transaction:begin
-      transaction:commit
-      transaction:rollback
+      Removes a number from the keyspace.
 
 
-@section{table:delete}
+@defproc[(table:delete [table-name string?] [a-pattern pattern?]) void?]
 
-        (table:delete table-name a-pattern)
-
-    Accepts a table name and a pattern, then deletes all rows from the table that
-    match the pattern.
+    Deletes all rows from the table that match the pattern.
 
     If the table has more than one column, pattern must be a list.  Currently pattern
-    is either an underscore or a literal.  An underscore matches anything.
-
-@section{table:insert table:insert*}
-
-    (table:insert name . rows) 
-    (table:insert* name rows) 
+    elements are either an underscore or a literal.  An underscore matches anything.
 
 
-@section{table:match}
+@defproc[(table:insert [table-name string?] [row (listof any)] ...) void?]
+@defproc[(table:insert* [table-name string?] [rows  (listof (listof any))]) void?]
 
-    (table:match table-name pattern [a-filter identity])
+    Non-string field values are converted to string using @racket[->string].
 
-    Accepts a table name, a pattern, and optionally a filter function.  Returns all
-    rows in the table that match the pattern.  If the filter is present then the filter
-    is mapped over the rows to create the return value.
+@defproc[(table:match [table-name string?] [a-pattern pattern?] [a-filter (row? . -> . row?) identity]) (listof row?)]
 
-
-
-
+    Returns all rows in the table that match the pattern.  If the filter is present then each
+    fetched row is sent through it before being returned.
 
 
+@defform[(with-connection (connection-info ...) body ...)]
+
+   Defines a connection context.  Upon entering the block the specified connection is opened with
+   the specified database, upon leaving the block the connection is closed.
+
+   If connection contexts are nested, the inner most context applies.
+
+   In a multithreaded environment transaction contexts will block use of a connection.
+   See also, @secref{as-transaction}.
