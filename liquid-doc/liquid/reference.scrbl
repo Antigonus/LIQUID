@@ -11,4 +11,11 @@ Primary functions, their syntax, and effects.
 @local-table-of-contents[]
 @include-section{db-lib-ref.scrbl}
 @include-section{dataplex-ref.scrbl}
+@include-section{filter-ref.scrbl}
+@include-section{http-session-ref.scrbl}
+@include-section{http-server-ref.scrbl}
+@include-section{http-server-pages.scrbl}
+@include-section{query-parser-ref.scrbl}
+@include-section{realtime.scrbl}
+@include-section{tokens.scrbl}
 

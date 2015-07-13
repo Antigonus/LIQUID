@@ -1,8 +1,13 @@
 
 
-#lang scribble/base
+#lang scribble/manual
+@(require (for-label racket/base
+                     racket/contract/base
+                     ))               
 
-@title{Real-Time Support} 
+@title[#:tag "realtime-reference"]{realtime}
+
+@defmodule[liquid/dataplex-lib]
 
 @section{fun-timed}
 

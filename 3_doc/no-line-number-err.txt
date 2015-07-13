@@ -1,0 +1,29 @@
+raco setup: 1 running: <pkgs>/liquid-doc/liquid/liquid.scrbl
+tabular: contract violation
+  expected: list?
+  given: "imperative:try"
+  in: an element of
+      the 1st argument of
+      (->*
+       ((listof
+         (listof (or/c 'cont block? content?))))
+       (#:cell-properties
+        (listof (listof any/c))
+        #:column-properties
+        (listof any/c)
+        #:row-properties
+        (listof any/c)
+        #:sep
+        (or/c content? block? #f)
+        #:style
+        (or/c style? string? symbol? #f))
+       table?)
+  contract from: 
+      <pkgs>/scribble-lib/scribble/base.rkt
+  blaming: <pkgs>/liquid-doc/liquid/query-parser.scrbl
+  at: <pkgs>/scribble-lib/scribble/base.rkt:349.2
+  context...:
+   /usr/share/racket/collects/racket/contract/private/blame.rkt:143:0: raise-blame-error16
+   /usr/share/racket/collects/racket/contract/private/misc.rkt:496:9
+   /usr/share/racket/collects/racket/contract/private/arrow-val-first.rkt:273:3
+   /home/deep/liquid-doc/liquid/query-parser.scrbl: [running body]

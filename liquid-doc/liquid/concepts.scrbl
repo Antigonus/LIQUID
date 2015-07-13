@@ -11,5 +11,6 @@ The guiding concepts behind each library.
 @local-table-of-contents[]
 @include-section{dataplex-concepts.scrbl}
 @include-section{db-lib-concepts.scrbl}
+@include-section{query-parser-concepts.scrbl}
 
 

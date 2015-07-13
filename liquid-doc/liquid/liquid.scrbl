@@ -8,10 +8,11 @@
 
 @author["Thomas Walker Lynch"]
 
-Useful racket functions for developing experimental algorithms for deep web search.  The
-dataplex, for example, is an implementation of Dr. Andrea Cali's definition of abstract
-data type in databases.  This work was funded in part by Birckbeck College Univeristy of
-London as part of the LIQUID project.
+This package is a framework, i.e. a bunch of functions, for integrating into programs or
+custom web servers the deep web search algorithms that were created in the LIQUID research
+project conducted by researchers at Birkbeck College University of London. See the
+section "About Project LIQUID" for more information.
+
 
 @table-of-contents[]
 @include-section{LIQUID.scrbl}

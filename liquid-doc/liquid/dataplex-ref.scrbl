@@ -3,7 +3,7 @@
                      racket/contract/base
                      ))               
 
-@title[#:tag "dataplex-reference"]{dataplex-lib}
+@title[#:tag "dataplex-reference"]{dataplex}
 
 @defmodule[liquid/dataplex-lib]
 

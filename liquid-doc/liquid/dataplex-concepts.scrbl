@@ -3,7 +3,7 @@
                      racket/contract/base
                      ))               
 
-@title[#:tag "dataplex-concepts"]{dataplex-lib}
+@title[#:tag "dataplex-concepts"]{dataplex}
 
 
 @section{Introduction}
