@@ -689,7 +689,7 @@
         (not (null? ts))
         (ormap tok-has-err ts)
         ))
-    ;note test framed-item-sep-test-2 & 3 in "query-parser-framing.rkt"
+    ;note test framed-item-sep-test-2 & 3 in "parser-framing.rkt"
 
 
 ;;--------------------------------------------------------------------------------

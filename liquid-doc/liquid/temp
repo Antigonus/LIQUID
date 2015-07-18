@@ -1,38 +1,4 @@
-
-@defproc[(dataplex:create-shape-relation [a-dataplex is-dataplex]) void?]
-
-      dataplex:delete-shape-relation
-      dataplex:delete-shape-relation*
-
-      dataplex:create-semantic-relation
-      dataplex:delete-semantic-relation
-      dataplex:delete-semantic-relation*
-
-
-
-
-
-
-
-@section[#:tag "as-transaction"]{as-transaction}
-
-@section{db:alloc-name}
-
-
-
-
-;;@section[#:tag "as-transaction"]{as-transaction}
-;;
-;;        @defform[(as-transaction body ...)]
-
-@section[#:tag "as-transaction"]
-
-        @defform[(as-transaction body ...)]
-
-xxx
-
-@section[ @defform[(as-transaction body ...)]]
-yyy
-
-@section{ @defform[(as-transaction body ...)]]}
-
+git mv query-parser-concepts.scrbl       parser-concepts.scrbl     
+git mv query-parser-framing-ref.scrbl    parser-framing-ref.scrbl  
+git mv query-parser-ref.scrbl            parser-ref.scrbl          
+git mv query-parser-tokens-ref.scrbl     parser-tokens-ref.scrbl   

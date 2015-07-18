@@ -18,8 +18,8 @@
   (require (planet neil/html-parsing:2:0))
   (require "lynch-lib.rkt") 
   (require "tokens.rkt")
-  (require "query-parser-tokens.rkt")
-  (require "query-parser-well-formed.rkt")
+  (require "parser-tokens.rkt")
+  (require "parser-well-formed.rkt")
   (require "realtime.rkt")
 
 ;;--------------------------------------------------------------------------------

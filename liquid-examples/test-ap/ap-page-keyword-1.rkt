@@ -114,7 +114,7 @@
   ;;
     (define (parse-query-wi arrival-query)
       (let*(
-            [parse/parse-errors (query-parser* arrival-query)]
+            [parse/parse-errors (parser* arrival-query)]
             [arrival-query-parse  (car parse/parse-errors)]
             [parse-errors (cadr parse/parse-errors)]
             [arrival-query-parse-htmle `(pre ,(->pretty-string arrival-query-parse))]
@@ -320,17 +320,17 @@
 ;;--------------------------------------------------------------------------------
 ;;  the web page is assembled here
 ;;
-;; input: tcp context, arrival url
+;; input: ssl context, arrival url
 ;; output: htmle for the webpage
 ;;
-    (define (page-test-keyword the-tcp-context arrival-url)
+    (define (page-test-keyword the-ssl-context arrival-url)
       (let*
         (
           [header   (html-header collapse-box-script-str)]
           [body     (xexp->html (page-test-keyword-body arrival-url))]
           [document (html-str header body)]
           )
-        (parameterize [(current-output-port (tcp-context-out the-tcp-context))]
+        (parameterize [(current-output-port (ssl-context-out the-ssl-context))]
           (display (http-response)) ; comment this out to see the document as text on browser page
           (display document)
           )

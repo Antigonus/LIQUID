@@ -36,8 +36,8 @@
   (require liquid/tokens)
   (require liquid/filter)
   (require liquid/webi-lib)
-  (require liquid/query-parser-tokens)
-  (require liquid/query-parser)
+  (require liquid/parser-tokens)
+  (require liquid/parser)
 
   (require "webi-dblp.rkt")
   (require "ap-page-lib.rkt")
@@ -134,7 +134,7 @@
   ;;
     (define (parse-query-wi arrival-query)
       (let*(
-            [parse/parse-errors (query-parser* arrival-query)]
+            [parse/parse-errors (parser* arrival-query)]
             [arrival-query-parse  (car parse/parse-errors)]
             [parse-errors (cadr parse/parse-errors)]
             [arrival-query-parse-htmle `(pre ,(->pretty-string arrival-query-parse))]
@@ -345,17 +345,17 @@
 ;;--------------------------------------------------------------------------------
 ;;  the web page is assembled here
 ;;
-;; input: tcp context, arrival url
+;; input: ssl context, arrival url
 ;; output: htmle for the webpage
 ;;
-    (define (page-test-conjunction the-tcp-context arrival-url)
+    (define (page-test-conjunction the-ssl-context arrival-url)
       (let*
         (
           [header   (html-header collapse-box-script-str)]
           [body     (xexp->html (page-test-webi-predicate-body arrival-url))]
           [document (html-str header body)]
           )
-        (parameterize [(current-output-port (tcp-context-out the-tcp-context))]
+        (parameterize [(current-output-port (ssl-context-out the-ssl-context))]
           (display (http-response)) ; comment this out to see the document as text on browser page
           (display document)
           )

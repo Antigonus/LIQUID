@@ -6,10 +6,10 @@
                      ))               
 
 
-@title[#:tag "query-parser-ref"]{query-parser}
+@title[#:tag "parser-ref"]{parser}
 
-@defmodule[liquid/query-parser]
-@defmodule[liquid/query-parser-tokens]
+@defmodule[liquid/parser]
+@defmodule[liquid/parser-tokens]
 
 @section{rule form}
 
@@ -38,11 +38,11 @@
    Error tokens have an attribute set that marks them as such.  An error token can be unique for the
    error condition, or it can simply be a regular token with annotation saying there was an error.
 
-   The example query-parser is called with:
+   The example parser is called with:
 
-   @racket[(query-parser in)]
+   @racket[(parser in)]
 
-@section{query-parser-tokens}
+@section{parser-tokens}
 
    This module defines some fundamental tokens.
 

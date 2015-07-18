@@ -24,8 +24,8 @@
   (require liquid/filter)
   (require liquid/realtime)
   (require liquid/webi-lib)
-  (require liquid/query-parser-tokens)
-  (require liquid/query-parser-well-formed)
+  (require liquid/parser-tokens)
+  (require liquid/parser-well-formed)
   (require liquid/dbi-dblp)
 
   (require "webi-dblp-scrape-test-data-0.rkt")
@@ -98,7 +98,7 @@
       (eqv? 1 1
         )))
 
- ;; variation of well-formed-operand found in query-parser-well-formed.rkt
+ ;; variation of well-formed-operand found in parser-well-formed.rkt
  (define (well-formed-dblp-operand an-operand) ; should add more checks ..
    (and
      (eqv? (type an-operand) (tok:operand))

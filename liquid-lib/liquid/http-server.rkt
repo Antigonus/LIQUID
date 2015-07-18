@@ -21,7 +21,7 @@
 ;; library includes
 ;;
    (require "lynch-lib.rkt")
-   (require "tcp-server.rkt")
+   (require "ssl-server.rkt")
    (require "http-session.rkt")
    (require "http-server-pages.rkt") ; for pages-init
 
@@ -30,8 +30,8 @@
 ;;
    (define (http-server [portno 8080] [session-timeout 300] ) 
      (log "http-server start")
-     (server-pages-init) 
-     (define stop (tcp-server http-session portno session-timeout))
+     (server-pages-init)
+     (define stop (ssl-server http-session portno session-timeout))
      (λ()
        (log "http-server stop")
        (stop)

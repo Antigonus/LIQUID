@@ -12,9 +12,9 @@
   (require "lynch-lib.rkt")
   (require "tokens.rkt")
   (require "filter.rkt")
-  (require "query-parser-tokens.rkt")
-  (require "query-parser-lex.rkt")
-  (require "query-parser-framing.rkt")
+  (require "parser-tokens.rkt")
+  (require "parser-lex.rkt")
+  (require "parser-framing.rkt")
 
 ;;--------------------------------------------------------------------------------
 ;; test/debug
@@ -315,7 +315,7 @@
   ;;----------------------------------------
   ;; grammar rules 
   ;;
-    (define (query-parser in)
+    (define (parser in)
       (let*(
              [ts (qp-lex in (current-file-name))]
              [framed-ts (framed-by-parens ts)]
@@ -324,10 +324,10 @@
         the-parse
         ))
 
-    (define (query-parser-test-0)
+    (define (parser-test-0)
       (let*(
              [in (open-input-string "who(\"jim\", _) & writes(x, y)")]
-             [the-parse (query-parser in)]
+             [the-parse (parser in)]
              )
         (.eq.
           the-parse
@@ -367,17 +367,17 @@
                       (28 1 27))
                      (attribute:lexeme "y"))))))
           )))
-      (test-hook query-parser-test-0)
+      (test-hook parser-test-0)
 
 
 ;;--------------------------------------------------------------------------------
 ;;   returns the query parse with a separate error report
 ;;
-  (define (query-parser* the-query)
+  (define (parser* the-query)
     (let*
       (
         [in (open-input-string the-query)]
-        [parse (query-parser in)]
+        [parse (parser in)]
         [parse-errors (trim-tok-err parse)]
         )
       (list parse parse-errors)
@@ -386,9 +386,9 @@
 ;;--------------------------------------------------------------------------------
 ;; provides
 ;;
-  (provide-with-trace "query-parser"
-    query-parser
-    query-parser*
+  (provide-with-trace "parser"
+    parser
+    parser*
     )
 
 

@@ -6,7 +6,7 @@
                      ))               
 
 
-@title[#:tag "query-parser-concepts"]{query-parser}
+@title[#:tag "parser-concepts"]{parser}
 
    This is a framework for writing context free (or a little bit of context) parsers,
    where the resulting parse will contain error tokens when things don't go as planned.

@@ -19,7 +19,7 @@
 
   (require "lynch-lib.rkt")
   (require "tokens.rkt")
-  (require "query-parser-tokens.rkt")
+  (require "parser-tokens.rkt")
 
  
 ;;--------------------------------------------------------------------------------

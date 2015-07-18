@@ -32,7 +32,7 @@
   (require liquid/filter)
   (require liquid/webi-lib)
 
-  (require liquid/query-parser-tokens)
+  (require liquid/parser-tokens)
 
 
 ;;--------------------------------------------------------------------------------

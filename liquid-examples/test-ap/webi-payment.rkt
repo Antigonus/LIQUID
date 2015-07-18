@@ -22,8 +22,8 @@
   (require liquid/filter)
   (require liquid/realtime)
   (require liquid/webi-lib)
-  (require liquid/query-parser-tokens)
-  (require liquid/query-parser-well-formed)
+  (require liquid/parser-tokens)
+  (require liquid/parser-well-formed)
 
 ;;--------------------------------------------------------------------------------
 ;; usage message provided to interface user upon request

@@ -2,7 +2,7 @@
   tests for filter.rkt 
     2015-05-25T08:53:03Z created twl
 
-  These tests are here because they make use of query-parser.rkt
+  These tests are here because they make use of parser.rkt
 |#
 #lang racket
 
@@ -11,7 +11,7 @@
 ;;
   (require "lynch-lib.rkt")
   (require "filter.rkt")
-  (require "query-parser.rkt")
+  (require "parser.rkt")
   (require "tokens.rkt")
 
 ;;--------------------------------------------------------------------------------
@@ -19,7 +19,7 @@
   (define (marked-toks-test-0)
     (let*(
            [          in (open-input-string "d(n_t,)")]
-           [       parse (query-parser in)]
+           [       parse (parser in)]
            [          ts (list parse)]
            [the-marked-toks (marked-toks ts tok-has-err)]
            [expected-marked-toks 
@@ -47,7 +47,7 @@
   (define (marked-toks-test-1)
     (let*(
            [         in (open-input-string "qed(a,_,c)&dlp(\"a\", __ , seven) & wikipedia(number_theory,)")]
-           [       parse (query-parser in)]
+           [       parse (parser in)]
            [          ts (list parse)]
            [the-marked-toks (marked-toks ts tok-has-err)]
            [expected-marked-toks 
@@ -99,7 +99,7 @@
   (define (trim-tok-err-test-0) 
     (let*(
            [in (open-input-string "d(n_t,)")]
-           [parse (query-parser in)]
+           [parse (parser in)]
            [trimmed (trim-tok-err parse)]
            [expected-trimmed 
              '(tok:conjunction
@@ -131,7 +131,7 @@
   (define (trim-tok-err-test-1) 
     (let*(
            [in (open-input-string "d(n_t,2)")]
-           [parse (query-parser in)]
+           [parse (parser in)]
            [trimmed (trim-tok-err parse)]
            )
       (not trimmed)
@@ -141,7 +141,7 @@
   (define (trim-tok-err-test-2) 
     (let*(
            [in (open-input-string "qed(a,_,c)&dlp(\"a\", 3, seven) & wikipedia(number_theory,)")]
-           [parse (query-parser in)]
+           [parse (parser in)]
            [trimmed (trim-tok-err parse)]
            [expected-trimmed 
              '(tok:conjunction

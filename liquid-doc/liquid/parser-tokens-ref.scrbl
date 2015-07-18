@@ -5,11 +5,11 @@
                      racket/contract/base
                      ))               
 
-@title[#:tag "query-parser-tokens-ref"]{query-parser-tokens}
+@title[#:tag "parser-tokens-ref"]{parser-tokens}
 
-@defmodule[liquid/query-parser-framing]
+@defmodule[liquid/parser-framing]
 
-Some tokens of general use when writing query-parsers.
+Some tokens of general use when writing parsers.
 
 
 

@@ -122,18 +122,18 @@
 ;;--------------------------------------------------------------------------------
 ;; global types
 ;;    
-  (struct tcp-context (in out server-IP server-port client-IP client-port) #:transparent)
-  (define (tcp-context->string a-tcp-context) 
+  (struct ssl-context (in out server-IP server-port client-IP client-port) #:transparent)
+  (define (ssl-context->string a-ssl-context) 
     (string-append
      "server "
-      (tcp-context-server-IP a-tcp-context)
+      (ssl-context-server-IP a-ssl-context)
       ":"
-      (number->string (tcp-context-server-port a-tcp-context))
+      (number->string (ssl-context-server-port a-ssl-context))
       ";"
       "client "
-      (tcp-context-client-IP a-tcp-context)
+      (ssl-context-client-IP a-ssl-context)
       ":"
-      (number->string (tcp-context-client-port a-tcp-context))
+      (number->string (ssl-context-client-port a-ssl-context))
       ))
 
 ;;--------------------------------------------------------------------------------
@@ -479,14 +479,14 @@
 
   ;; global type definitions
   ;;
-    (provide tcp-context)  ; helps organize tcp connections
-    (provide tcp-context-in)
-    (provide tcp-context-out)
-    (provide tcp-context-server-IP)
-    (provide tcp-context-server-port)
-    (provide tcp-context-client-IP)
-    (provide tcp-context-client-port)
-    (provide tcp-context->string)
+    (provide ssl-context)  ; helps organize ssl connections
+    (provide ssl-context-in)
+    (provide ssl-context-out)
+    (provide ssl-context-server-IP)
+    (provide ssl-context-server-port)
+    (provide ssl-context-client-IP)
+    (provide ssl-context-client-port)
+    (provide ssl-context->string)
 
 
   ;; syntax

@@ -3,11 +3,9 @@
 (define collection 'multi)
 
 (define deps '("liquid-lib"
-                ))
-;;               "liquid-doc"))
+               "liquid-doc"))
 (define implies '("liquid-lib"
-                   ))
-;;                  "liquid-doc"))
+                  "liquid-doc"))
 
 (define pkg-desc "Framework for developing experimental deep web search engines.")
 

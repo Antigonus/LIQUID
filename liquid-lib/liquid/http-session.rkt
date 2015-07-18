@@ -178,8 +178,8 @@
 ;;
 ;;  it should be possible to have css etc with error pages ..
 ;;
-  (define (page-http-error the-tcp-context [message0 ""] [message1 ""] [code 400])
-    (parameterize ([current-output-port (tcp-context-out the-tcp-context)]) 
+  (define (page-http-error the-ssl-context [message0 ""] [message1 ""] [code 400])
+    (parameterize ([current-output-port (ssl-context-out the-ssl-context)]) 
       (display "HTTP/1.0 ")
       (display (number->string code))
       (display " Error\r\n")
@@ -193,15 +193,15 @@
       (void)
       ))
 
-  (define (page-not-found the-tcp-context url)
-     (page-http-error the-tcp-context "page not found: " (url->string url) 404))
+  (define (page-not-found the-ssl-context url)
+     (page-http-error the-ssl-context "page not found: " (url->string url) 404))
 
 
 ;;-------------------------------------------------------------------------------
 ;; application pages
 ;;
 ;; page-hook used by applications to hook their pages into the server
-;; page-get  used by http-session, given a tcp-context and a url, gets a page
+;; page-get  used by http-session, given a ssl-context and a url, gets a page
 ;;
 ;;
   (define the-pages (make-hash))
@@ -245,11 +245,11 @@
       (string=? (url-path->string (url-path url)) "/tutorials/other/top-20-mysql-best-practices")
       )
 
-  (define (page-get the-tcp-context url)
+  (define (page-get the-ssl-context url)
     (define page-name-string (url-path->string (url-path url)))
     (apply 
      (page-lookup page-name-string) ; returns a page function
-     (list the-tcp-context url)     ; arguments for a page function
+     (list the-ssl-context url)     ; arguments for a page function
      ))
 
 
@@ -260,14 +260,14 @@
 ;; out:  response placed on output port, function returns void
 ;;
 ;;  
-  (define (http-request-handler request-line attributes the-tcp-context)
+  (define (http-request-handler request-line attributes the-ssl-context)
     (log request-line)
     (match-define (list well-formed message cmd url protocol) (parse-request request-line))
     (if well-formed
-        (cond [(eq? cmd `GET) (page-get the-tcp-context url)]
+        (cond [(eq? cmd `GET) (page-get the-ssl-context url)]
               [else
-               (page-http-error the-tcp-context "unrecognized request")])
-        (page-http-error the-tcp-context "request not well formed" message)
+               (page-http-error the-ssl-context "unrecognized request")])
+        (page-http-error the-ssl-context "request not well formed" message)
         ))
         
 
@@ -295,8 +295,8 @@
 ;; need parms for header-read-timeout and log file port
 ;; this loop assumes keep-alive, that should probably be updated
 ;;
-  (define (http-session the-tcp-context extend#)
-    (define in (tcp-context-in the-tcp-context))
+  (define (http-session the-ssl-context extend#)
+    (define in (ssl-context-in the-ssl-context))
     (skip-white in) ; client has connected, hang here until client sends data, and the data is not white
     (set-box! extend# #t) ; extends our time so this transaction won't be interrupted
 
@@ -321,7 +321,7 @@
 
     (cond 
       [(and complete (eq? status #t) (not (string=? request-line "")))
-       (http-request-handler request-line attributes the-tcp-context) ; session writes response to tcp-context-out
+       (http-request-handler request-line attributes the-ssl-context) ; session writes response to ssl-context-out
        ]
       [else
         `request-read-failed

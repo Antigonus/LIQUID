@@ -15,7 +15,7 @@ Primary functions, their syntax, and effects.
 @include-section{http-session-ref.scrbl}
 @include-section{http-server-ref.scrbl}
 @include-section{http-server-pages.scrbl}
-@include-section{query-parser-ref.scrbl}
+@include-section{parser-ref.scrbl}
 @include-section{realtime.scrbl}
 @include-section{tokens.scrbl}
 

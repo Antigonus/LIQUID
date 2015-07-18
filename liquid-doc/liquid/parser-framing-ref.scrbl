@@ -5,9 +5,9 @@
                      racket/contract/base
                      ))               
 
-@title[#:tag "query-parser-framing-ref"]{query-parser-framing}
+@title[#:tag "parser-framing-ref"]{parser-framing}
 
-@defmodule[liquid/query-parser-framing]
+@defmodule[liquid/parser-framing]
 
 Utilities to help write quary-parsers that have lists.
 
