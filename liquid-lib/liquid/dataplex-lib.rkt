@@ -839,13 +839,13 @@
         (let(
               [t0
                 (equal?
-                  (semantic-relation:lookup-ids dp sm-account '(_ _))
+                  (sort (semantic-relation:lookup-ids dp sm-account '(_ _)) <)
                   '(1 4 7 10)
                   )
                 ]
               [t1
                 (equal?
-                  (semantic-relation:lookup-ids dp sm-account '( (_  "M" _) _))
+                  (sort (semantic-relation:lookup-ids dp sm-account '( (_  "M" _) _)) <)
                   '(1 7 10)
                   )
                 ]
@@ -922,23 +922,23 @@
               [m1 (semantic-relation:match dp sm-account '( (_  "M" _) _))]
               [m2 (semantic-relation:match dp sm-account '( (_  "M" _) (312 _)))]
               )
-          ;;(pretty-print (list 'm0 m0 'm1 m1 'm2 m2))
+         ;;(pretty-print (list 'm0 m0 'm1 m1 'm2 m2))
           (and
             (equal?
-              m0
-              '(
+              (list->set m0)
+              (list->set '(
                  (("James" "M" "Doe") ("345" "1053"))
                  (("John" "H" "Smith") ("312" "1212"))
                  (("Ronald" "M" "Donald") ("312" "5860"))
                  (("John" "M" "Ward") ("463" "5860"))
-                 ))
+                 )))
             (equal?
-              m1
-              '(
+              (list->set m1)
+              (list->set '(
                  (("James" "M" "Doe") ("345" "1053"))
                  (("Ronald" "M" "Donald") ("312" "5860"))
                  (("John" "M" "Ward") ("463" "5860"))
-                 ))
+                 )))
             (equal?
               m2
               '(
@@ -1135,7 +1135,6 @@
 
     )
 
-#| 
     (define (dataplex-lib-trace-internal)
       (trace shape-relation:list-semantic-citings)
       (trace semantic-relation:lookup-ids)
@@ -1144,4 +1143,4 @@
       (trace shape-relation:match-semantic-citings)
       (trace shape-relation:match-by-semantic-id)
       )
-|#
+

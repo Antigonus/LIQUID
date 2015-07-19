@@ -231,7 +231,7 @@
             [s  (string-append "`" (source->string x0))] 
             [x1 (eval (read (open-input-string s)))]
             )
-        ;(writeln x0 s x1)
+;;       (pretty-print (list x0 s x1))
         (.eq. x0 x1)
         ))
     (test-hook source->string-test-0)
