@@ -1,29 +1,51 @@
-raco setup: 1 running: <pkgs>/liquid-doc/liquid/liquid.scrbl
-tabular: contract violation
-  expected: list?
-  given: "imperative:try"
-  in: an element of
-      the 1st argument of
-      (->*
-       ((listof
-         (listof (or/c 'cont block? content?))))
-       (#:cell-properties
-        (listof (listof any/c))
-        #:column-properties
-        (listof any/c)
-        #:row-properties
-        (listof any/c)
-        #:sep
-        (or/c content? block? #f)
-        #:style
-        (or/c style? string? symbol? #f))
-       table?)
-  contract from: 
-      <pkgs>/scribble-lib/scribble/base.rkt
-  blaming: <pkgs>/liquid-doc/liquid/query-parser.scrbl
-  at: <pkgs>/scribble-lib/scribble/base.rkt:349.2
-  context...:
-   /usr/share/racket/collects/racket/contract/private/blame.rkt:143:0: raise-blame-error16
-   /usr/share/racket/collects/racket/contract/private/misc.rkt:496:9
-   /usr/share/racket/collects/racket/contract/private/arrow-val-first.rkt:273:3
-   /home/deep/liquid-doc/liquid/query-parser.scrbl: [running body]
+Just stated documenting these recently ...
+
+1. 
+
+  raco setup: 1 running: <pkgs>/liquid-doc/liquid/liquid.scrbl
+  tabular: contract violation
+    expected: list?
+    given: "imperative:try"
+    in: an element of
+        the 1st argument of
+        (->*
+         ((listof
+           (listof (or/c 'cont block? content?))))
+         (#:cell-properties
+          (listof (listof any/c))
+          #:column-properties
+          (listof any/c)
+          #:row-properties
+          (listof any/c)
+          #:sep
+          (or/c content? block? #f)
+          #:style
+          (or/c style? string? symbol? #f))
+         table?)
+    contract from: 
+        <pkgs>/scribble-lib/scribble/base.rkt
+    blaming: <pkgs>/liquid-doc/liquid/query-parser.scrbl
+    at: <pkgs>/scribble-lib/scribble/base.rkt:349.2
+    context...:
+     /usr/share/racket/collects/racket/contract/private/blame.rkt:143:0: raise-blame-error16
+     /usr/share/racket/collects/racket/contract/private/misc.rkt:496:9
+     /usr/share/racket/collects/racket/contract/private/arrow-val-first.rkt:273:3
+     /home/deep/liquid-doc/liquid/query-parser.scrbl: [running body]
+
+2. in this one I have copied ap.rkt which is working in the liquid-example directory, over to a new directory so
+that it can be modified into a different application.  I get an error with no line number for a refernce to
+a file in the liquid-doc!   Not suprisingly grepping for webi-dblp.rkt yields nothing in the local code.  So
+where the heck is this coming from???
+
+  Welcome to Racket v6.1.
+  racket@> (enter! "ap.rkt")
+  get-module-code: no such file: #<path:/home/deep/liquid-doc/liquid/webi-dblp.rkt>
+    context...:
+     /usr/share/racket/collects/syntax/modcode.rkt:109:0: get-module-path51
+     /usr/share/racket/collects/syntax/modcode.rkt:212:0: get-module-code79
+     standard-module-name-resolver
+     standard-module-name-resolver
+     standard-module-name-resolver
+     /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
+     /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+     /usr/share/racket/collects/racket/private/misc.rkt:87:7

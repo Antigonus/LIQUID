@@ -37,7 +37,7 @@
 
     ;; no hook the initialized pages into the server
     (page-hook "/server/hello" page-hello)
-    (page-hook "/server/ssl" page-ssl)
+    (page-hook "/server/session" page-session)
     )
 
 ;;--------------------------------------------------------------------------------
@@ -75,18 +75,18 @@
 ;;--------------------------------------------------------------------------------
 ;; pages
 ;;
-  (define (page-hello the-ssl-context url)
-    (parameterize ([current-output-port (ssl-context-out the-ssl-context)])
+  (define (page-hello the-session-context url)
+    (parameterize ([current-output-port (session-context-out the-session-context)])
       (display (http-response))
       (display (html-str (html-header) "<body>hello<br></body>\r\n"))
       ))
 
-  (define (page-ssl the-ssl-context url)
-    (parameterize [(current-output-port (ssl-context-out the-ssl-context))]
+  (define (page-session the-session-context url)
+    (parameterize [(current-output-port (session-context-out the-session-context))]
       (let*(
              [an-http-response (http-response)]
-             [a-ssl-context    (ssl-context->string the-ssl-context)]
-             [doc-body         (string-append "<body>" a-ssl-context "<br>" "</body>\r\n") ]
+             [a-session-context    (session-context->string the-session-context)]
+             [doc-body         (string-append "<body>" a-session-context "<br>" "</body>\r\n") ]
              )
         (display an-http-response)
         (display (html-str (html-header) doc-body))

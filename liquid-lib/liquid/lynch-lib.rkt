@@ -122,18 +122,18 @@
 ;;--------------------------------------------------------------------------------
 ;; global types
 ;;    
-  (struct ssl-context (in out server-IP server-port client-IP client-port) #:transparent)
-  (define (ssl-context->string a-ssl-context) 
+  (struct session-context (in out server-IP server-port client-IP client-port) #:transparent)
+  (define (session-context->string a-session-context) 
     (string-append
      "server "
-      (ssl-context-server-IP a-ssl-context)
+      (session-context-server-IP a-session-context)
       ":"
-      (number->string (ssl-context-server-port a-ssl-context))
+      (number->string (session-context-server-port a-session-context))
       ";"
       "client "
-      (ssl-context-client-IP a-ssl-context)
+      (session-context-client-IP a-session-context)
       ":"
-      (number->string (ssl-context-client-port a-ssl-context))
+      (number->string (session-context-client-port a-session-context))
       ))
 
 ;;--------------------------------------------------------------------------------
@@ -479,14 +479,14 @@
 
   ;; global type definitions
   ;;
-    (provide ssl-context)  ; helps organize ssl connections
-    (provide ssl-context-in)
-    (provide ssl-context-out)
-    (provide ssl-context-server-IP)
-    (provide ssl-context-server-port)
-    (provide ssl-context-client-IP)
-    (provide ssl-context-client-port)
-    (provide ssl-context->string)
+    (provide session-context)  ; helps organize ssl connections
+    (provide session-context-in)
+    (provide session-context-out)
+    (provide session-context-server-IP)
+    (provide session-context-server-port)
+    (provide session-context-client-IP)
+    (provide session-context-client-port)
+    (provide session-context->string)
 
 
   ;; syntax

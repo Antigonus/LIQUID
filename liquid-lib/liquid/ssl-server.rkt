@@ -60,12 +60,12 @@
             [(in out) (ssl-accept a-ssl-listener)] ; blocks until a client connects on our port
             [(server-IP server-port client-IP client-port) (ssl-addresses out #t)]
             )
-        (define the-ssl-context (ssl-context in out server-IP server-port client-IP client-port))
-        (define session (λ(extend#) (session-transactor the-ssl-context extend#)))
+        (define the-session-context (session-context in out server-IP server-port client-IP client-port))
+        (define session (λ(extend#) (session-transactor the-session-context extend#)))
         (thread (λ()
-          (log (list "start ssl session" the-ssl-context))
+          (log (list "start ssl session" the-session-context))
           (match-define (list complete exit-status) (fun-timed session-timeout session))
-          (log (list "end session" the-ssl-context complete exit-status))
+          (log (list "end session" the-session-context complete exit-status))
           (close-input-port in)
           (close-output-port out)
           )))

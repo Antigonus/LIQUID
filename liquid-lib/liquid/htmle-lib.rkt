@@ -70,7 +70,7 @@ HSTRING0
       ))
    
       ;;helper for collapse-box-test-0
-      (define (collapse-box-test-0-1  the-ssl-context url) 
+      (define (collapse-box-test-0-1  the-session-context url) 
       ;;(define (collapse-box-test-0-1) ; for testing
           (let*(
                  [response-str (http-response)]
@@ -97,7 +97,7 @@ HSTRING0
               (displayln "---")
             |#
 
-            (parameterize [(current-output-port (ssl-context-out the-ssl-context))]
+            (parameterize [(current-output-port (session-context-out the-session-context))]
               (display response-str)
               (display document-str)
               )))
