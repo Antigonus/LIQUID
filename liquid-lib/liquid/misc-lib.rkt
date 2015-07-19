@@ -497,7 +497,7 @@
 
   ;; functions
   ;;
-    (provide-with-trace "lynch-lib" ;; this context continues to the bottom of the page
+    (provide-with-trace "misc-lib" ;; this context continues to the bottom of the page
 
       ;; arithmetic
       ;;

@@ -20,7 +20,7 @@
 ;;--------------------------------------------------------------------------------
 ;; library includes
 ;;
-   (require "lynch-lib.rkt")
+   (require "misc-lib.rkt")
    (require "ssl-server.rkt")
    (require "http-session.rkt")
    (require "http-server-pages.rkt") ; for pages-init

@@ -16,7 +16,7 @@
   (require html)
   (require net/url net/uri-codec)
   (require (planet neil/html-parsing:2:0))
-  (require "lynch-lib.rkt") 
+  (require "misc-lib.rkt") 
   (require "tokens.rkt")
   (require "parser-tokens.rkt")
   (require "parser-well-formed.rkt")

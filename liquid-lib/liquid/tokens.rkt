@@ -25,7 +25,7 @@
 ;;--------------------------------------------------------------------------------
 ;; uses these libraries
 ;;
-  (require "lynch-lib.rkt")
+  (require "misc-lib.rkt")
   (require parser-tools/lex) ; for the position structure
 
 ;;--------------------------------------------------------------------------------

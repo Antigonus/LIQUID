@@ -9,7 +9,7 @@
 ;;--------------------------------------------------------------------------------
 ;; uses these libraries
 ;;
-  (require "lynch-lib.rkt")
+  (require "misc-lib.rkt")
   (require "filter.rkt")
   (require "parser.rkt")
   (require "tokens.rkt")

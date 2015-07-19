@@ -58,7 +58,7 @@
 ;; uses these libraries
 ;;
   (require db)
-  (require "lynch-lib.rkt")
+  (require "misc-lib.rkt")
 
 ;;--------------------------------------------------------------------------------
 ;;  initialize the database
@@ -414,7 +414,7 @@
 ;;   programmers should not make identifiers of the form "unique_to_db_name-[0-9]+"
 ;;   one would think that wouldn't be a very strong programming constraint ...
 ;;
-;;   analogous to session-unique service in lynch-lib.rkt, but 
+;;   analogous to session-unique service in misc-lib.rkt, but 
 ;;   for the life of the db instead of the session
 ;;
 ;;   deallocation, when implemented, should have two modes, one where the names

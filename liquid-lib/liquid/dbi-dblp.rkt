@@ -14,7 +14,7 @@
 ;; uses these libraries
 ;;
   (require db)
-  (require "lynch-lib.rkt")
+  (require "misc-lib.rkt")
   (require "db-lib.rkt")
 
 ;;--------------------------------------------------------------------------------

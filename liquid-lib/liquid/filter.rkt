@@ -9,7 +9,7 @@
 ;; uses these libraries
 ;;
   ;(require racket/trace)
-  (require "lynch-lib.rkt")
+  (require "misc-lib.rkt")
   (require "tokens.rkt")
 
 ;;---------------------------------------------------------------------------------

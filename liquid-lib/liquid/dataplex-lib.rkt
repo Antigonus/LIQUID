@@ -17,7 +17,7 @@
   (require racket/trace)
   (require racket/list)
   (require db)
-  (require "lynch-lib.rkt")
+  (require "misc-lib.rkt")
   (require "db-lib.rkt")
 
 ;;--------------------------------------------------------------------------------

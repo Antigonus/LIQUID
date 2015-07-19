@@ -19,7 +19,7 @@
 ;;--------------------------------------------------------------------------------
 ;; library includes
 ;;
-  (require "lynch-lib.rkt")
+  (require "misc-lib.rkt")
   (require "realtime.rkt") ; sets real time boundary on function call
   (require racket/match); for treating return lists like multiple values (values is not a car class citizen)
   (require net/url)
@@ -102,7 +102,7 @@
 ;;  output: `(well-formed message cmd url protocol)
 ;;
 ;; currently ignores protocol
-;; the list-strings is found in lynch-lib.rkt
+;; the list-strings is found in misc-lib.rkt
 ;;
   (define (parse-request request-line)
     (let ( 

@@ -17,7 +17,7 @@
 ;;
   (require parser-tools/lex)
 
-  (require "lynch-lib.rkt")
+  (require "misc-lib.rkt")
   (require "tokens.rkt")
   (require "parser-tokens.rkt")
   (require "parser-lex.rkt")

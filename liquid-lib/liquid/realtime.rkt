@@ -15,7 +15,7 @@
 ;;
   (require racket/match)
   (require racket/runtime-path)
-  (require "lynch-lib.rkt") ; currently just for the test-hook
+  (require "misc-lib.rkt") ; currently just for the test-hook
   
 
 ;;--------------------------------------------------------------------------------

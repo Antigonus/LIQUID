@@ -11,7 +11,7 @@
 ;; uses these libraries
 ;;
   (require parser-tools/lex) ; for the position structure
-  (require "lynch-lib.rkt")
+  (require "misc-lib.rkt")
   (require "tokens.rkt")
 
 ;;--------------------------------------------------------------------------------

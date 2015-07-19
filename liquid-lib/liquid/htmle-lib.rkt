@@ -19,7 +19,7 @@
   (require (planet neil/html-parsing:2:0))
   (require (planet neil/html-writing:2:0))
 
-  (require "lynch-lib.rkt")
+  (require "misc-lib.rkt")
   (require "http-session.rkt") ; test routines use (page-hook)
   (require "http-server.rkt") ; test routines run a web server 
   (require "http-server-pages.rkt") ; test routines grap header out of here
