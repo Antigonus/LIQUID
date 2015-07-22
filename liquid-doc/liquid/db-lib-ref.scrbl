@@ -10,11 +10,11 @@
 @defform[(as-transaction body ...)]
 
         Context for a transaction.  The transaction begins when the context
-        is entered, and ends upon leaving the context.  @racket[body] may be any LISP
+        is entered, and ends upon leaving the context.  @racket[body] can be any LISP
         form, including those which do not invoke db-lib.
 
-        Entering a transaction blocks the current connection from
-        being used in other threads.  See also, @secref{with-connection}.
+        Entering a transaction will block the current connection from
+        being used in other threads.  See also, @secref{with-db}.
 
 
 @defproc[(db:alloc-name) string?]
@@ -112,12 +112,25 @@
     fetched row is sent through it before being returned.
 
 
-@defform[(with-connection (connection-info ...) body ...)]
+@defform[(with-db db-name body ...)]
 
-   Defines a connection context.  Upon entering the block the specified connection is opened with
-   the specified database, upon leaving the block the connection is closed.
+   Defines a database connection context.  Upon entering the context a connection is opened with the
+   posgresql server and attached to the database named db-name.  Information about connecting to
+   the database is found in parameter variables at the top of db-lib.rkt.
 
-   If connection contexts are nested, the inner most context applies.
+   The database connection is opened when entering the context, and closed when leaving
+   it.  There can be multiple simultaneous database contexts active, even on the same
+   database, either due to nesting or threading.
 
-   In a multithreaded environment transaction contexts will block use of a connection.
-   See also, @secref{as-transaction}.
+   Inside the context function calls to db-lib or those of the dataplex-lib, which is built on top of
+   db-lib, will automatically use the specified database.
+
+   Multiple threads of execution may occur within a database context; however, simultaneous transactions
+   contexts are not allowed.   If within a database context a given transaction begins on one thread, then the
+   other threads are blocked from beginning a transaction until the given transaction completes. In contrast
+   transactions in different database contexts are independent. (If two simultaneous transactions on the same
+   database but different connections occur, it is up to the database server to gurantee correct behavior.)
+   
+
+
+   

@@ -20,6 +20,7 @@ section "About Project LIQUID" for more information.
 @include-section{architecture.scrbl}
 @include-section{reference.scrbl}
 @include-section{examples.scrbl}
+@include-section[running-tests.scrbl}
 
 @index-section[]
 

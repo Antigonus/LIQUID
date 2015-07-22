@@ -1,46 +1,8 @@
 #|
   db-lib
 
-    generic tables interface
+    generic tables interface with db and transaction contexts
 
-    All columns are text type.  Column names are column_n, where n is an index starting
-    from zero.  
-
-    this file provides useful routines for accessing the database
-    high level generic interface to db for a scheme program
-
-    created: 2015-01-02T09:31:19Z twl
-
-  1. shared connection
-
-    We have one database connection for the whole ap, and it is found in
-    current-db-connection.  (db-lib-init) initializes the connection and the schema.
-
-    Be careful to use semaphores and transaction blocks when making use of database
-    routines, and particularly the allocators, or the database may lose integrity.  Note the
-    'as-transaction' syntax provided here.
-
-  2. all columns are text
-
-    We store the text image of numbers in the database.  The conversion occurs as
-    close to the SQL as possible so that the library user won't see it.  In this way only
-    racket numerics math applies to the numbers.  We do this because we like racket
-    numerics, but we sometimes don't like built in database numerics, and furthermore mixing
-    them would be a bit confusing.
-
-  3. keyspaces
-
-    Kamespace names for tables are the same as the name of the table.  This is in part a
-    contract with the programmer.
-
-    Allocators are used to create unique ids for table rows, for creating temporary
-    variables names within a keyspace, for making unique values when testing, etc.
-    (keyspace:alloc-number keyspace) gives a unique number in that keyspace, and (alloc-a-name
-    keyspace) gives a unique name.  These values are unique in context of the database.
-    See (unique-to-session-number) and (unique-to-session-name) for unique values within a
-    session. Note, unique numbers to the session may not be unique to the database.
-
-    We reserve the keyspace 'unique_to_db' for global allocation. 
 
   -- 
     in sql queries be sure to double quote table names, and to single quote values
@@ -61,42 +23,50 @@
   (require "misc-lib.rkt")
 
 ;;--------------------------------------------------------------------------------
-;;  initialize the database
+;; db-lib as an object shared state
 ;;
-;; database integrity can be lost and/or the application can deadlock if this is called
-;; while another thread is using the database as it resets the synchronization semaphores.
+  (define db-log "db-lib-log.txt")
+
+;;--------------------------------------------------------------------------------
+;; used by with-db to establish a connection
 ;;
-;; because of the test hook, the application does not need to call db-lib-init when regression
-;; is run as part of loading the application
+;;   this will surely become more sophisiticated in later versions ...
 ;;
-  (define (db-lib-init)
+  (define (db-connect db-name)
     (let*(
-           [make-connection 
-             (λ() (postgresql-connect #:database "mordecai" #:user "mordecai" #:socket 'guess))
-             ]
+           [user-name (getevn "USER")]
            )
-      (with-handlers
-        (
-          [(λ(v) #t) ; this handler catches anything
-            (λ(v)
-              (log (string-append "exception in db-lib-init: " (->string v)))
-              v
-              )
-            ]
-          )
-        (current-db-connection (make-connection))
-        (current-db-semaphore (make-semaphore 1))
-        (current-db-allocator-semaphore (make-semaphore 1))
-        (cond
-          [(not (db:is-table "table_allocator_overhead")) 
-            (allocator-create)
-            (db:create-keyspace "unique_to_db") ; puts row in allocator_overhead for a db global unique count
-            ]
-          [(current-db-log) "db-lib-init"]
-          )
-        
-        #f ; no errors
-        )))
+      (postgresql-connect #:database db-name  #:user user-name #:socket 'guess)
+    ))
+
+
+;;--------------------------------------------------------------------------------
+;; database context
+;;
+;; input:  a database name, a body of code
+;; output: result of last body expression or throws an exception    
+;;
+;; database must already exist
+;;    
+;; nested transaction blocks within a db-context is fine, simultaneous transaction
+;; blocks can not be allowed (as the transactions would alias), To solve this problem
+;; I put a semaphore on a parameter, each transaction block then has its own semaphore
+;; context.
+;;
+  (define-syntax (with-db stx)
+    (syntax-case stx ()
+      [(with-db db-name body ...)
+        #`(let(
+                [connection (db-connect db-name)]
+                [transaction-semaphore (make-semaphore 1)] ; 1 simultaneous transaction between threads
+                [transaction-semaphore-owner #f] ; no one owns the semaphore yet
+                )
+            (begin-always
+              (begin body ...)
+              (disconnect connection)
+              ))
+        ]
+      ))
 
     (define (db-lib-init-test-0) (not (db-lib-init)))
     (test-hook db-lib-init-test-0)
@@ -111,33 +81,29 @@
 ;;--------------------------------------------------------------------------------
 ;;  a transaction environment
 ;;
-;;    sets semphore so no other transaction environment will use the db connection
-;;    starts a transaction, and rolls it back if there is an exception, otherwise closes it
-;;
 ;;  (as-transaction body ...)
+;;
+;;  Transactions on the smae connection, but different threads, will block each other   
 ;; 
   (define-syntax (as-transaction stx)
     (syntax-case stx ()
       [(as-transaction body ...)
-        #`(begin
-            (semaphore-wait (current-db-semaphore))
-            (transaction:begin)
-            (begin0
-             (with-handlers
-               (
-                 [(λ(v) #t) ; this handler catches anything
-                   (λ(v)
-                     (transaction:rollback)
-                     (semaphore-post (current-db-semaphore))
-                     (raise v)
-                     )
-                   ]
-                 )
-               body ...
-               )
-              (transaction:commit)
-              (semaphore-post (current-db-semaphore))
-            ))
+        #`(cond
+            [(equal? (semaphore-owner) (current-thread)) ; no race possible as nothing else can change to our thread
+              (begin-always
+                (begin (transaction:begin) body ..)
+                (transaction:rollback))
+              ]
+
+            [else
+              (semaphore-wait transaction-semaphore)
+              (set! semaphore-owner (current-thread))
+              (begin-always
+                (begin (transaction:begin) body ...)
+                (begin (transaction:rollback) (set! semaphore-owner #f) (semaphore-post transaction-semaphore))
+                )
+              ]
+            )
         ]
       ))
 
@@ -871,7 +837,8 @@
 
     )
 
-  (provide 
+  (provide
+    with-db      
     as-transaction
     db-lib-trace
     db-lib-untrace

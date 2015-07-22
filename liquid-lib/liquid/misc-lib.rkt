@@ -113,10 +113,6 @@
   (define current-read-request-timeout (make-parameter 5)); 5 cadrs to finish request header read
   (define current-file-name (make-parameter "test-session")); filename for query parsing
   (define current-get-webpage-timeout (make-parameter 60)) ; used in "web.rkt"
-  (define current-db-connection (make-parameter #f)) ; see db-lib.rkt (db-lib-init)
-  (define current-db-semaphore (make-parameter #f)) ; see db-lib.rkt
-  (define current-db-allocator-semaphore (make-parameter #f)) ; see db-lib.rkt
-
   (define current-db-log (make-parameter #f))
 
 ;;--------------------------------------------------------------------------------
@@ -464,6 +460,51 @@
               ))))))
 
 ;;--------------------------------------------------------------------------------
+;; ruby style always block
+;;
+;;  form1 runs, then form2 runs.  The return value is from form1.
+;;
+;;  If form1 throws an exception, form2 still runs.  Then the exception is thrown.
+;;
+;;  If form1 throws  an exception, then form2 throws an exception, we thow the exception from
+;;  form2.  I'm not sure this is the desired behavior, perhaps we should always throw the
+;;  form1 exception.  What to do when two exceptions are in flight?  hmmm
+;;
+   (define-syntax (begin-always stx)
+     (syntax-case stx ()
+       [(begin-always form1 form2)
+         #`(begin0
+             (with-handlers
+               (
+                 [(λ(v) #t) ; this handler catches anything
+                   (λ(v)
+                     form2
+                     (raise v)
+                     )
+                   ]
+                 )
+               form1
+               )
+             form2
+             )
+         ]
+       ))
+
+       (define (begin-always-test-0)
+         (define x 2)
+         (with-handlers (
+                          [exn:fail:contract:divide-by-zero? (λ(v)(= x 4))]
+                          )
+           (begin-always
+             (/ 1 0)
+             (set! x 4)
+             )
+           #f
+           ))
+
+      (test-hook begin-always-test-0)
+
+;;--------------------------------------------------------------------------------
 ;; provides the following
 ;;    
   ;; global parameters
@@ -471,11 +512,6 @@
     (provide current-read-request-timeout) ; how long we wait for the http client to provide the complete request
     (provide current-file-name) ; the source file we are reading from for the query parser
     (provide current-get-webpage-timeout)
-
-    (provide current-db-connection) ; see db-lib.rkt db-lib-init
-    (provide current-db-semaphore) ; for co-ordinating between threads
-    (provide current-db-allocator-semaphore) ; for co-ordinating between threads
-    (provide current-db-log) ; dump SQL to log then send it to db
 
   ;; global type definitions
   ;;
@@ -493,7 +529,7 @@
   ;;
     (provide with-semaphore)
     (provide provide-with-trace)
-
+    (provide begin-always)
 
   ;; functions
   ;;

@@ -6,11 +6,12 @@
 
 @title[#:style '(toc)]{Concepts}
 
-The guiding concepts behind each library.
+The guiding concepts behind each library.  The sections are given in order of complexity/dependencies rather
+than alphabetic order.  This facilitates top to bottom reading.
 
 @local-table-of-contents[]
-@include-section{dataplex-concepts.scrbl}
 @include-section{db-lib-concepts.scrbl}
+@include-section{dataplex-concepts.scrbl}
 @include-section{parser-concepts.scrbl}
 
 
