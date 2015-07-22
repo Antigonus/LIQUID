@@ -267,8 +267,10 @@
       unique-to-session-count
       (set! unique-to-session-count (++ unique-to-session-count))
       ))
+   (define (unique-to-session-number-dealloc n) (void))
    (define (unique-to-session-name)
      (string-append "unique-to-session-name-" (number->string (unique-to-session-number))))
+   (define (unique-to-session-name-dealloc name) (void))
 
 ;;--------------------------------------------------------------------------------
 ;; common parsing functions
@@ -366,6 +368,51 @@
 
 
 ;;--------------------------------------------------------------------------------
+;; ruby style always block
+;;
+;;  form1 runs, then form2 runs.  The return value is from form1.
+;;
+;;  If form1 throws an exception, form2 still runs.  Then the exception is thrown.
+;;
+;;  If form1 throws  an exception, then form2 throws an exception, we thow the exception from
+;;  form2.  I'm not sure this is the desired behavior, perhaps we should always throw the
+;;  form1 exception.  What to do when two exceptions are in flight?  hmmm
+;;
+   (define-syntax (begin-always stx)
+     (syntax-case stx ()
+       [(begin-always form1 form2)
+         #`(begin0
+             (with-handlers
+               (
+                 [(λ(v) #t) ; this handler catches anything
+                   (λ(v)
+                     form2
+                     (raise v)
+                     )
+                   ]
+                 )
+               form1
+               )
+             form2
+             )
+         ]
+       ))
+
+       (define (begin-always-test-0)
+         (define x 2)
+         (with-handlers (
+                          [exn:fail:contract:divide-by-zero? (λ(v)(= x 4))]
+                          )
+           (begin-always
+             (/ 1 0)
+             (set! x 4)
+             )
+           #f
+           ))
+
+      (test-hook begin-always-test-0)
+
+;;--------------------------------------------------------------------------------
 ;;  a with-semaphore block
 ;;
 ;;  (with-semaphore semaphore body ...) 
@@ -373,24 +420,13 @@
   (define-syntax (with-semaphore stx)
     (syntax-case stx ()
       [(with-semaphore semaphore body ...)
-        #`(begin
-            (semaphore-wait semaphore)
-            (begin0
-             (with-handlers
-               (
-                 [(λ(v) #t) ; this handler catches anything
-                   (λ(v)
-                     (semaphore-post semaphore)
-                     (raise v)
-                     )
-                   ]
-                 )
-               body ...
-               )
-              (semaphore-post semaphore)
-            ))
-        ]
-      ))
+        #`(begin-always
+            (begin
+              (semaphore-wait semaphore)
+              body ...
+              )
+            (semaphore-post semaphore)
+            )]))
 
 ;;--------------------------------------------------------------------------------
 ;; defines a trace-able module interface
@@ -458,51 +494,6 @@
 ;              |#
               (datum->syntax stx program)
               ))))))
-
-;;--------------------------------------------------------------------------------
-;; ruby style always block
-;;
-;;  form1 runs, then form2 runs.  The return value is from form1.
-;;
-;;  If form1 throws an exception, form2 still runs.  Then the exception is thrown.
-;;
-;;  If form1 throws  an exception, then form2 throws an exception, we thow the exception from
-;;  form2.  I'm not sure this is the desired behavior, perhaps we should always throw the
-;;  form1 exception.  What to do when two exceptions are in flight?  hmmm
-;;
-   (define-syntax (begin-always stx)
-     (syntax-case stx ()
-       [(begin-always form1 form2)
-         #`(begin0
-             (with-handlers
-               (
-                 [(λ(v) #t) ; this handler catches anything
-                   (λ(v)
-                     form2
-                     (raise v)
-                     )
-                   ]
-                 )
-               form1
-               )
-             form2
-             )
-         ]
-       ))
-
-       (define (begin-always-test-0)
-         (define x 2)
-         (with-handlers (
-                          [exn:fail:contract:divide-by-zero? (λ(v)(= x 4))]
-                          )
-           (begin-always
-             (/ 1 0)
-             (set! x 4)
-             )
-           #f
-           ))
-
-      (test-hook begin-always-test-0)
 
 ;;--------------------------------------------------------------------------------
 ;; provides the following

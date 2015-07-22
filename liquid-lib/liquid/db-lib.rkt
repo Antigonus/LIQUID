@@ -25,7 +25,11 @@
 ;;--------------------------------------------------------------------------------
 ;; db-lib as an object shared state
 ;;
-  (define db-log "db-lib-log.txt")
+  (define current-db-log (make-parameter #f)) ; set to true for logging
+  (define current-db-connection (make-parameter #f))
+  (define current-db-context-id (make-parameter #f))
+  (define trans-locks (make-hash)) ; used for transactions to block between threads
+  (define current-db-allocator-semaphore (make-parameter (make-semaphore 1)))
 
 ;;--------------------------------------------------------------------------------
 ;; used by with-db to establish a connection
@@ -34,7 +38,7 @@
 ;;
   (define (db-connect db-name)
     (let*(
-           [user-name (getevn "USER")]
+           [user-name (getenv "USER")]
            )
       (postgresql-connect #:database db-name  #:user user-name #:socket 'guess)
     ))
@@ -53,24 +57,32 @@
 ;; I put a semaphore on a parameter, each transaction block then has its own semaphore
 ;; context.
 ;;
+;;  caused a lot of headaches -- the (my-parm new-value)  write does not cross a thread boundary
+;;  so had to move the semaphore and its owner to a global hash table
+;;
+  (define (db-trans-semaphore-owner t) (car t))
+  (define (db-trans-semaphore t) (cadr t))
+  (define (db-trans o s) (list o s))
+
   (define-syntax (with-db stx)
     (syntax-case stx ()
       [(with-db db-name body ...)
-        #`(let(
-                [connection (db-connect db-name)]
-                [transaction-semaphore (make-semaphore 1)] ; 1 simultaneous transaction between threads
-                [transaction-semaphore-owner #f] ; no one owns the semaphore yet
-                )
+        #`(parameterize(
+                         [current-db-context-id (unique-to-session-number)]
+                         [current-db-connection (db-connect db-name)]
+                         )
+            (hash-set! trans-locks (current-db-context-id) (db-trans #f (make-semaphore 1)))
             (begin-always
               (begin body ...)
-              (disconnect connection)
-              ))
+              (begin
+                ; what to do about thread wait .. we can't know, so user will have to handle this
+                (hash-clear! trans-locks (current-db-context-id))
+                (disconnect connection)
+                (unique-to-session-number-dealloc (current-db-context-id))
+                )))
         ]
       ))
 
-    (define (db-lib-init-test-0) (not (db-lib-init)))
-    (test-hook db-lib-init-test-0)
-      
 ;;--------------------------------------------------------------------------------
 ;; transactions
 ;;
@@ -88,24 +100,28 @@
   (define-syntax (as-transaction stx)
     (syntax-case stx ()
       [(as-transaction body ...)
-        #`(cond
-            [(equal? (semaphore-owner) (current-thread)) ; no race possible as nothing else can change to our thread
+        #`(let*(
+                 [owner-semaphore (hash-ref trans-locks (current-db-context-id))]
+                 [owner (db-trans-semaphore-owner owner-semaphore)]
+                 [semaphore (db-trans-semaphore owner-semaphore)]
+                )
+            (cond
+            [(equal? owner (current-thread)) ; no race possible as nothing else can change to our thread
               (begin-always
-                (begin (transaction:begin) body ..)
+                (begin (transaction:begin) body ...)
                 (transaction:rollback))
               ]
 
             [else
-              (semaphore-wait transaction-semaphore)
-              (set! semaphore-owner (current-thread))
-              (begin-always
-                (begin (transaction:begin) body ...)
-                (begin (transaction:rollback) (set! semaphore-owner #f) (semaphore-post transaction-semaphore))
-                )
-              ]
-            )
-        ]
-      ))
+              (with-semaphore semaphore
+                (hash-set! trans-locks (current-db-context-id) (db-trans (current-thread) semaphore))
+                (begin-always
+                  (begin (transaction:begin) body ...)
+                  (begin 
+                    (transaction:rollback)
+                    (hash-set! trans-locks (current-db-context-id) (db-trans #f semaphore))
+                    )))
+              ]))]))
 
    ;; note the db-test-1 below
 
@@ -222,6 +238,7 @@
   ;;  exception occurs in (sql:row ...) because two rows are returned -- causes transaction
   ;;  to be canceled
   ;;
+#|
     (define (sql-test-1)
       (db-lib-init)
 
@@ -260,7 +277,7 @@
     ;; to make sure this transaction stuff can be done twice
     (define (sql-test-2) (sql-test-1))
     (test-hook sql-test-2)
-
+|#
 
 ;;--------------------------------------------------------------------------------
 ;; db persistent unique numbers within a keyspace

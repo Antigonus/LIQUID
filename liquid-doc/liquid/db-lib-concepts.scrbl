@@ -26,8 +26,14 @@
    The transaction begins upon entering the context, and ends upon leaving it.  Database commands
    and LISP commands may be mixed inside the transaction block.  Tansaction contexts may be nested.
    Transactions in the same database context block between threads.  This prevents the two transaction
-   blocks from interleaving commands on the connection.  A user may use different transaction
-   contexts on different threads so as to avoid transaction contexts from blocking each other.
+   blocks from interleaving commands on the connection.  
+
+   The with db-context will close without waiting for spawned threads to complete, so if
+   the user needs the db connection then he or she will have to code in a thread wait
+   before leaving the context.
+
+   A user may use different transaction contexts on different threads so as to avoid
+   transaction contexts from blocking each other, and to avoid issues with threads wait.
 
 @section{Function Naming Conventions}
 
