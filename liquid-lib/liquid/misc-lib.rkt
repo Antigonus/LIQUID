@@ -569,7 +569,9 @@
       ;; for creating unique to the session numbers or identifiers, might not be unique between sessions
       ;;
         unique-to-session-number ; gives out a number it never gave out before
+        unique-to-session-number-dealloc
         unique-to-session-name ; gives out a name of the form idnnnn   where nnnn is a number.
+        unique-to-session-name-dealloc
 
       ;; character/string utilities
       ;;

@@ -25,11 +25,13 @@
 ;;--------------------------------------------------------------------------------
 ;; db-lib as an object shared state
 ;;
+  (define current-test-db (make-parameter "db-lib-test"))
+  (define current-working-db (make-parameter "mordecai"))
   (define current-db-log (make-parameter #f)) ; set to true for logging
   (define current-db-connection (make-parameter #f))
   (define current-db-context-id (make-parameter #f))
   (define trans-locks (make-hash)) ; used for transactions to block between threads
-  (define current-db-allocator-semaphore (make-parameter (make-semaphore 1)))
+  (define current-db-allocator-semaphore (make-parameter (make-semaphore 1))) ; used by key allocator
 
 ;;--------------------------------------------------------------------------------
 ;; used by with-db to establish a connection
@@ -60,9 +62,10 @@
 ;;  caused a lot of headaches -- the (my-parm new-value)  write does not cross a thread boundary
 ;;  so had to move the semaphore and its owner to a global hash table
 ;;
-  (define (db-trans-semaphore-owner t) (car t))
-  (define (db-trans-semaphore t) (cadr t))
-  (define (db-trans o s) (list o s))
+  ;; the owned-semaphore data type
+  (define (owned-semaphore-owner t) (car t))
+  (define (owned-semaphore-semaphore t) (cadr t))
+  (define (owned-semaphore o s) (list o s))
 
   (define-syntax (with-db stx)
     (syntax-case stx ()
@@ -71,20 +74,57 @@
                          [current-db-context-id (unique-to-session-number)]
                          [current-db-connection (db-connect db-name)]
                          )
-            (hash-set! trans-locks (current-db-context-id) (db-trans #f (make-semaphore 1)))
+            (hash-set! trans-locks (current-db-context-id) (owned-semaphore #f (make-semaphore 1)))
             (begin-always
               (begin body ...)
               (begin
-                ; what to do about thread wait .. we can't know, so user will have to handle this
-                (hash-clear! trans-locks (current-db-context-id))
-                (disconnect connection)
+                ;; if the user doesn't want the connection pulled out from under a thread, needs to put
+                ;; thread wait in body  (a thread might not even use the connection, we can't know)
+                (disconnect (current-db-connection))
+                (hash-remove! trans-locks (current-db-context-id))
                 (unique-to-session-number-dealloc (current-db-context-id))
                 )))
         ]
       ))
 
 ;;--------------------------------------------------------------------------------
-;; transactions
+;;  initialize the database
+;;
+;;
+  (define (db-lib-init-1)
+    (cond
+      [(not (db:is-table "table_allocator_overhead")) 
+        (allocator-create)
+        (db:create-keyspace "unique_to_db") ; puts row in allocator_overhead for a db global unique count
+        ]
+    ))
+
+  (define (db-lib-init)
+    (cond [(current-db-log) (log "db-init")])
+    (with-handlers
+      (
+        [(λ(v) #t) ; this handler catches anything
+          (λ(v)
+            (log (string-append "exception in db-lib-init: " (->string v)))
+            v
+            )
+          ]
+        )
+      (with-db (current-test-db)
+        (db-lib-init-1)
+        )
+      (with-db (current-working-db)
+        (db-lib-init-1)
+        )
+      #t
+      ))
+
+  (define (db-lib-init-test-0) (db-lib-init))
+  (test-hook db-lib-init-test-0)
+
+
+;;--------------------------------------------------------------------------------
+;; as-transaction helpers
 ;;
   (define (transaction:begin)    (start-transaction (current-db-connection)))
   (define (transaction:commit)   (commit-transaction  (current-db-connection)))
@@ -101,9 +141,9 @@
     (syntax-case stx ()
       [(as-transaction body ...)
         #`(let*(
-                 [owner-semaphore (hash-ref trans-locks (current-db-context-id))]
-                 [owner (db-trans-semaphore-owner owner-semaphore)]
-                 [semaphore (db-trans-semaphore owner-semaphore)]
+                 [an-owned-semaphore (hash-ref trans-locks (current-db-context-id))]
+                 [owner (owned-semaphore-owner an-owned-semaphore)]
+                 [semaphore (owned-semaphore-semaphore an-owned-semaphore)]
                 )
             (cond
             [(equal? owner (current-thread)) ; no race possible as nothing else can change to our thread
@@ -114,12 +154,12 @@
 
             [else
               (with-semaphore semaphore
-                (hash-set! trans-locks (current-db-context-id) (db-trans (current-thread) semaphore))
+                (hash-set! trans-locks (current-db-context-id) (owned-semaphore (current-thread) semaphore))
                 (begin-always
                   (begin (transaction:begin) body ...)
                   (begin 
                     (transaction:rollback)
-                    (hash-set! trans-locks (current-db-context-id) (db-trans #f semaphore))
+                    (hash-set! trans-locks (current-db-context-id) (owned-semaphore #f semaphore))
                     )))
               ]))]))
 
@@ -197,87 +237,85 @@
   (define (sql:list* arg) (db-gasket* query-list arg))
 
   (define (sql-test-0)
-    (as-transaction 
-      (sql:exec  "create temporary table some_named_numbers (n integer, d varchar(20))")
-      (sql:exec  "insert into some_named_numbers values (0, 'zero')")
-      (sql:exec  "insert into some_named_numbers values (2, 'two')")
-      (sql:exec  "insert into some_named_numbers values (1, 'one')")
-      (sql:exec '("insert into some_named_numbers values ($1, $2)" 3 "three"))
-      (let(
-            [results
-              (list
-                (equal?
-                  (sql:rows "select n, d from some_named_numbers where n % 2 = 0")
-                  '(#(0 "zero") #(2 "two"))
+    (with-db (current-test-db)
+      (as-transaction 
+        (sql:exec  "create temporary table some_named_numbers (n integer, d varchar(20))")
+        (sql:exec  "insert into some_named_numbers values (0, 'zero')")
+        (sql:exec  "insert into some_named_numbers values (2, 'two')")
+        (sql:exec  "insert into some_named_numbers values (1, 'one')")
+        (sql:exec '("insert into some_named_numbers values ($1, $2)" 3 "three"))
+        (let(
+              [results
+                (list
+                  (equal?
+                    (sql:rows "select n, d from some_named_numbers where n % 2 = 0")
+                    '(#(0 "zero") #(2 "two"))
+                    )
+                  (equal?
+                    (sql:row "select * from some_named_numbers where n = 0")
+                    '#(0 "zero")
+                    )
+                  (equal?
+                    (sql:list "select d from some_named_numbers order by n")
+                    '("zero" "one" "two" "three")
+                    )
+                  (equal?
+                    (sql:value "select count(*) from some_named_numbers")
+                    4
+                    )
+                  (eqv?
+                    (sql:maybe-value "select d from some_named_numbers where n = 5")
+                    #f
+                    )
                   )
-                (equal?
-                  (sql:row "select * from some_named_numbers where n = 0")
-                  '#(0 "zero")
-                  )
-                (equal?
-                  (sql:list "select d from some_named_numbers order by n")
-                  '("zero" "one" "two" "three")
-                  )
-                (equal?
-                  (sql:value "select count(*) from some_named_numbers")
-                  4
-                  )
-                (eqv?
-                  (sql:maybe-value "select d from some_named_numbers where n = 5")
-                  #f
-                  )
-                )
-              ]
-            )
-        (sql:exec "drop table some_named_numbers")
-        ;;(pretty-print results)(newline)
-        (andmap (λ(e)e) results)
-        )))
+                ]
+              )
+          (sql:exec "drop table some_named_numbers")
+          ;;(pretty-print results)(newline)
+          (andmap (λ(e)e) results)
+          ))))
     (test-hook sql-test-0)
 
   ;;  exception occurs in (sql:row ...) because two rows are returned -- causes transaction
   ;;  to be canceled
   ;;
-#|
     (define (sql-test-1)
-      (db-lib-init)
+      (with-db (current-test-db)
+        (with-handlers
+          (
+            [(λ(v) #t) ; this handler catches anything
+              (λ(v)
+                (let(
+                      [tables (sql:list "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")]
+                      )
+                  ;; table created before the transaction block exists, data put in after does not
+                  (begin0
+                    (and 
+                      (member "some_named_numbers" tables)
+                      (not  (sql:maybe-value "select n from some_named_numbers where d = 'zero'") )
+                      )
+                    (sql:exec "drop table some_named_numbers")
+                    )))
+              ]
+            )
+          (sql:exec  "create table some_named_numbers (n integer, d varchar(20))")
+          (as-transaction 
+            (sql:exec  "insert into some_named_numbers values (0, 'zero')")
+            (sql:exec  "insert into some_named_numbers values (2, 'two')")
+            (sql:exec  "insert into some_named_numbers values (1, 'one')")
+            (sql:exec '("insert into some_named_numbers values ($1, $2)" 3 "three"))
 
-      (with-handlers
-        (
-          [(λ(v) #t) ; this handler catches anything
-            (λ(v)
-              (let(
-                    [tables (sql:list "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")]
-                    )
-                ;; table created before the transaction block exists, data put in after does not
-                (begin0
-                  (and 
-                    (member "some_named_numbers" tables)
-                    (not  (sql:maybe-value "select n from some_named_numbers where d = 'zero'") )
-                    )
-                  (sql:exec "drop table some_named_numbers")
-                )))
-            ]
-          )
-        (sql:exec  "create table some_named_numbers (n integer, d varchar(20))")
-        (as-transaction 
-          (sql:exec  "insert into some_named_numbers values (0, 'zero')")
-          (sql:exec  "insert into some_named_numbers values (2, 'two')")
-          (sql:exec  "insert into some_named_numbers values (1, 'one')")
-          (sql:exec '("insert into some_named_numbers values ($1, $2)" 3 "three"))
-
-          (sql:row "select n, d from some_named_numbers where n % 2 = 0") ; exception! result is two rows
-          )
-        (displayln "internal test error db-test-1 passed as-transaction without an exception")
-        (sql:exec "drop table some_named_numbers")
-        #f
-        ))
+            (sql:row "select n, d from some_named_numbers where n % 2 = 0") ; exception! result is two rows
+            )
+          (displayln "internal test error db-test-1 passed as-transaction without an exception")
+          (sql:exec "drop table some_named_numbers")
+          #f
+          )))
     (test-hook sql-test-1)
 
     ;; to make sure this transaction stuff can be done twice
     (define (sql-test-2) (sql-test-1))
     (test-hook sql-test-2)
-|#
 
 ;;--------------------------------------------------------------------------------
 ;; db persistent unique numbers within a keyspace
@@ -367,24 +405,25 @@
         )))
 
   (define (keyspace-alloc-test-0)
-    (let(
-          [name (db:alloc-name)]
-          )
-      (db:create-keyspace name)
+    (with-db (current-test-db)
       (let(
-            [n1 (keyspace:alloc-number name)]
-            [n2 (keyspace:alloc-number name)]
-            [n3 (keyspace:alloc-number name)]
+            [name (db:alloc-name)]
             )
-        (db:delete-keyspace name)
-        (and
-          (> n1 0)
-          (> n2 0)
-          (> n3 0)
-          (≠ n1 n2)
-          (≠ n1 n3)
-          (≠ n2 n3)
-          ))))
+        (db:create-keyspace name)
+        (let(
+              [n1 (keyspace:alloc-number name)]
+              [n2 (keyspace:alloc-number name)]
+              [n3 (keyspace:alloc-number name)]
+              )
+          (db:delete-keyspace name)
+          (and
+            (> n1 0)
+            (> n2 0)
+            (> n3 0)
+            (≠ n1 n2)
+            (≠ n1 n3)
+            (≠ n2 n3)
+            )))))
     (test-hook keyspace-alloc-test-0)
 
 ;;--------------------------------------------------------------------------------
@@ -412,12 +451,13 @@
 
 
   (define (db:alloc-name-test-0)
-    (let(
-          [name-0 (db:alloc-name)]
-          [name-1 (db:alloc-name)]
-          )
-      (not (string=? name-0 name-1))
-      ))
+    (with-db (current-test-db)
+      (let(
+            [name-0 (db:alloc-name)]
+            [name-1 (db:alloc-name)]
+            )
+        (not (string=? name-0 name-1))
+        )))
   (test-hook db:alloc-name-test-0)
 
 ;;--------------------------------------------------------------------------------
@@ -457,11 +497,12 @@
     (boolify (member table-name (db:tables)))
     )
 
-  (define (db:is-table-test-0) 
-    (and
-      (db:is-table "table_allocator_overhead")
-      (not (db:is-table (db:alloc-name)))
-      ))
+  (define (db:is-table-test-0)
+    (with-db (current-test-db)
+      (and
+        (db:is-table "table_allocator_overhead")
+        (not (db:is-table (db:alloc-name)))
+        )))
   (test-hook db:is-table-test-0)
 
   ;; e.g. deletes all tables beginning with "uni": (db:delete-table* (db:tables #rx"^uni"))
@@ -521,17 +562,18 @@
     (test-hook columns-decl-test-0)
 
     (define (db:create-delete-table-test-0)
-      (let*(
-             [tables (map (λ(e) (db:alloc-name)) '(1 2 3))]
-             [nada (map (λ(e)(db:create-table e 3)) tables)]
-             [exists (andmap (λ(e)(db:is-table e)) tables)]
-             )
-        (db:delete-table* tables)
-        (let(
-              [still-exists (ormap  (λ(e)(db:is-table e)) tables)]
-              )
-          (and exists (not still-exists))
-          )))
+      (with-db (current-test-db)
+        (let*(
+               [tables (map (λ(e) (db:alloc-name)) '(1 2 3))]
+               [nada (map (λ(e)(db:create-table e 3)) tables)]
+               [exists (andmap (λ(e)(db:is-table e)) tables)]
+               )
+          (db:delete-table* tables)
+          (let(
+                [still-exists (ormap  (λ(e)(db:is-table e)) tables)]
+                )
+            (and exists (not still-exists))
+            ))))
     (test-hook db:create-delete-table-test-0)
 
 
@@ -715,24 +757,25 @@
          ))
 
       (define (db:table-test-0)
-        (let(
-              [table (db:alloc-name)]
-              )
-          (db:create-table table 5)
-          (table:insert table '(1 2 2 7 8))
-          (table:insert table '(2 2 3 7 10))
-          (table:insert table '(3 3 4 7 11))
-          (table:insert table '(4 2 4 6 17))
+        (with-db (current-test-db)
           (let(
-                [two-seven (table:match table '(_ 2 _ 7 _))]
+                [table (db:alloc-name)]
                 )
-            (begin0
-              (equal?
-                two-seven
-                '(("1" "2" "2" "7" "8") ("2" "2" "3" "7" "10"))
-                )
-              (db:delete-table table)
-              ))))
+            (db:create-table table 5)
+            (table:insert table '(1 2 2 7 8))
+            (table:insert table '(2 2 3 7 10))
+            (table:insert table '(3 3 4 7 11))
+            (table:insert table '(4 2 4 6 17))
+            (let(
+                  [two-seven (table:match table '(_ 2 _ 7 _))]
+                  )
+              (begin0
+                (equal?
+                  two-seven
+                  '(("1" "2" "2" "7" "8") ("2" "2" "3" "7" "10"))
+                  )
+                (db:delete-table table)
+                )))))
       (test-hook db:table-test-0)
 
   ;; input: a table name, a pattern to identify records
@@ -762,45 +805,46 @@
           )))
 
       (define (table:insert-delete-test-0)
-        (let(
-              [table (db:alloc-name)]
-              )
-          (db:create-table table 2) ; will throw an exception (test fail) if the table already exists
+        (with-db (current-test-db)
           (let(
-                [table-found-1 (db:is-table table)]
-                [initial-rows (table:match table '(_ _))]
-                [proposed-rows '((1 2) (2 2) (3 4))]
-                [outf (λ(e)(map string->number e))]
+                [table (db:alloc-name)]
                 )
-            (table:insert* table proposed-rows)
+            (db:create-table table 2) ; will throw an exception (test fail) if the table already exists
             (let(
-                  [found-rows-1 (table:match table '(_ _) outf)]
+                  [table-found-1 (db:is-table table)]
+                  [initial-rows (table:match table '(_ _))]
+                  [proposed-rows '((1 2) (2 2) (3 4))]
+                  [outf (λ(e)(map string->number e))]
                   )
-              (table:delete table '(_ 2))
+              (table:insert* table proposed-rows)
               (let(
-                    [found-rows-2 (table:match table '(_ _) outf)]
+                    [found-rows-1 (table:match table '(_ _) outf)]
                     )
-                (table:delete table '(3 4))
+                (table:delete table '(_ 2))
                 (let(
-                      [found-rows-3 (table:match table '(_ _) outf)]
+                      [found-rows-2 (table:match table '(_ _) outf)]
                       )
-                  (db:delete-table table)
+                  (table:delete table '(3 4))
                   (let(
-                        [table-found-2 (db:is-table table)]
+                        [found-rows-3 (table:match table '(_ _) outf)]
                         )
-                    (and
-                      table-found-1
-                      (null? initial-rows)
-                      (equal? found-rows-1 proposed-rows)
-                      (equal? found-rows-2 '((3 4)))
-                      (null? found-rows-3)
-                      (not table-found-2)
-                      ))
+                    (db:delete-table table)
+                    (let(
+                          [table-found-2 (db:is-table table)]
+                          )
+                      (and
+                        table-found-1
+                        (null? initial-rows)
+                        (equal? found-rows-1 proposed-rows)
+                        (equal? found-rows-2 '((3 4)))
+                        (null? found-rows-3)
+                        (not table-found-2)
+                        ))
+                    )
                   )
                 )
               )
-            )
-          ))
+            )))
       (test-hook table:insert-delete-test-0)
 ;;--------------------------------------------------------------------------------
 ;; some tests
@@ -809,9 +853,17 @@
 ;;--------------------------------------------------------------------------------
 ;; module interface
 ;;
-  (provide-with-trace "db-lib"
-    db-lib-init
 
+  (provide
+    with-db      
+    as-transaction
+    db-lib-trace
+    db-lib-untrace
+    )
+
+  (provide-with-trace "db-lib"
+
+#|
     ;; rather not expose these if possible
     ;;
       sql:exec
@@ -830,7 +882,7 @@
       transaction:begin
       transaction:commit
       transaction:rollback
-
+|#
 
     ;; db-lib interface
     ;;
@@ -854,9 +906,3 @@
 
     )
 
-  (provide
-    with-db      
-    as-transaction
-    db-lib-trace
-    db-lib-untrace
-    )
