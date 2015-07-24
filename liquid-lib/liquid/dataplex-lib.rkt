@@ -29,16 +29,30 @@
   (define (db:dataplex-directory-name) "dataplexes")
 
   (define (dataplex-lib-init)
-    (db-lib-init)
-    (as-transaction
-      (cond
-        [(not (db:is-table (db:dataplex-directory-name))) (db:create-table (db:dataplex-directory-name) 1)]
-        ))
-    'no-errors
-    )
+    (with-db (current-test-db)
+      (db-lib-init)
+      (as-transaction
+        (let (
+               [already-init (db:is-table (db:dataplex-directory-name))]
+               )
+          (cond
+            [already-init 'already-initialized]
+            [else 
+              (db:create-table (db:dataplex-directory-name) 1)
+              'initialized
+              ]
+            )))))
 
-  (define (dataplex-lib-init-test-0) (eqv? 'no-errors (dataplex-lib-init)))
-  (test-hook dataplex-lib-init-test-0)
+    (define (dataplex-lib-init-test-0)
+      (let(
+            [result (dataplex-lib-init)]
+            )
+        (or
+          (eqv? result 'initialized)
+          (eqv? result 'already-initialized)
+          )))
+    
+    (test-hook dataplex-lib-init-test-0)
 
 ;;--------------------------------------------------------------------------------
 ;; dataplex context
@@ -73,17 +87,18 @@
           ))))
 
   (define (syntax-with-dataplex-test-0)
-    (let*(
-           [a-dataplex-name (db:alloc-name)]
-           [shouldbe-the-keyspace (string-append a-dataplex-name "_keyspace")]
-           [dataplex-object (dataplex:object-scope a-dataplex-name)] ; lexical scope of symbols, object not in db
-           )
-      ;;(pretty-print shouldbe-the-keyspace)
-      (with-dataplex dataplex-object
-        ;;(pretty-print dataplex:keyspace)
-        (string=? dataplex:keyspace shouldbe-the-keyspace)
-        )
-      ))
+    (with-db (current-test-db)
+      (let*(
+             [a-dataplex-name (db:alloc-name)]
+             [shouldbe-the-keyspace (string-append a-dataplex-name "_keyspace")]
+             [dataplex-object (dataplex:object-scope a-dataplex-name)] ; lexical scope of symbols, object not in db
+             )
+        ;;(pretty-print shouldbe-the-keyspace)
+        (with-dataplex dataplex-object
+          ;;(pretty-print dataplex:keyspace)
+          (string=? dataplex:keyspace shouldbe-the-keyspace)
+          )
+        )))
   (test-hook syntax-with-dataplex-test-0)
 
   (define (shape-relation:object-scope dataplex relation-name)
@@ -281,43 +296,41 @@
         (table:delete (db:dataplex-directory-name) dataplex:name)
         ))
 
-
-  ;; this test only looks at the tables that exist after creation, inserting 
-  ;; data might cause more tables to come into existance, and delete should
-  ;; get those also, but that is not tested here.
   ;;
     (define (db:dataplex-test-0)
-      (db-lib-init)
-      (let(
-            [dataplex-name (db:alloc-name)]
-            [exists-flag #f]
-            [still-exists-flag #t]
-            )
+      (with-db (current-test-db)
+        (dataplex-lib-init)
         (let(
-              [new-dataplex (db:create-dataplex dataplex-name)]
+              [dataplex-name (db:alloc-name)]
+              [exists-flag #f]
+              [still-exists-flag #t]
               )
-          (with-dataplex new-dataplex
-            (set! exists-flag 
-              (andmap 
-                db:is-table 
-                (list 
-                  dataplex:shape-relations 
-                  dataplex:semantic-relations
-                  ))))
+          (let(
+                [new-dataplex (db:create-dataplex dataplex-name)]
+                )
+            ;;(pretty-print (list dataplex-name exists-flag still-exists-flag new-dataplex))
+            (with-dataplex new-dataplex
+              (set! exists-flag 
+                (andmap 
+                  db:is-table 
+                  (list 
+                    dataplex:shape-relations 
+                    dataplex:semantic-relations
+                    ))))
 
-          (db:delete-dataplex new-dataplex)
-          (with-dataplex new-dataplex  ;; ok to use scoped symbols from deleted dataplex object ..
-            (set! still-exists-flag 
-              (ormap 
-                db:is-table 
-                (list 
-                  dataplex:shape-relations 
-                  dataplex:semantic-relations
-                  ))))
-          ;;(pretty-print (list 'exists-flag exists-flag 'stil-exists-flag still-exists-flag))
-          (and exists-flag (not still-exists-flag))
-          )))
-      (test-hook db:dataplex-test-0)
+            (db:delete-dataplex new-dataplex)
+            (with-dataplex new-dataplex  ;; ok to use scoped symbols from deleted dataplex object ..
+              (set! still-exists-flag 
+                (ormap 
+                  db:is-table 
+                  (list 
+                    dataplex:shape-relations 
+                    dataplex:semantic-relations
+                    ))))
+            ;;(pretty-print (list 'exists-flag exists-flag 'stil-exists-flag still-exists-flag))
+            (and exists-flag (not still-exists-flag))
+            ))))
+  (test-hook db:dataplex-test-0)
 
   (define (dataplex:is-shape-relation proposed-shape-relation)
     (eqv? 'shape-relation (car proposed-shape-relation))
@@ -544,7 +557,8 @@
            (append-map find-citing shape-value-ids)
            )))
 
-    (define (shape-relation-test-0)
+  (define (shape-relation-test-0)
+    (with-db  (current-test-db)
       (let(
             [d0  (dataplex:object-scope "shape-relation-test-0-dp")]
             )
@@ -562,14 +576,14 @@
                )
           #|
           (pretty-print
-            (list
-              'id-0 id-0
-              'id-1 id-1
-              'id-2 id-2
-              'm-0  m-0
-              'm-1  m-1
-              'm-2  m-2
-              ))
+          (list
+          'id-0 id-0
+          'id-1 id-1
+          'id-2 id-2
+          'm-0  m-0
+          'm-1  m-1
+          'm-2  m-2
+          ))
           |#
           (db:delete-dataplex d0)
           (cond
@@ -581,11 +595,11 @@
                  (equal? m-1 '( (27 28 29) (57 28 29) ))
                  (equal? m-1 '( (57 28 29) (27 28 29) ))
                  ))
-               #f]
+              #f]
             [(pair? m-2) #f]
             [else #t]
             )
-          )))
+          ))))
     (test-hook shape-relation-test-0)
 
 ;;--------------------------------------------------------------------------------
@@ -806,59 +820,61 @@
          
 
     (define (semantic-relation:lookup-ids-test-0)
-      (db:delete-dataplex (dataplex:object-scope "semantic-relation:lookup-ids-test-0"))
-      (let*(
-             [dp (db:create-dataplex "semantic-relation:lookup-ids-test-0")]
-             [sp-name   (dataplex:create-shape-relation dp "name" 3)]
-             [sp-number (dataplex:create-shape-relation dp "number" 2)]
-             [sm-account  (dataplex:create-semantic-relation dp "account" (list sp-name sp-number))]
-             )
-        (semantic-relation:insert dp sm-account '(("James" "M" "Doe") (345 1053)))
-        (begin0
-          (equal?
-            (semantic-relation:lookup-ids dp sm-account '(_ _))
-            '(1)
+      (with-db (current-test-db)
+        (db:delete-dataplex (dataplex:object-scope "semantic-relation:lookup-ids-test-0"))
+        (let*(
+               [dp (db:create-dataplex "semantic-relation:lookup-ids-test-0")]
+               [sp-name   (dataplex:create-shape-relation dp "name" 3)]
+               [sp-number (dataplex:create-shape-relation dp "number" 2)]
+               [sm-account  (dataplex:create-semantic-relation dp "account" (list sp-name sp-number))]
+               )
+          (semantic-relation:insert dp sm-account '(("James" "M" "Doe") (345 1053)))
+          (begin0
+            (equal?
+              (semantic-relation:lookup-ids dp sm-account '(_ _))
+              '(1)
+              )
+            (db:delete-dataplex (dataplex:object-scope "semantic-relation:lookup-ids-test-0"))
             )
-          (db:delete-dataplex (dataplex:object-scope "semantic-relation:lookup-ids-test-0"))
-          )
-      ))
+          )))
     (test-hook semantic-relation:lookup-ids-test-0) 
 
     (define (semantic-relation:lookup-ids-test-1)
-      (db:delete-dataplex (dataplex:object-scope "semantic-relation:lookup-ids-test-1"))
-      (let*(
-             [dp (db:create-dataplex "semantic-relation:lookup-ids-test-1")]
-             [sp-name (dataplex:create-shape-relation dp "name" 3)]
-             [sp-number (dataplex:create-shape-relation dp "number" 2)]
-             [sm-account (dataplex:create-semantic-relation dp "account" (list sp-name sp-number))]
-             )
-        (semantic-relation:insert dp sm-account '(("James"  "M" "Doe")    (345 1053)))
-        (semantic-relation:insert dp sm-account '(("John"   "H" "Smith")  (555 1212)))
-        (semantic-relation:insert dp sm-account '(("Ronald" "M" "Donald") (312 5860)))
-        (semantic-relation:insert dp sm-account '(("John"   "M" "Ward")   (463 5860)))
-        (let(
-              [t0
-                (equal?
-                  (sort (semantic-relation:lookup-ids dp sm-account '(_ _)) <)
-                  '(1 4 7 10)
-                  )
-                ]
-              [t1
-                (equal?
-                  (sort (semantic-relation:lookup-ids dp sm-account '( (_  "M" _) _)) <)
-                  '(1 7 10)
-                  )
-                ]
-              [t2
-                (equal?
-                  (semantic-relation:lookup-ids dp sm-account '( (_  "M" _) (312 _)))
-                  '(7)
-                  )
-                ]
-              )
-          ;;(pretty-print (list 't0 t0 't1 t1 't2 t2))
-          (and t0 t1 t2)
-      )))
+      (with-db (current-test-db)
+        (db:delete-dataplex (dataplex:object-scope "semantic-relation:lookup-ids-test-1"))
+        (let*(
+               [dp (db:create-dataplex "semantic-relation:lookup-ids-test-1")]
+               [sp-name (dataplex:create-shape-relation dp "name" 3)]
+               [sp-number (dataplex:create-shape-relation dp "number" 2)]
+               [sm-account (dataplex:create-semantic-relation dp "account" (list sp-name sp-number))]
+               )
+          (semantic-relation:insert dp sm-account '(("James"  "M" "Doe")    (345 1053)))
+          (semantic-relation:insert dp sm-account '(("John"   "H" "Smith")  (555 1212)))
+          (semantic-relation:insert dp sm-account '(("Ronald" "M" "Donald") (312 5860)))
+          (semantic-relation:insert dp sm-account '(("John"   "M" "Ward")   (463 5860)))
+          (let(
+                [t0
+                  (equal?
+                    (sort (semantic-relation:lookup-ids dp sm-account '(_ _)) <)
+                    '(1 4 7 10)
+                    )
+                  ]
+                [t1
+                  (equal?
+                    (sort (semantic-relation:lookup-ids dp sm-account '( (_  "M" _) _)) <)
+                    '(1 7 10)
+                    )
+                  ]
+                [t2
+                  (equal?
+                    (semantic-relation:lookup-ids dp sm-account '( (_  "M" _) (312 _)))
+                    '(7)
+                    )
+                  ]
+                )
+            ;;(pretty-print (list 't0 t0 't1 t1 't2 t2))
+            (and t0 t1 t2)
+            ))))
       (test-hook semantic-relation:lookup-ids-test-1)
 
 
@@ -866,84 +882,87 @@
   ;; output: filtered rows from the semantic relation
   ;;
       (define (semantic-relation:match dataplex semantic-relation [pattern '(_)] [filter identity])
-        (with-semantic-relation semantic-relation
-          (define (fetch id)
-            (let*(
-                   [column-shape-names (table:match semantic-relation:shape-relations '(_) car)]
-                   [shapes (map (λ(e)(shape-relation:object-scope dataplex e)) column-shape-names)]
-                   )
-              (map (λ(e)(shape-relation:match-by-semantic-id e id)) shapes)
-              ))
+        (with-db (current-test-db)
+          (with-semantic-relation semantic-relation
+            (define (fetch id)
+              (let*(
+                     [column-shape-names (table:match semantic-relation:shape-relations '(_) car)]
+                     [shapes (map (λ(e)(shape-relation:object-scope dataplex e)) column-shape-names)]
+                     )
+                (map (λ(e)(shape-relation:match-by-semantic-id e id)) shapes)
+                ))
 
-          (let*(
-                 [ids (semantic-relation:lookup-ids dataplex semantic-relation pattern)]
-                 [rows (map fetch ids)]
-                 )
-            (map filter rows)
-            )))
+            (let*(
+                   [ids (semantic-relation:lookup-ids dataplex semantic-relation pattern)]
+                   [rows (map fetch ids)]
+                   )
+              (map filter rows)
+              ))))
 
       (define (shape-relation:match-by-semantic-id shape-relation id)
-        (with-shape-relation shape-relation
-          (let(
-                [shape-row-ids
-                  (table:match 
-                    shape-relation:citings
-                    `(,id _ _) 
-                    caddr
-                    )
-                  ]
-                )
+        (with-db (current-test-db)
+          (with-shape-relation shape-relation
             (let(
-                  [matched-rows
-                    (append-map 
-                      (λ(e)(table:match shape-relation:values `(,e) cdr)) 
-                      shape-row-ids
+                  [shape-row-ids
+                    (table:match 
+                      shape-relation:citings
+                      `(,id _ _) 
+                      caddr
                       )
                     ]
                   )
-              ;;(pretty-print (list 'matched-rows matched-rows))
-              (if (singleton matched-rows) (car matched-rows) matched-rows)
-              ))))
+              (let(
+                    [matched-rows
+                      (append-map 
+                        (λ(e)(table:match shape-relation:values `(,e) cdr)) 
+                        shape-row-ids
+                        )
+                      ]
+                    )
+                ;;(pretty-print (list 'matched-rows matched-rows))
+                (if (singleton matched-rows) (car matched-rows) matched-rows)
+              )))))
           
     (define (semantic-relation:match-test-1)
-      (db:delete-dataplex (dataplex:object-scope "semantic-relation:match-test-1"))
-      (let*(
-             [dp (db:create-dataplex "semantic-relation:match-test-1")]
-             [sp-name (dataplex:create-shape-relation dp "name" 3)]
-             [sp-number (dataplex:create-shape-relation dp "number" 2)]
-             [sm-account (dataplex:create-semantic-relation dp "account" (list sp-name sp-number))]
-             )
-        (semantic-relation:insert dp sm-account '(("James"  "M" "Doe")    (345 1053)))
-        (semantic-relation:insert dp sm-account '(("John"   "H" "Smith")  (312 1212)))
-        (semantic-relation:insert dp sm-account '(("Ronald" "M" "Donald") (312 5860)))
-        (semantic-relation:insert dp sm-account '(("John"   "M" "Ward")   (463 5860)))
-        (let(
-              [m0 (semantic-relation:match dp sm-account '(_ _))]
-              [m1 (semantic-relation:match dp sm-account '( (_  "M" _) _))]
-              [m2 (semantic-relation:match dp sm-account '( (_  "M" _) (312 _)))]
-              )
-         ;;(pretty-print (list 'm0 m0 'm1 m1 'm2 m2))
-          (and
-            (equal?
-              (list->set m0)
-              (list->set '(
-                 (("James" "M" "Doe") ("345" "1053"))
-                 (("John" "H" "Smith") ("312" "1212"))
-                 (("Ronald" "M" "Donald") ("312" "5860"))
-                 (("John" "M" "Ward") ("463" "5860"))
-                 )))
-            (equal?
-              (list->set m1)
-              (list->set '(
-                 (("James" "M" "Doe") ("345" "1053"))
-                 (("Ronald" "M" "Donald") ("312" "5860"))
-                 (("John" "M" "Ward") ("463" "5860"))
-                 )))
-            (equal?
-              m2
-              '(
-                 (("Ronald" "M" "Donald") ("312" "5860"))
-                 ))))))
+      (with-db (current-test-db)
+        (db:delete-dataplex (dataplex:object-scope "semantic-relation:match-test-1"))
+        (let*(
+               [dp (db:create-dataplex "semantic-relation:match-test-1")]
+               [sp-name (dataplex:create-shape-relation dp "name" 3)]
+               [sp-number (dataplex:create-shape-relation dp "number" 2)]
+               [sm-account (dataplex:create-semantic-relation dp "account" (list sp-name sp-number))]
+               )
+          (semantic-relation:insert dp sm-account '(("James"  "M" "Doe")    (345 1053)))
+          (semantic-relation:insert dp sm-account '(("John"   "H" "Smith")  (312 1212)))
+          (semantic-relation:insert dp sm-account '(("Ronald" "M" "Donald") (312 5860)))
+          (semantic-relation:insert dp sm-account '(("John"   "M" "Ward")   (463 5860)))
+          (let(
+                [m0 (semantic-relation:match dp sm-account '(_ _))]
+                [m1 (semantic-relation:match dp sm-account '( (_  "M" _) _))]
+                [m2 (semantic-relation:match dp sm-account '( (_  "M" _) (312 _)))]
+                )
+            ;;(pretty-print (list 'm0 m0 'm1 m1 'm2 m2))
+            (and
+              (equal?
+                (list->set m0)
+                (list->set '(
+                              (("James" "M" "Doe") ("345" "1053"))
+                              (("John" "H" "Smith") ("312" "1212"))
+                              (("Ronald" "M" "Donald") ("312" "5860"))
+                              (("John" "M" "Ward") ("463" "5860"))
+                              )))
+              (equal?
+                (list->set m1)
+                (list->set '(
+                              (("James" "M" "Doe") ("345" "1053"))
+                              (("Ronald" "M" "Donald") ("312" "5860"))
+                              (("John" "M" "Ward") ("463" "5860"))
+                              )))
+              (equal?
+                m2
+                '(
+                   (("Ronald" "M" "Donald") ("312" "5860"))
+                   )))))))
       (test-hook semantic-relation:match-test-1)
 
 
@@ -953,6 +972,7 @@
 
   (define (dataplex-test-1)
 
+    (with-db (current-test-db)
     ;; clear out prior test tables, if any
     (table:delete (db:dataplex-directory-name) '("dataplex_test_1_0"))
     (db:delete-keyspace "dataplex_test_1_0_keyspace")
@@ -1081,7 +1101,7 @@
                 )
             ))
           ]
-          )))
+          ))))
           (test-hook dataplex-test-1)
 
    (define (tables pattern) (sort (db:tables pattern) string<?))

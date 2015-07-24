@@ -25,8 +25,11 @@
 ;;--------------------------------------------------------------------------------
 ;; db-lib as an object shared state
 ;;
+  ;; provided others
   (define current-test-db (make-parameter "db-lib-test"))
   (define current-working-db (make-parameter "mordecai"))
+
+  ;; private
   (define current-db-log (make-parameter #f)) ; set to true for logging
   (define current-db-connection (make-parameter #f))
   (define current-db-context-id (make-parameter #f))
@@ -121,49 +124,7 @@
 
   (define (db-lib-init-test-0) (db-lib-init))
   (test-hook db-lib-init-test-0)
-
-
-;;--------------------------------------------------------------------------------
-;; as-transaction helpers
-;;
-  (define (transaction:begin)    (start-transaction (current-db-connection)))
-  (define (transaction:commit)   (commit-transaction  (current-db-connection)))
-  (define (transaction:rollback) (rollback-transaction  (current-db-connection)))
-
-;;--------------------------------------------------------------------------------
-;;  a transaction environment
-;;
-;;  (as-transaction body ...)
-;;
-;;  Transactions on the smae connection, but different threads, will block each other   
-;; 
-  (define-syntax (as-transaction stx)
-    (syntax-case stx ()
-      [(as-transaction body ...)
-        #`(let*(
-                 [an-owned-semaphore (hash-ref trans-locks (current-db-context-id))]
-                 [owner (owned-semaphore-owner an-owned-semaphore)]
-                 [semaphore (owned-semaphore-semaphore an-owned-semaphore)]
-                )
-            (cond
-            [(equal? owner (current-thread)) ; no race possible as nothing else can change to our thread
-              (begin-always
-                (begin (transaction:begin) body ...)
-                (transaction:rollback))
-              ]
-
-            [else
-              (with-semaphore semaphore
-                (hash-set! trans-locks (current-db-context-id) (owned-semaphore (current-thread) semaphore))
-                (begin-always
-                  (begin (transaction:begin) body ...)
-                  (begin 
-                    (transaction:rollback)
-                    (hash-set! trans-locks (current-db-context-id) (owned-semaphore #f semaphore))
-                    )))
-              ]))]))
-
-   ;; note the db-test-1 below
+  
 
 
 ;;--------------------------------------------------------------------------------
@@ -236,6 +197,49 @@
   (define (sql:list . arg) (sql:list* arg))
   (define (sql:list* arg) (db-gasket* query-list arg))
 
+
+;;--------------------------------------------------------------------------------
+;; as-transaction helpers
+;;
+  (define (transaction:begin)    (start-transaction (current-db-connection)))
+  (define (transaction:commit)   (commit-transaction  (current-db-connection)))
+  (define (transaction:rollback) (rollback-transaction  (current-db-connection)))
+
+;;--------------------------------------------------------------------------------
+;;  a transaction environment
+;;
+;;  (as-transaction body ...)
+;;
+;;  Transactions on the smae connection, but different threads, will block each other   
+;; 
+  (define-syntax (as-transaction stx)
+    (syntax-case stx ()
+      [(as-transaction body ...)
+        #`(let*(
+                 [an-owned-semaphore (hash-ref trans-locks (current-db-context-id))]
+                 [owner (owned-semaphore-owner an-owned-semaphore)]
+                 [semaphore (owned-semaphore-semaphore an-owned-semaphore)]
+                )
+            (cond
+            [(equal? owner (current-thread)) ; no race possible as nothing else can change to our thread
+              (begin-always
+                (begin0 (begin (transaction:begin) body ...) (transaction:commit))
+                (transaction:rollback))
+              ]
+
+            [else
+              (with-semaphore semaphore
+                (hash-set! trans-locks (current-db-context-id) (owned-semaphore (current-thread) semaphore))
+                (begin-always
+                  (begin0 (begin (transaction:begin) body ...) (transaction:commit))
+                  (begin 
+                    (transaction:rollback)
+                    (hash-set! trans-locks (current-db-context-id) (owned-semaphore #f semaphore))
+                    )))
+              ]))]))
+
+
+
   (define (sql-test-0)
     (with-db (current-test-db)
       (as-transaction 
@@ -271,15 +275,32 @@
                 ]
               )
           (sql:exec "drop table some_named_numbers")
-          ;;(pretty-print results)(newline)
+          ;(pretty-print results)(newline)
           (andmap (λ(e)e) results)
           ))))
     (test-hook sql-test-0)
 
+
+  ;; basic scoping working?
+  ;;
+    (define (as-transaction-test-0)
+      (with-db (current-test-db)
+        (define x 22)
+        (as-transaction
+          (set! x 10)
+          (void)
+          )
+        (let(
+              [y (as-transaction 17)]
+              )
+          (and (= x 10) (= y 17))
+        )))
+    (test-hook as-transaction-test-0)
+
   ;;  exception occurs in (sql:row ...) because two rows are returned -- causes transaction
   ;;  to be canceled
   ;;
-    (define (sql-test-1)
+    (define (as-transaction-test-1)
       (with-db (current-test-db)
         (with-handlers
           (
@@ -307,15 +328,20 @@
 
             (sql:row "select n, d from some_named_numbers where n % 2 = 0") ; exception! result is two rows
             )
-          (displayln "internal test error db-test-1 passed as-transaction without an exception")
+          (displayln "expected an exception")
           (sql:exec "drop table some_named_numbers")
           #f
           )))
-    (test-hook sql-test-1)
+    (test-hook as-transaction-test-1)
 
     ;; to make sure this transaction stuff can be done twice
-    (define (sql-test-2) (sql-test-1))
-    (test-hook sql-test-2)
+    (define (as-transaction-test-2) (as-transaction-test-1))
+    (test-hook as-transaction-test-2)
+
+    ;; need to add a between threads blocking test!
+    ;;
+
+
 
 ;;--------------------------------------------------------------------------------
 ;; db persistent unique numbers within a keyspace
@@ -853,8 +879,9 @@
 ;;--------------------------------------------------------------------------------
 ;; module interface
 ;;
-
   (provide
+    current-test-db   
+    current-working-db
     with-db      
     as-transaction
     db-lib-trace
@@ -862,9 +889,9 @@
     )
 
   (provide-with-trace "db-lib"
+    db-lib-init
 
-#|
-    ;; rather not expose these if possible
+    ;; rather not expose these if possible, sql:exec is currently used in dataplex-lib.rkt
     ;;
       sql:exec
       sql:exec*
@@ -878,11 +905,6 @@
       sql:rows*
       sql:list
       sql:list*
-
-      transaction:begin
-      transaction:commit
-      transaction:rollback
-|#
 
     ;; db-lib interface
     ;;

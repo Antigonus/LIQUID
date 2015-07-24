@@ -398,19 +398,28 @@
          ]
        ))
 
-       (define (begin-always-test-0)
-         (define x 2)
-         (with-handlers (
-                          [exn:fail:contract:divide-by-zero? (λ(v)(= x 4))]
-                          )
-           (begin-always
-             (/ 1 0)
-             (set! x 4)
-             )
-           #f
-           ))
+    (define (begin-always-test-0)
+      (define x 3)
+      (and
+        (= 5 (begin-always 5 (set! x 7)))
+        (= 7 x)
+        ))
+    (test-hook begin-always-test-0)
 
-      (test-hook begin-always-test-0)
+    (define (begin-always-test-1)
+      (define x 2)
+      (with-handlers (
+                       [exn:fail:contract:divide-by-zero? (λ(v)(= x 4))]
+                       )
+        (begin-always
+          (/ 1 0)
+          (set! x 4)
+          )
+        #f
+        ))
+    (test-hook begin-always-test-1)
+
+
 
 ;;--------------------------------------------------------------------------------
 ;;  a with-semaphore block

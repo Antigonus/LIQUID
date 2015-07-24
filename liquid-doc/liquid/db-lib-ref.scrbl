@@ -14,7 +14,21 @@
         form, including those which do not invoke db-lib.
 
         Entering a transaction will block the current connection from
-        being used in other threads.  See also, @secref{with-db}.
+        being used in transactions in other threads.  See also, @secref{with-db}.
+
+        The transaction is rolled back if an exception occurs.  The rollback affects only
+        daabase functions, not the LISP functions inside the transaction block.
+
+        The transaction is committed upon leaving the scope other than by an exception.
+
+        .. probably should add a break that rolls back the transactions without an
+        exception (perhapst this is an exception that is locally handled)
+
+
+@defproc[(db-lib-init) void?]
+
+  Initializes the module.  Must be called at least once before the module is used.
+  Multiple invocations are ok.
 
 
 @defproc[(db:alloc-name) string?]
