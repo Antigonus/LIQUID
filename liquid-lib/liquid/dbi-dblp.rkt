@@ -395,25 +395,26 @@
             ))))
 
   (define (test-db-citation-0)
-    (let*(
-          [schema (db:alloc-name)]
-          [author-table (string-append schema "_author")]
-          [pub-0 '("How to Ride a Horse" "journal" "1873" "Alex" "Tomlinson" "Smith" "Johnson")]
-          [pub-1 '("Making Glue" "conference" "1921" "Johnson" "B. Johnson")]
-          )
-      (create-citation-schema schema)
-      (apply insert-citation schema pub-0)
-      (apply insert-citation schema pub-1)
-      (and
-        (db:is-table author-table)
-        (equal?
-          (get-citations schema)
-          (list pub-0 pub-1))
-        (begin
-          (drop-citation-schema schema)
-          (not (db:is-table author-table))
-          )
-        )))
+    (with-db (current-test-db)
+      (let*(
+             [schema (db:alloc-name)]
+             [author-table (string-append schema "_author")]
+             [pub-0 '("How to Ride a Horse" "journal" "1873" "Alex" "Tomlinson" "Smith" "Johnson")]
+             [pub-1 '("Making Glue" "conference" "1921" "Johnson" "B. Johnson")]
+             )
+        (create-citation-schema schema)
+        (apply insert-citation schema pub-0)
+        (apply insert-citation schema pub-1)
+        (and
+          (db:is-table author-table)
+          (equal?
+            (get-citations schema)
+            (list pub-0 pub-1))
+          (begin
+            (drop-citation-schema schema)
+            (not (db:is-table author-table))
+            )
+          ))))
   (test-hook test-db-citation-0)
 
 ;;--------------------------------------------------------------------------------
