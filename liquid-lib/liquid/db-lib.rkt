@@ -25,8 +25,10 @@
 ;;--------------------------------------------------------------------------------
 ;; db-lib as an object shared state
 ;;
-  ;; provided others
+   ;; provided to others
+
   (define current-test-db (make-parameter "db-lib-test"))
+  (define current-example-db (make-parameter "db-lib-example"))
   (define current-working-db (make-parameter "mordecai"))
 
   ;; private
@@ -882,6 +884,7 @@
   (provide
     current-test-db   
     current-working-db
+    current-example-db
     with-db      
     as-transaction
     db-lib-trace

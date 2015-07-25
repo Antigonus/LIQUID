@@ -132,6 +132,7 @@
       (number->string (session-context-client-port a-session-context))
       ))
 
+
 ;;--------------------------------------------------------------------------------
 ;; arithmetic -- these should be set at the syntax level
 ;;
@@ -271,6 +272,72 @@
    (define (unique-to-session-name)
      (string-append "unique-to-session-name-" (number->string (unique-to-session-number))))
    (define (unique-to-session-name-dealloc name) (void))
+
+
+;;--------------------------------------------------------------------------------
+;; if a variable is defined
+;;   see: Metaxal http://stackoverflow.com/questions/20076868/how-to-know-whether-a-racket-variable-is-defined-or-not
+;;
+  (define-syntax (if-defined stx)
+    (syntax-case stx ()
+      [(_ id iftrue iffalse)
+       (let ([where (identifier-binding #'id)])
+         (if where #'iftrue #'iffalse))]))
+
+  (define (if-defined-test-0)
+      (if-defined if-defined-test-x (void) (define if-defined-test-x 9))
+      (and
+        (eqv? (if-defined if-defined-test-no-such-var 'yes 'no) 'no)
+        (eqv? (if-defined if-defined-test-x 'yes 'no) 'yes)
+        (= if-defined-test-x 9)
+        ))
+  (test-hook if-defined-test-0)
+
+  ;; quiet define, if the variable is already defined does nothing (instead of complaining)
+  (define-syntax (qdefine stx)
+    (syntax-case stx ()
+      [(qdefine id value)
+         (let ([where (identifier-binding #'id)])
+           (if where #'(void) #'(define id value))
+           )
+        ]
+      ))
+
+  (define (if-defined-test-1)
+    (let(
+          [y 11]
+          )
+      (qdefine if-defined-test-x 9)
+      (qdefine y 12)
+      (and
+        (= if-defined-test-x 9)
+        (= y 11)
+        )))
+  (test-hook if-defined-test-1)
+
+  ;; quiet define, if the variable is already defined uses set!, else uses define
+  (define-syntax (qdefine! stx)
+    (syntax-case stx ()
+      [(qdefine id value)
+         (let ([where (identifier-binding #'id)])
+           (if where #'(set! id value) #'(define id value))
+           )
+        ]
+      ))
+
+  (define (if-defined-test-2)
+    (let(
+          [y 11]
+          )
+      (qdefine! if-defined-test-x 9)
+      (qdefine! y 12)
+      (and
+        (= if-defined-test-x 9)
+        (= y 12)
+        )))
+  (test-hook if-defined-test-2)
+
+
 
 ;;--------------------------------------------------------------------------------
 ;; common parsing functions
@@ -525,11 +592,16 @@
     (provide session-context->string)
 
 
-  ;; syntax
+  ;; language extensions
   ;;
-    (provide with-semaphore)
-    (provide provide-with-trace)
-    (provide begin-always)
+    (provide
+      if-defined
+      qdefine
+      qdefine!
+      with-semaphore
+      provide-with-trace
+      begin-always
+      )
 
   ;; functions
   ;;
