@@ -7,7 +7,7 @@
 (http-server-trace)
 (http-session-trace)
 ;(log-http-server.txt
-(lynch-lib-trace)
+(misc-lib-trace)
 ;(parser-framing-trace)
 ;(parser-lex-trace)
 ;(parser-trace)

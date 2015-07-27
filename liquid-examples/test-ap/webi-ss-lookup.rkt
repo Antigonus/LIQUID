@@ -17,7 +17,7 @@
   (require net/url net/uri-codec)
   (require (planet neil/html-parsing:2:0))
 
-  (require liquid/lynch-lib.rk) 
+  (require liquid/misc-lib.rk) 
   (require liquid/tokens)
   (require liquid/filter)
   (require liquid/realtime)

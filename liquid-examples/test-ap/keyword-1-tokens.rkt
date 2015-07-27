@@ -20,7 +20,7 @@
 ;;
   (require parser-tools/lex) ; for the position structure
 
-  (require liquid/lynch-lib)
+  (require liquid/misc-lib)
   (require liquid/tokens)
 
 ;;--------------------------------------------------------------------------------

@@ -21,7 +21,7 @@
 ;;--------------------------------------------------------------------------------
 ;; uses these libraries
 ;;
-  (require liquid/lynch-lib) 
+  (require liquid/misc-lib) 
   (require liquid/http-server)
   (require liquid/http-session)
   (require liquid/db-lib)
@@ -55,38 +55,39 @@
 ;;--------------------------------------------------------------------------------
 ;; main
 ;;
-  (define (run [portno 8080]) 
+  (define (run [portno 4330])
 
     ;; other tests pages may be spread thoughout the application code, grep page-hook
     (page-hook "/test/webi-predicate" page-test-webi-predicate)
     (page-hook "/test/conjunction" page-test-conjunction)
 
-    (let(
-          [dbis-init-errors (dbis-init)]
-          [ap-pages-init-errors (ap-pages-init)]
-          [webis-init-errors (webis-init)]
-          )
-      (cond
-        [dbis-init-errors 
-          (displayln 
-            (string-append 
-              "database init exception: " 
-              (->pretty-string dbis-init-errors)))
-          ]
-        [ap-pages-init-errors 
-          (displayln 
-            (string-append
-              "application init exception: " 
-              (->pretty-string ap-pages-init-errors)))
-          ]
-        [webis-init-errors
-          (displayln 
-            (string-append 
-              "web interfaces init exception: " 
-              (->pretty-string webis-init-errors)))
-          ]
-        [else
-          (http-server portno)
-          ]
-        )))
+    (with-db (current-example-db)
+      (let(
+            [dbis-init-errors (dbis-init)]
+            [ap-pages-init-errors (ap-pages-init)]
+            [webis-init-errors (webis-init)]
+            )
+        (cond
+          [dbis-init-errors 
+            (displayln 
+              (string-append 
+                "database init exception: " 
+                (->pretty-string dbis-init-errors)))
+            ]
+          [ap-pages-init-errors 
+            (displayln 
+              (string-append
+                "application init exception: " 
+                (->pretty-string ap-pages-init-errors)))
+            ]
+          [webis-init-errors
+            (displayln 
+              (string-append 
+                "web interfaces init exception: " 
+                (->pretty-string webis-init-errors)))
+            ]
+          [else
+            (http-server portno)
+            ]
+          ))))
 

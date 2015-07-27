@@ -18,7 +18,7 @@
   (require (planet neil/html-writing:2:0))
   (require racket/match)
 
-  (require liquid/lynch-lib)
+  (require liquid/misc-lib)
   (require liquid/http-session)
   (require liquid/http-server-pages)
   (require liquid/htmle-lib)
@@ -323,14 +323,14 @@
 ;; input: ssl context, arrival url
 ;; output: htmle for the webpage
 ;;
-    (define (page-test-keyword the-ssl-context arrival-url)
+    (define (page-test-keyword the-session-context arrival-url)
       (let*
         (
           [header   (html-header collapse-box-script-str)]
           [body     (xexp->html (page-test-keyword-body arrival-url))]
           [document (html-str header body)]
           )
-        (parameterize [(current-output-port (ssl-context-out the-ssl-context))]
+        (parameterize [(current-output-port (session-context-out the-session-context))]
           (display (http-response)) ; comment this out to see the document as text on browser page
           (display document)
           )

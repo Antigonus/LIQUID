@@ -13,7 +13,7 @@
 ;;--------------------------------------------------------------------------------
 ;; uses these libraries
 ;;
-  (require liquid/lynch-lib)
+  (require liquid/misc-lib)
   (require liquid/tokens)
 
   (require "keyword-1-parser-tokens.rkt")

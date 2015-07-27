@@ -88,20 +88,20 @@
       all-passed
       ))
  
-  (define (example-test-0) (= (+ 1 1) 2))
-  (define (example-test-1) (= (+ 1 1) 3))
-  (define (example-test-2) (car 17)) ; fails due to exception being raised
+  (define (example-pass-test) (= (+ 1 1) 2))
+  (define (example-fail-test) (= (+ 1 1) 3))
+  (define (example-exception-test) (car 17)) ; fails due to exception being raised
 
-  (test-hook example-test-0) ; adds the example test to the test suit
-  (test-hook example-test-1) ; adds the example test to the test suit
-  (test-hook example-test-2) ; adds the example test to the test suit
+  (test-hook example-pass-test) ; adds the example test to the test suit
+  (test-hook example-fail-test) ; adds the example test to the test suit
+  (test-hook example-exception-test) ; adds the example test to the test suit
 
 
   (displayln "running example tests.. car passes, cadr fails, caddr has an exception ..")
   (test-all)
-  (test-remove example-test-0)
-  (test-remove example-test-1)
-  (test-remove example-test-2)
+  (test-remove example-pass-test)
+  (test-remove example-fail-test)
+  (test-remove example-exception-test)
 
   (displayln "(test-all) to run the tests")
 
@@ -207,6 +207,7 @@
     (define (length=-test-1) (length= '(a b c) 3))
     (define (length=-test-2) (not (length= '(a b c) 4)))
 
+
     (define (length≠ l n) (not (length= l n)))
 
     (define (singleton l) 
@@ -254,6 +255,45 @@
             (list< '(5 7 4 3) '(5 7 4 3))
             ))))
     (test-hook list<-test-0)         
+
+
+;;--------------------------------------------------------------------------------
+;;  flatten n levels
+;;
+;;
+  (define (flatten-1 l)
+    (foldr
+      (λ(e0 r0)
+        (if (pair? e0)
+          (foldr (λ(e1 r1) (cons e1 r1)) r0 e0)
+          (cons e0 r0)
+          ))
+      '()
+      l
+      ))
+
+  (define-for-syntax (flatten-1 l)
+    (foldr
+      (λ(e0 r0)
+        (if (pair? e0)
+          (foldr (λ(e1 r1) (cons e1 r1)) r0 e0)
+          (cons e0 r0)
+          ))
+      '()
+      l
+      ))
+
+
+  (define (test-flatten-1)
+    (and
+      (equal? (flatten-1 '()) '())
+      (equal? (flatten-1 '(1)) '(1))
+      (equal? (flatten-1 '(1 2 3)) '(1 2 3))
+      (equal? (flatten-1 '((1))) '(1))
+      (equal? (flatten-1 '(1 (2 3) 4)) '(1 2 3 4))
+      (equal? (flatten-1 '((1 2) (3 (4 (5 6)) 7) 8))  '(1 2 3 (4 (5 6)) 7 8) )
+      ))
+  (test-hook test-flatten-1)    
 
 
 ;;--------------------------------------------------------------------------------
@@ -337,8 +377,80 @@
         )))
   (test-hook if-defined-test-2)
 
+;;--------------------------------------------------------------------------------
+;;  parallel cond, executes all that are true
+;;
+;;  else clauses are concatenated
+;;
+;;  need to fix so it returns values from all fired clauses in a list
+;;
+;;  the flag name should be unique to the session, but I don' think that works
+;;  for syntax right now.
+;;
+;;  don't like how having no special cases is a separate function - could end up
+;;  with case specific bugs
+;;
+  (define (filter-fold pred tran l [init-r '()])
+    (foldr
+      (λ(e r) (if (pred e) (cons (tran e) r) r) )
+      init-r
+      l
+      ))
+  (define (filter-fold-test-0)
+    (equal?
+      (filter-fold (λ(e)#t) (λ(e)e) '(1 2 3))
+      '(1 2 3)
+      ))
+  (define (filter-fold-test-1)
+    (equal?
+      (filter-fold (λ(e)(odd? e)) (λ(e)(- e 1)) '(1 2 3))
+      '(0 2)
+      ))
 
 
+  (define-syntax (cond* stx)
+    (let*(
+           [datum (syntax->datum stx)]
+           [clauses (cdr datum)]
+           [condition-clauses (filter (λ(e)(not (eqv? 'else e))) clauses)]
+           [else-clauses      (filter (λ(e)(eqv? 'else e)) clauses)]
+           [program
+             `(let*(
+                    [condition (λ(e)(eval (car e)))]
+                    [transform (λ(e)(eval (cons 'begin (cdr e))))]
+                    [results   (filter-fold condition transform ',condition-clauses)]
+                    )
+                (if (null? results)
+                  (filter-fold (λ(e)#t) transform ',else-clauses)
+                  results
+                  ))]
+           )
+      ;;(display "cond* program:") (displayln program)
+      (datum->syntax stx program)
+      ))
+
+    (define (cond*-test-0)
+      (equal?
+        (cond*
+          [#t 1]
+          [#f (+ 1 1)]
+          [#t (+ 2 1)]
+          )
+        '(1 3)
+        ))
+    (test-hook cond*-test-0)
+
+    (define (cond*-test-1)
+      (equal?
+        (cond*
+          [(odd? 3) 5]
+          [(begin (+ 7 9) #f) (+ 11 13)]
+          [#t (+ 15 17)]
+        )
+      '(5 32)
+        ))
+    (test-hook cond*-test-1)
+  
 ;;--------------------------------------------------------------------------------
 ;; common parsing functions
 ;;
@@ -601,6 +713,7 @@
       with-semaphore
       provide-with-trace
       begin-always
+      cond*
       )
 
   ;; functions
@@ -646,6 +759,9 @@
           singleton
 
           list<
+
+          filter-fold
+
 
       ;; for creating unique to the session numbers or identifiers, might not be unique between sessions
       ;;
