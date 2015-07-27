@@ -380,15 +380,8 @@
 ;;--------------------------------------------------------------------------------
 ;;  parallel cond, executes all that are true
 ;;
-;;  else clauses are concatenated
-;;
-;;  need to fix so it returns values from all fired clauses in a list
-;;
-;;  the flag name should be unique to the session, but I don' think that works
-;;  for syntax right now.
-;;
-;;  don't like how having no special cases is a separate function - could end up
-;;  with case specific bugs
+;;  else true clauses are concatenated and run, so they run in order of appearence in
+;;  the cond.  would like to have cond** that uses threads instead
 ;;
   (define (filter-fold pred tran l [init-r '()])
     (foldr
