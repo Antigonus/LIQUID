@@ -10,27 +10,27 @@
 ;;
   ;(require racket/trace)
   (require "misc-lib.rkt")
-  (require "tokens.rkt")
+  (require "node.rkt")
 
 ;;---------------------------------------------------------------------------------
 ;; trims the parse tree based on a-predicate
 ;;
-;;  input: a list of tokens that may be roots of parse trees, a predicate that accepts and
-;;         may mark a token
+;;  input: a list of nodes that may be roots of parse trees, a predicate that accepts and
+;;         might mark a node
 ;;
-;; output: branches leading to marked tokens
+;; output: branches leading to marked nodes
 ;;         
 ;; After trimming all leaves will be marked. Some intermediate marked takens may appear
 ;; within branches that lead to marked leaves.
 ;;
 ;; Often used to pull out branches leading to error messages.  The branch gives the 
-;; context for the error.  See trim-tok-errs below.
+;; context for the error.  See trim-nd-errs below.
 ;;
-;; Often a parse tree has a single root, see trim-tok below.
+;; Often a parse tree has a single root, see trim-nd below.
 ;;
 ;;
-  (define (trim-toks ts a-predicate)
-    (define (traverse-tokens ts)
+  (define (trim-nds ts a-predicate)
+    (define (traverse-nodes ts)
       (cond
         [(null? ts) '()]
         [(not ts) '()]
@@ -39,27 +39,27 @@
                  [t (car ts)]
                  [r (cdr ts)]
                  [t-marked (a-predicate t)]
-                 [depth-search-results (traverse-tokens (tok-children t))]
+                 [depth-search-results (traverse-nodes (nd-children t))]
                  [branch-marked (pair? depth-search-results)]
                  )
             (cond
               [(or t-marked branch-marked)
                 (let(
                       [y (type t)]
-                      [a (tok-attributes t)]
+                      [a (nd-attributes t)]
                       [c depth-search-results]
                       )
-                  (cons (tok-make* y a c) (traverse-tokens r))
+                  (cons (nd-make* y a c) (traverse-nodes r))
                   )
                 ]
               [else
-                (traverse-tokens r)
+                (traverse-nodes r)
                 ]
               ))
           ]
         ))
-    ;(trace traverse-tokens)
-    (traverse-tokens ts)
+    ;(trace traverse-nodes)
+    (traverse-nodes ts)
     )
 
   ;; useful for testing
@@ -68,19 +68,19 @@
   
 
 ;;--------------------------------------------------------------------------------
-;; for triming a single token
+;; for triming a single node
 ;;
-;; Convenience function for running trim-toks on a single token
+;; Convenience function for running trim-nds on a single node
 ;;
-;; input: a token and a predicate
-;; output: the trimmed token, or #f if no marked tokens were found
+;; input: a node and a predicate
+;; output: the trimmed node, or #f if no marked nodes were found
 ;;
-  (define (trim-tok t a-predicate) 
+  (define (trim-nd t a-predicate) 
     (cond
       [(not t) #f]
       [else
         (let(
-              [trim-result (trim-toks (list t) a-predicate)]
+              [trim-result (trim-nds (list t) a-predicate)]
               )
           (cond
             [(null? trim-result) #f]
@@ -95,22 +95,22 @@
 
 
 ;;;--------------------------------------------------------------------------------
-;;; the trim predicate is set to (tok-has-err)
+;;; the trim predicate is set to (ndhas-err)
 ;;;
-  (define (trim-tok-err t) (trim-tok t tok-has-err))
+  (define (trim-nd-err t) (trim-nd t nd-has-err))
 
 
 ;;---------------------------------------------------------------------------------
 ;; marked
 ;;
-;;  input: a list of tokens that may be roots of parse trees, a predicate that accepts and
-;;         may mark a token, just as for trim-toks.
+;;  input: a list of nodes that may be roots of parse trees, a predicate that accepts and
+;;         might mark a node, just as for trim-nds.
 ;;
-;; output: a list of all marked tokens independent of where they were found in the tree.
+;; output: a list of all marked nodes independent of where they were found in the tree.
 ;;
 ;;
-  (define (marked-toks ts a-predicate)
-    (define (traverse-tokens ts)
+  (define (marked-nds ts a-predicate)
+    (define (traverse-nodes ts)
       (cond
         [(null? ts) '()]
         [(not ts) '()]
@@ -119,8 +119,8 @@
                  [                   t (car ts)]
                  [                   r (cdr ts)]
                  [            t-marked (a-predicate t)]
-                 [depth-search-results (traverse-tokens (tok-children t))]
-                 [     breadth-results (traverse-tokens r)]
+                 [depth-search-results (traverse-nodes (nd-children t))]
+                 [     breadth-results (traverse-nodes r)]
                  [             results (append depth-search-results breadth-results)]
                  )
             (cond
@@ -129,7 +129,7 @@
               ))
           ]
         ))
-    (traverse-tokens ts)
+    (traverse-nodes ts)
     )
 
 ;;---------------------------------------------------------------------------------
@@ -202,8 +202,8 @@
 ;;
 ;;  input: a prefix tree, a tree ; both are lists
 ;;
-;;  this is similar to marked-toks above, where the predicate is the prefix match, but
-;;  marked-toks operates specifically on token trees and ignores attributes.
+;;  this is similar to marked-nds above, where the predicate is the prefix match, but
+;;  marked-nds operates specifically on node trees and ignores attributes.
 ;;
 ;;  use repeated applications of fitler-prefix to get order indpendence of such things
 ;;  as attributes
@@ -297,9 +297,9 @@
 ;; provides
 ;;
    (provide-with-trace "filter"
-     trim-toks
-     trim-tok-err
-     marked-toks
+     trim-nds
+     trim-nd-err
+     marked-nds
      filter-prefix
      )
 

@@ -116,12 +116,12 @@
           )
 
       (define ip (open-input-string request-line))
-      (define tokens (list-strings ip))
-      (define well-formed (= (length tokens) 3))
+      (define nodes (list-strings ip))
+      (define well-formed (= (length nodes) 3))
 
       (if well-formed
           (begin
-            (set!-values (cmd-string url-string protocol) (apply values tokens))
+            (set!-values (cmd-string url-string protocol) (apply values nodes))
             ;(set! cmd (parse-command cmd-string))
             (cond
                   [(string=? cmd-string "GET") (set! cmd `GET)]
@@ -144,8 +144,8 @@
           ;else
           (set! message 
                 (string-append 
-                 "expected three tokens, found " 
-                 (number->string (length tokens))
+                 "expected three nodes, found " 
+                 (number->string (length nodes))
                  ": \""
                  request-line 
                  "\""

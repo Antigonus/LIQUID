@@ -121,7 +121,7 @@
       (with-db (current-working-db)
         (db-lib-init-1)
         )
-      #t
+      #f  ;; false - no errors exist
       ))
 
   (define (db-lib-init-test-0) (db-lib-init))

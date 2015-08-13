@@ -143,12 +143,31 @@
   (define (-- n) (- n 1))
 
 ;;--------------------------------------------------------------------------------
-;; fundamental functions
+;; functions
 ;;    
   (define (do-nothing . args) void) ; possibly examine a value with trace
   (define identity values)
   (define (boolify b) (not (not b))) ; outputs either #t or #f
   (define no-error not) ; useful when returning exception values on fail
+
+   ;;; variable output arity function, returns a symbol on error, or a a variable length
+   ;;; list.  This routine is used splices in multiple continuations baed on the return
+   ;;; type and arity
+   ;;;
+   ;;; input: list  lamda-0 lamda-1 lambda-many
+   ;;;
+   ;;; calls lambda-0 with no arguments if the list is empty,
+   ;;; calls lambda-1 with first element in the list, if the list is length 1
+   ;;; otherwise calls lambda-many with the list
+   ;;;
+     (define (by-arity l y0 y1 y-many [y-no-list identity])
+       (cond
+         [(not (pair? l)) (y-no-list l)]
+         [(null? l)     (y0)]
+         [(length= l 1) (y1 (car l))]
+         [else          (y-many  l)]
+         ))
+
 
 ;;--------------------------------------------------------------------------------
 ;; log utils
@@ -173,6 +192,8 @@
 ;;--------------------------------------------------------------------------------
 ;; list manipulation
 ;;
+  (define (bcons a b) (cons b a)) ; we like to specifiy the object being worked on first
+
   ;; efficient length compares
   ;;
     (define (length* l limit [n 0])
@@ -422,6 +443,8 @@
       (datum->syntax stx program)
       ))
 
+;; notice no test of else, and it don't work
+
     (define (cond*-test-0)
       (equal?
         (cond*
@@ -450,21 +473,15 @@
 
   ;; some string processing routines
   ;;
-    (define (->string x)
+    (define (->string x [conv-fun display]) ; converts x to a string, default uses display, also consider write and pretty-print
       (let(
             [out (open-output-string)]
             )
-        (display x out)
-        (get-output-string out)
-        ))
-
-    (define (->pretty-string x)
-      (let(
-            [out (open-output-string)]
-            )
-        (pretty-print x out)
-        (get-output-string out)
-        ))
+        (conv-fun x out)
+        (begin0
+          (get-output-string out)
+          (close-output-port out)
+          )))
 
     (define (with-quotes str) (string-append "\"" str "\""))
     (define (with-escaped-quotes str)  (string-append (string #\\ #\") str (string #\\ #\")))
@@ -516,7 +533,7 @@
         (equal? (begin (skip-white ip) (non-white ip)) "ef")
       ))
 
-    ;; tokenizer
+    ;; nodeizer
     ;;
     ;; input: an input port 
     ;; output: a list of whitespace separated strings we found up until EOF
@@ -765,8 +782,7 @@
 
       ;; character/string utilities
       ;;
-        ->string ; uses (write) to convert an object to string
-        ->pretty-string ; uses pretty print to convert an object to a string
+        ->string ; converts object to string using [display] or provide write or pretty-print
 
         with-quotes ; puts quotes on a string
         with-escaped-quotes ; with escaped double quotes
@@ -777,6 +793,6 @@
         skip-white   ; skips white chars on port
         non-white-list ; reads non-white chars from port and puts them in a list
         non-white ; returns string rather than list as per non-white-list
-        list-strings ; returns list of white separated tokens found on port
+        list-strings ; returns list of white separated nodes found on port
 
       )

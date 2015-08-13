@@ -1,9 +1,9 @@
 #|
- tokens for the query lexer and parser
+ nodes for the query lexer and parser
 
  created: 2014-12-10T15:11:10Z twl
 
- this extends and specifies tokens defined in tokens.rkt for the query lexer and parser  
+ this extends and specifies nodes defined in nodes.rkt for the query lexer and parser  
 |#
 #lang racket
 
@@ -12,29 +12,29 @@
 ;;
   (require parser-tools/lex) ; for the position structure
   (require "misc-lib.rkt")
-  (require "tokens.rkt")
+  (require "node.rkt")
 
 ;;--------------------------------------------------------------------------------
-;; query parser tokens
+;; query parser nodes
 ;;
-;;  See tokens.rkt for a definition of this class
+;;  See nodes.rkt for a definition of this class
 ;;
-  ;; token children
+  ;; node children
   ;;
-  (define (tok:conjunction) 'tok:conjunction) ; query conjunction
-  (define (tok:operand) 'tok:operand); predicate operand - value must be a token list
-  (define (tok:operand-list) 'tok:operand-list) ; a list of predicate operands - value must be a list of operands
-  (define (tok:pattern) 'tok:pattern) ; we use this to make the operands that need to be filled in
-  (define (tok:pred) 'tok:pred)  ; search predicate
-  (define (tok:paren-node) 'tok:paren-node)
+  (define (tk:conjunction) 'tk:conjunction) ; query conjunction
+  (define (tk:operand) 'tk:operand); predicate operand - value must be a node list
+  (define (tk:operand-list) 'tk:operand-list) ; a list of predicate operands - value must be a list of operands
+  (define (tk:pattern) 'tk:pattern) ; we use this to make the operands that need to be filled in
+  (define (tk:pred) 'tk:pred)  ; search predicate
+  (define (tk:paren-node) 'tk:paren-node)
 
-  (tok-hook
-    (tok:conjunction)
-    (tok:operand)
-    (tok:operand-list)
-    (tok:pattern)
-    (tok:pred)
-    (tok:paren-node)
+  (ndhook
+    (tk:conjunction)
+    (tk:operand)
+    (tk:operand-list)
+    (tk:pattern)
+    (tk:pred)
+    (tk:paren-node)
     )
 
 ;;--------------------------------------------------------------------------------

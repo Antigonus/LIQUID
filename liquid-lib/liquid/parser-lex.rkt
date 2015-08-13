@@ -1,7 +1,7 @@
 #|
  lexer for the query parser
    created: 2014-11-21T14:38:53Z twl
-   tokenizes the input string
+   nodeizes the input string
 |#
 
 #lang racket
@@ -18,17 +18,17 @@
   (require (prefix-in lex: parser-tools/lex-sre))
 
   (require "misc-lib.rkt")
-  (require "tokens.rkt")
-  (require "parser-tokens.rkt")
+  (require "node.rkt")
+  (require "parser-nodes.rkt")
 
  
 ;;--------------------------------------------------------------------------------
 ;; make a lexer
 ;;
 ;;    input: an input port
-;;   output: a list of tokens
+;;   output: a list of nodes
 ;;
-;; parts that don't lex are put in the token 'lex-other'
+;; parts that don't lex are put in the node 'lex-other'
 ;;
  (define (qp-lex in filename)
    (port-count-lines! in)
@@ -40,7 +40,7 @@
          (lex:* (lex:or "_" (char-range #\a #\z) (char-range #\A #\Z) (char-range #\0 #\9))))
         ;
         (let (
-              [a-tok (tok-make-lex (tok:symbol) (position-deconstruct start-pos) (position-deconstruct end-pos) lexeme)]
+              [a-tok (nd-make-lex (tk:symbol) (position-deconstruct start-pos) (position-deconstruct end-pos) lexeme)]
               )
           (cons a-tok (the-lexer input-port))
           )
@@ -50,7 +50,7 @@
        [(lex:seq "\"" (complement (lex:seq any-string "\"" any-string)) "\"")
         ;
         (let (
-              [a-tok (tok-make-lex (tok:string) (position-deconstruct start-pos) (position-deconstruct end-pos) lexeme)]
+              [a-tok (nd-make-lex (tk:string) (position-deconstruct start-pos) (position-deconstruct end-pos) lexeme)]
               )
           (cons a-tok (the-lexer input-port))
           )
@@ -59,7 +59,7 @@
        [(lex:seq "/*" (complement (lex:seq any-string "*/" any-string)) "*/")
         ;
         (let (
-              [a-tok (tok-make-lex (tok:comment) (position-deconstruct start-pos) (position-deconstruct end-pos) lexeme)]
+              [a-tok (nd-make-lex (tk:comment) (position-deconstruct start-pos) (position-deconstruct end-pos) lexeme)]
               )
           (cons a-tok (the-lexer input-port))
           )
@@ -68,7 +68,7 @@
        [(lex:or "(" ")" "," "_" "&")
         ;
         (let (
-              [a-tok (tok-make-lex (tok:punc) (position-deconstruct start-pos) (position-deconstruct end-pos) lexeme)]
+              [a-tok (nd-make-lex (tk:punc) (position-deconstruct start-pos) (position-deconstruct end-pos) lexeme)]
               )
           (cons a-tok (the-lexer input-port))
           )
@@ -77,9 +77,9 @@
        [(lex:seq (lex:? #\-) (lex:+ (char-range #\0 #\9)))
         ; 
         (let*(
-              [t0 (tok-make-lex (tok:number) (position-deconstruct start-pos) (position-deconstruct end-pos) lexeme)]
-              [a0 (attribute-make (attribute:value) (string->number lexeme))]
-              [t1 (tok-append-attributes t0 a0)]
+              [t0 (nd-make-lex (tk:number) (position-deconstruct start-pos) (position-deconstruct end-pos) lexeme)]
+              [a0 (attribute-make (at:value) (string->number lexeme))]
+              [t1 (nd-ascribe-attribute t0 a0)]
               )
           (cons t1 (the-lexer input-port))
           )
@@ -95,7 +95,7 @@
          (let*(
                [other-string-continue (non-white input-port)] ; non-white is in utils.rkt
                [other-string (string-append lexeme other-string-continue)]
-               [a-tok (tok-make-lex (tok:lex-other) (position-deconstruct start-pos) (position-deconstruct end-pos) other-string)]
+               [a-tok (nd-make-lex (tk:lex-other) (position-deconstruct start-pos) (position-deconstruct end-pos) other-string)]
                )
            (cons a-tok (the-lexer input-port))
            )
@@ -112,28 +112,28 @@
            [ts (qp-lex in "lex-test-0")]
            [expected-ts 
              `(
-                (tok:symbol ((attribute:source source-generator-lex "test-session" (1 1 0)   (3 1 2))  (attribute:lexeme "a1")))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (3 1 2)   (4 1 3))  (attribute:lexeme "(")))
-                (tok:symbol ((attribute:source source-generator-lex "test-session" (4 1 3)   (5 1 4))  (attribute:lexeme "a")))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (6 1 5)   (7 1 6))  (attribute:lexeme ",")))
-                (tok:symbol ((attribute:source source-generator-lex "test-session" (7 1 6)   (8 1 7))  (attribute:lexeme "b")))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (8 1 7)   (9 1 8))  (attribute:lexeme ",")))
-                (tok:symbol ((attribute:source source-generator-lex "test-session" (9 1 8)   (10 1 9)) (attribute:lexeme "c")))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (10 1 9)  (11 1 10))(attribute:lexeme ")")))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (12 1 11) (13 1 12))(attribute:lexeme "&")))
-                (tok:symbol ((attribute:source source-generator-lex "test-session" (14 1 13) (16 1 15))(attribute:lexeme "Q2")))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (16 1 15) (17 1 16))(attribute:lexeme "(")))
-                (tok:number ((attribute:source source-generator-lex "test-session" (17 1 16) (18 1 17))(attribute:lexeme "1")(attribute:value 1)))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (18 1 17) (19 1 18))(attribute:lexeme ",")))
-                (tok:number ((attribute:source source-generator-lex "test-session" (19 1 18) (20 1 19))(attribute:lexeme "3")(attribute:value 3)))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (20 1 19) (21 1 20))(attribute:lexeme ",")))
-                (tok:number ((attribute:source source-generator-lex "test-session" (21 1 20) (22 1 21))(attribute:lexeme "5")(attribute:value 5)))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (22 1 21) (23 1 22))(attribute:lexeme ")")))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (24 1 23) (25 1 24))(attribute:lexeme "&")))
-                (tok:symbol ((attribute:source source-generator-lex "test-session" (26 1 25) (28 1 27))(attribute:lexeme "q3")))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (28 1 27) (29 1 28))(attribute:lexeme "(")))
-                (tok:string ((attribute:source source-generator-lex "test-session" (29 1 28) (36 1 35))(attribute:lexeme "\"apple\"")))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (36 1 35) (37 1 36))(attribute:lexeme ")")))
+                (tk:symbol ((at:source source-generator-lex "test-session" (1 1 0)   (3 1 2))  (at:lexeme "a1")))
+                (tk:punc   ((at:source source-generator-lex "test-session" (3 1 2)   (4 1 3))  (at:lexeme "(")))
+                (tk:symbol ((at:source source-generator-lex "test-session" (4 1 3)   (5 1 4))  (at:lexeme "a")))
+                (tk:punc   ((at:source source-generator-lex "test-session" (6 1 5)   (7 1 6))  (at:lexeme ",")))
+                (tk:symbol ((at:source source-generator-lex "test-session" (7 1 6)   (8 1 7))  (at:lexeme "b")))
+                (tk:punc   ((at:source source-generator-lex "test-session" (8 1 7)   (9 1 8))  (at:lexeme ",")))
+                (tk:symbol ((at:source source-generator-lex "test-session" (9 1 8)   (10 1 9)) (at:lexeme "c")))
+                (tk:punc   ((at:source source-generator-lex "test-session" (10 1 9)  (11 1 10))(at:lexeme ")")))
+                (tk:punc   ((at:source source-generator-lex "test-session" (12 1 11) (13 1 12))(at:lexeme "&")))
+                (tk:symbol ((at:source source-generator-lex "test-session" (14 1 13) (16 1 15))(at:lexeme "Q2")))
+                (tk:punc   ((at:source source-generator-lex "test-session" (16 1 15) (17 1 16))(at:lexeme "(")))
+                (tk:number ((at:source source-generator-lex "test-session" (17 1 16) (18 1 17))(at:lexeme "1")(at:value 1)))
+                (tk:punc   ((at:source source-generator-lex "test-session" (18 1 17) (19 1 18))(at:lexeme ",")))
+                (tk:number ((at:source source-generator-lex "test-session" (19 1 18) (20 1 19))(at:lexeme "3")(at:value 3)))
+                (tk:punc   ((at:source source-generator-lex "test-session" (20 1 19) (21 1 20))(at:lexeme ",")))
+                (tk:number ((at:source source-generator-lex "test-session" (21 1 20) (22 1 21))(at:lexeme "5")(at:value 5)))
+                (tk:punc   ((at:source source-generator-lex "test-session" (22 1 21) (23 1 22))(at:lexeme ")")))
+                (tk:punc   ((at:source source-generator-lex "test-session" (24 1 23) (25 1 24))(at:lexeme "&")))
+                (tk:symbol ((at:source source-generator-lex "test-session" (26 1 25) (28 1 27))(at:lexeme "q3")))
+                (tk:punc   ((at:source source-generator-lex "test-session" (28 1 27) (29 1 28))(at:lexeme "(")))
+                (tk:string ((at:source source-generator-lex "test-session" (29 1 28) (36 1 35))(at:lexeme "\"apple\"")))
+                (tk:punc   ((at:source source-generator-lex "test-session" (36 1 35) (37 1 36))(at:lexeme ")")))
                 )
              ]
            )
@@ -148,14 +148,14 @@
            [ts (qp-lex in "lex-test-1")]
            [expected-ts 
              `(
-                (tok:symbol ((attribute:source source-generator-lex "test-session" (1 1 0)  (4 1 3))  (attribute:lexeme "qed")))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (4 1 3)  (5 1 4))  (attribute:lexeme "(")))
-                (tok:symbol ((attribute:source source-generator-lex "test-session" (5 1 4)  (6 1 5))  (attribute:lexeme "a")))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (6 1 5)  (7 1 6))  (attribute:lexeme ",")))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (7 1 6)  (8 1 7))  (attribute:lexeme "_")))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (8 1 7)  (9 1 8))  (attribute:lexeme ",")))
-                (tok:symbol ((attribute:source source-generator-lex "test-session" (9 1 8)  (10 1 9)) (attribute:lexeme "c")))
-                (tok:punc   ((attribute:source source-generator-lex "test-session" (10 1 9) (11 1 10))(attribute:lexeme ")")))
+                (tk:symbol ((at:source source-generator-lex "test-session" (1 1 0)  (4 1 3))  (at:lexeme "qed")))
+                (tk:punc   ((at:source source-generator-lex "test-session" (4 1 3)  (5 1 4))  (at:lexeme "(")))
+                (tk:symbol ((at:source source-generator-lex "test-session" (5 1 4)  (6 1 5))  (at:lexeme "a")))
+                (tk:punc   ((at:source source-generator-lex "test-session" (6 1 5)  (7 1 6))  (at:lexeme ",")))
+                (tk:punc   ((at:source source-generator-lex "test-session" (7 1 6)  (8 1 7))  (at:lexeme "_")))
+                (tk:punc   ((at:source source-generator-lex "test-session" (8 1 7)  (9 1 8))  (at:lexeme ",")))
+                (tk:symbol ((at:source source-generator-lex "test-session" (9 1 8)  (10 1 9)) (at:lexeme "c")))
+                (tk:punc   ((at:source source-generator-lex "test-session" (10 1 9) (11 1 10))(at:lexeme ")")))
                 )
              ]
            )

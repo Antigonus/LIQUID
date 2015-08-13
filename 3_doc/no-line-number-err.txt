@@ -51,7 +51,7 @@ where the heck is this coming from???
      /usr/share/racket/collects/racket/private/misc.rkt:87:7
 
 
-3. the classic, somewhere in a 500 line file is an unbound identifier
+3. unknown identifiers are not so hard to find, unless created by a macro
 
 racket@misc-lib.rkt> (enter! "db-lib.rkt")
 (begin (require racket/trace) (define (db-lib-trace) (trace db-lib-init) (trace sql:exec) (trace sql:exec*) (trace sql:value) (trace sql:value*) (trace sql:maybe-value) (trace sql:maybe-value*) (trace sql:row) (trace sql:row*) (trace sql:rows) (trace sql:rows*) (trace sql:list) (trace sql:list*) (trace transaction:begin) (trace transaction:commit) (trace transaction:rollback) (trace column-list) (trace db:alloc-name) (trace db:alloc-number) (trace db:create-keyspace) (trace db:create-table) (trace db:delete-keyspace) (trace db:delete-table) (trace db:delete-table*) (trace db:is-keyspace) (trace db:is-table) (trace db:tables) (trace keyspace:alloc-number) (trace keyspace:dealloc-number) (trace table:delete) (trace table:insert) (trace table:insert*) (trace table:match)) (define (db-lib-untrace) (untrace db-lib-init) (untrace sql:exec) (untrace sql:exec*) (untrace sql:value) (untrace sql:value*) (untrace sql:maybe-value) (untrace sql:maybe-value*) (untrace sql:row) (untrace sql:row*) (untrace sql:rows) (untrace sql:rows*) (untrace sql:list) (untrace sql:list*) (untrace transaction:begin) (untrace transaction:commit) (untrace transaction:rollback) (untrace column-list) (untrace db:alloc-name) (untrace db:alloc-number) (untrace db:create-keyspace) (untrace db:create-table) (untrace db:delete-keyspace) (untrace db:delete-table) (untrace db:delete-table*) (untrace db:is-keyspace) (untrace db:is-table) (untrace db:tables) (untrace keyspace:alloc-number) (untrace keyspace:dealloc-number) (untrace table:delete) (untrace table:insert) (untrace table:insert*) (untrace table:match)) (provide db-lib-init) (provide sql:exec) (provide sql:exec*) (provide sql:value) (provide sql:value*) (provide sql:maybe-value) (provide sql:maybe-value*) (provide sql:row) (provide sql:row*) (provide sql:rows) (provide sql:rows*) (provide sql:list) (provide sql:list*) (provide transaction:begin) (provide transaction:commit) (provide transaction:rollback) (provide column-list) (provide db:alloc-name) (provide db:alloc-number) (provide db:create-keyspace) (provide db:create-table) (provide db:delete-keyspace) (provide db:delete-table) (provide db:delete-table*) (provide db:is-keyspace) (provide db:is-table) (provide db:tables) (provide keyspace:alloc-number) (provide keyspace:dealloc-number) (provide table:delete) (provide table:insert) (provide table:insert*) (provide table:match))
@@ -63,3 +63,20 @@ db-lib-init: unbound identifier in module
    /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
    /usr/share/racket/collects/racket/private/misc.rkt:87:7
 
+4.  say what? ... narrowed down to single module, never mind that module is 500 lines long .. went away after running
+raco setup on the library again
+
+racket@ap.rkt> (enter! "ap.rkt")
+  [re-loading /home/deep/liquid-examples/test-ap/ap.rkt]
+link: bad variable linkage;
+ reference to a variable that is not a procedure or structure-type constant across all instantiations
+  reference phase level: 0
+  variable module: "/home/deep/liquid-lib/liquid/misc-lib.rkt"
+  variable phase: 0
+  reference in module: "/home/deep/liquid-lib/liquid/http-session.rkt"
+  in: session-context-out
+  context...:
+   /home/deep/liquid-lib/liquid/http-session.rkt: [running body]
+   /home/deep/liquid-examples/test-ap/ap.rkt: [traversing imports]
+   /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+   /usr/share/racket/collects/racket/private/misc.rkt:87:7

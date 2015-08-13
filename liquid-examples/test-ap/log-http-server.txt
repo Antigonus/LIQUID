@@ -1,29 +1,28 @@
-2015-07-18T15:34:06 http-server start
-2015-07-18T15:34:46 start ssl session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54524)
-2015-07-18T15:34:46 end session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54524) #f #<void>
-2015-07-18T15:34:46 start ssl session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54525)
-2015-07-18T15:34:46 end session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54525) #f #<void>
-2015-07-18T15:35:58 start ssl session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54526)
-2015-07-18T15:35:58 start ssl session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54527)
-2015-07-18T15:35:58 GET / HTTP/1.1
-2015-07-18T15:35:59 end session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54526) #t #<void>
-2015-07-18T15:35:59 GET /favicon.ico HTTP/1.1
-2015-07-18T15:35:59 end session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54527) #t #<void>
-2015-07-18T15:35:59 start ssl session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54528)
-2015-07-18T15:35:59 GET /favicon.ico HTTP/1.1
-2015-07-18T15:35:59 end session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54528) #t #<void>
-2015-07-18T15:36:08 start ssl session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54529)
-2015-07-18T15:36:08 start ssl session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54530)
-2015-07-18T15:36:08 GET /ip HTTP/1.1
-2015-07-18T15:36:08 end session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54529) #t #<void>
-2015-07-18T15:36:13 end session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54530) #t request-read-failed
-2015-07-18T15:38:39 start ssl session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54531)
-2015-07-18T15:38:40 start ssl session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54532)
-2015-07-18T15:38:40 GET /server/ssl HTTP/1.1
-2015-07-18T15:38:40 end session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54531) #t #<void>
-2015-07-18T15:38:46 end session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54532) #t request-read-failed
-2015-07-18T15:38:57 start ssl session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54533)
-2015-07-18T15:38:57 start ssl session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54534)
+2015-07-28T08:22:01 http-server start
+2015-07-28T08:23:55 start ssl session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44891)
+2015-07-28T08:23:55 end session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44891) #f #<void>
+2015-07-28T08:23:55 start ssl session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44892)
+2015-07-28T08:23:55 end session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44892) #f #<void>
+2015-07-28T08:24:12 start ssl session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44893)
+2015-07-28T08:24:13 GET /server/hello HTTP/1.1
+2015-07-28T08:24:13 end session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44893) #t #<void>
+2015-07-28T08:24:14 start ssl session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44894)
+2015-07-28T08:24:14 GET /favicon.ico HTTP/1.1
+2015-07-28T08:24:14 end session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44894) #t #<void>
+2015-07-28T08:24:14 start ssl session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44895)
+2015-07-28T08:24:14 GET /favicon.ico HTTP/1.1
+2015-07-28T08:24:14 end session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44895) #t #<void>
+2015-07-28T08:25:00 start ssl session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44899)
+2015-07-28T08:25:00 start ssl session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44900)
+2015-07-28T08:25:00 GET /test/webi-predicate HTTP/1.1
+2015-07-28T08:25:00 end session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44899) #t #<void>
+2015-07-28T08:25:06 end session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44900) #t request-read-failed
+2015-07-28T08:25:17 start ssl session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44901)
+2015-07-28T08:25:18 start ssl session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44902)
+2015-07-28T08:25:18 GET /test/webi-predicate?query=dblp%28%22Cali%22%2C_%2C_%2C2015%29 HTTP/1.1
+2015-07-28T08:25:24 end session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44902) #t request-read-failed
+2015-07-28T08:25:28 end session #(struct:session-context #<input-port> #<output-port> 127.0.0.1 4330 127.0.0.1 44901) #t #<void>
+ssion #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54534)
 2015-07-18T15:38:57 GET /server/hello HTTP/1.1
 2015-07-18T15:38:57 end session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54533) #t #<void>
 2015-07-18T15:39:03 end session #(struct:ssl-context #<input-port> #<output-port> 127.0.0.1 4432 127.0.0.1 54534) #t request-read-failed

@@ -17,8 +17,8 @@
   (require net/url net/uri-codec)
   (require (planet neil/html-parsing:2:0))
   (require "misc-lib.rkt") 
-  (require "tokens.rkt")
-  (require "parser-tokens.rkt")
+  (require "node.rkt")
+  (require "parser-nodes.rkt")
   (require "parser-well-formed.rkt")
   (require "realtime.rkt")
 
@@ -147,7 +147,7 @@
       [(not (well-formed-pred pred)) not-found-webi]
       [else
         (let*(
-               [pred-name (car (tok-value pred))]
+               [pred-name (car (ndvalue pred))]
                [the-webi (webi-lookup pred-name)]
                )
           the-webi

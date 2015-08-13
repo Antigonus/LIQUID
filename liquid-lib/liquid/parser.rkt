@@ -10,9 +10,9 @@
 ;; uses these libraries
 ;;
   (require "misc-lib.rkt")
-  (require "tokens.rkt")
+  (require "node.rkt")
   (require "filter.rkt")
-  (require "parser-tokens.rkt")
+  (require "parser-nodes.rkt")
   (require "parser-lex.rkt")
   (require "parser-framing.rkt")
 
@@ -28,10 +28,10 @@
   ;;   but we are ready for the bigger language!
   ;;
   ;;  for grammar rules
-  ;;  input:  a token list the whole of which is matched
+  ;;  input:  a node list the whole of which is matched
   ;;          an imparative flag saying whether it is an error not to match
-  ;;  output: #f if the rule does not match,  or a token that is created by the rule
-  ;;          the returned token may be marked with an error attribute if matching was forced
+  ;;  output: #f if the rule does not match,  or a node that is created by the rule
+  ;;          the returned node may be marked with an error attribute if matching was forced
 
 
     ;;; Currently, when the operand to a  predicate is a single underscore '_' we consider this to be 
@@ -50,13 +50,13 @@
                   )
               (cond
                 [(and 
-                   (eqv? t0-type (tok:punc))
-                   (tok-attribute-is (attribute:lexeme) t0 "_")
+                   (eqv? t0-type (tk:punc))
+                   (nd-attribute-is (at:lexeme) t0 "_")
                    )
-                  (tok-make-parse ts (tok:pattern) 'rule-pattern)
+                  (nd-make-parse ts (tk:pattern) 'rule-pattern)
                   ]
                 [else
-                  (rule-errsyn-expected ts imperative (tok:pattern) 'rule-pattern)
+                  (rule-errsyn-expected ts imperative (tk:pattern) 'rule-pattern)
                   ]
                 ))
             ]
@@ -70,7 +70,7 @@
                )
           (.eq.
             the-parse
-            '(tok:pattern ((attribute:source rule-pattern "test-session" (1 1 0) (2 1 1))))
+            '(tk:pattern ((at:source rule-pattern "test-session" (1 1 0) (2 1 1))))
             )
           ))
 
@@ -83,7 +83,7 @@
       (define (rule-operand ts [imperative (imperative:test)])
         (cond
           [(null? ts) 
-            (rule-errsyn-expected ts imperative (tok:operand) 'rule-operand)
+            (rule-errsyn-expected ts imperative (tk:operand) 'rule-operand)
             ]
           [else
             (let*(
@@ -92,13 +92,13 @@
                    )
               (cond 
                 [(or
-                   (eqv? t0-type (tok:symbol))
-                   (eqv? t0-type (tok:number))
-                   (eqv? t0-type (tok:string))
+                   (eqv? t0-type (tk:symbol))
+                   (eqv? t0-type (tk:number))
+                   (eqv? t0-type (tk:string))
                    )
                   (let*(
-                         [tnew (tok-make-parse ts (tok:operand) 'rule-operand)]
-                         [tret (tok-append-children tnew t0)]
+                         [tnew (nd-make-parse ts (tk:operand) 'rule-operand)]
+                         [tret (nd-append-children tnew t0)]
                          )
                     tret
                     )]
@@ -110,13 +110,13 @@
                     (cond 
                       [pat
                         (let*(
-                               [tnew (tok-make-parse ts (tok:operand) 'rule-operand)]
-                               [tret (tok-append-children tnew pat)]
+                               [tnew (nd-make-parse ts (tk:operand) 'rule-operand)]
+                               [tret (nd-append-children tnew pat)]
                                )
                           tret
                           )]
                       [else
-                        (rule-errsyn-expected ts imperative (tok:operand) 'rule-operand)
+                        (rule-errsyn-expected ts imperative (tk:operand) 'rule-operand)
                         ]))]))]))
 
     (define (rule-operand-test-0)
@@ -127,11 +127,11 @@
              )
         (.eq.
           the-parse
-          '(tok:operand
-             ((attribute:source rule-operand "test-session" (1 1 0) (6 1 5)))
-             (tok:string
-               ((attribute:source source-generator-lex "test-session" (1 1 0) (6 1 5))
-                 (attribute:lexeme "\"abc\""))))
+          '(tk:operand
+             ((at:source rule-operand "test-session" (1 1 0) (6 1 5)))
+             (tk:string
+               ((at:source source-generator-lex "test-session" (1 1 0) (6 1 5))
+                 (at:lexeme "\"abc\""))))
           )
         ))
     (test-hook rule-operand-test-0)
@@ -143,10 +143,10 @@
               )
         (.eq.
           the-parse
-          '(tok:operand
-             ((attribute:source rule-operand "test-session" (1 1 0) (2 1 1)))
-             (tok:pattern
-               ((attribute:source rule-pattern "test-session" (1 1 0) (2 1 1)))))
+          '(tk:operand
+             ((at:source rule-operand "test-session" (1 1 0) (2 1 1)))
+             (tk:pattern
+               ((at:source rule-pattern "test-session" (1 1 0) (2 1 1)))))
           )
         ))
     (test-hook rule-operand-test-1)
@@ -160,25 +160,25 @@
       (cond
         [(and
            (length= ts 2)
-           (($tok (tok:symbol)) (car ts))
-           (($tok (tok:paren-node)) (cadr ts)))
+           (($tok (tk:symbol)) (car ts))
+           (($tok (tk:paren-node)) (cadr ts)))
 
           (let*(
-                 [separator (λ(t) (punc-val-is t ","))]
-                 [ts-of-operand-list (tok-children (cadr ts))]
+                 [separator (λ(t) (punc-is t ","))]
+                 [ts-of-operand-list (nd-children (cadr ts))]
                  [item-list (framed-items-sep ts-of-operand-list separator)]
                  [operand-list (map (λ(ts) (rule-operand ts (imperative:force))) item-list)]
-                 [new-t0  (tok-make-parse ts (tok:pred) 'rule-pred)]
-                 [new-t1  (tok-append-children* new-t0 operand-list)]
-                 [pname   (tok-lexeme (car ts))]
-                 [at0     (attribute-make* (attribute:value) pname)]
-                 [new-t2  (tok-append-attributes new-t1 at0)]
+                 [new-t0  (nd-make-parse ts (tk:pred) 'rule-pred)]
+                 [new-t1  (nd-append-children* new-t0 operand-list)]
+                 [pname   (nd-lexeme (car ts))]
+                 [at0     (attribute-make* (at:value) pname)]
+                 [new-t2  (nd-ascribe-attribute new-t1 at0)]
                  )
             new-t2
             )
           ]
         [else  
-          (rule-errsyn-expected ts imperative (tok:pred) 'rule-pred)
+          (rule-errsyn-expected ts imperative (tk:pred) 'rule-pred)
           ]
         ))
 
@@ -191,23 +191,23 @@
              )
         (.eq.
           the-parse
-          '(tok:pred
-             ((attribute:source rule-pred "test-session" (1 1 0) (11 1 10))
-               (attribute:value "qed"))
-             (tok:operand
-               ((attribute:source rule-operand "test-session" (5 1 4) (6 1 5)))
-               (tok:symbol
-                 ((attribute:source source-generator-lex "test-session" (5 1 4) (6 1 5))
-                   (attribute:lexeme "a"))))
-             (tok:operand
-               ((attribute:source rule-operand "test-session" (7 1 6) (8 1 7)))
-               (tok:pattern
-                 ((attribute:source rule-pattern "test-session" (7 1 6) (8 1 7)))))
-             (tok:operand
-               ((attribute:source rule-operand "test-session" (9 1 8) (10 1 9)))
-               (tok:symbol
-                 ((attribute:source source-generator-lex "test-session" (9 1 8) (10 1 9))
-                   (attribute:lexeme "c")))))
+          '(tk:pred
+             ((at:source rule-pred "test-session" (1 1 0) (11 1 10))
+               (at:value "qed"))
+             (tk:operand
+               ((at:source rule-operand "test-session" (5 1 4) (6 1 5)))
+               (tk:symbol
+                 ((at:source source-generator-lex "test-session" (5 1 4) (6 1 5))
+                   (at:lexeme "a"))))
+             (tk:operand
+               ((at:source rule-operand "test-session" (7 1 6) (8 1 7)))
+               (tk:pattern
+                 ((at:source rule-pattern "test-session" (7 1 6) (8 1 7)))))
+             (tk:operand
+               ((at:source rule-operand "test-session" (9 1 8) (10 1 9)))
+               (tk:symbol
+                 ((at:source source-generator-lex "test-session" (9 1 8) (10 1 9))
+                   (at:lexeme "c")))))
           )
         ))
     (test-hook rule-pred-test-0)
@@ -217,21 +217,21 @@
   ;;
     (define (rule-conjunction ts  [imperative (imperative:test)]) 
       (cond
-        [(null? ts)  (rule-errsyn-expected ts imperative (tok:conjunction) 'rule-conjunction)]
+        [(null? ts)  (rule-errsyn-expected ts imperative (tk:conjunction) 'rule-conjunction)]
         [else
           (let*(
-                 [separator (λ(t) (punc-val-is t "&"))]
+                 [separator (λ(t) (punc-is t "&"))]
                  [item-list (framed-items-sep ts separator)]
                  [pred-list (map (λ(ts) (rule-pred ts (imperative:force))) item-list)]
                  )
             (cond
               [(null? item-list) 
-                (rule-errsyn-expected ts imperative (tok:conjunction) 'rule-conjunction)
+                (rule-errsyn-expected ts imperative (tk:conjunction) 'rule-conjunction)
                 ]
               [else
                 (let*(
-                       [new-t0  (tok-make-parse ts (tok:conjunction) 'rule-conjunction)]
-                       [new-t1  (tok-append-children* new-t0 pred-list)]
+                       [new-t0  (nd-make-parse ts (tk:conjunction) 'rule-conjunction)]
+                       [new-t1  (nd-append-children* new-t0 pred-list)]
                        )
                   new-t1
                   )
@@ -244,71 +244,71 @@
              [the-parse (rule-conjunction framed-ts)]
              )
         (.eq. the-parse
-          '(tok:conjunction
-             ((attribute:source rule-conjunction "test-session" (1 1 0) (57 1 56)))
+          '(tk:conjunction
+             ((at:source rule-conjunction "test-session" (1 1 0) (57 1 56)))
 
-             (tok:pred
-               ((attribute:source rule-pred "test-session" (1 1 0) (57 1 56))
-                 (attribute:value "qed"))
-               (tok:operand
-                 ((attribute:source rule-operand "test-session" (5 1 4) (6 1 5)))
-                 (tok:symbol
-                   ((attribute:source source-generator-lex "test-session" (5 1 4) (6 1 5))
-                     (attribute:lexeme "a"))))
-               (tok:operand
-                 ((attribute:source rule-operand "test-session" (7 1 6) (8 1 7)))
-                 (tok:pattern
-                   ((attribute:source rule-pattern "test-session" (7 1 6) (8 1 7)))))
-               (tok:operand
-                 ((attribute:source rule-operand "test-session" (9 1 8) (10 1 9)))
-                 (tok:symbol
-                   ((attribute:source source-generator-lex "test-session" (9 1 8) (10 1 9))
-                     (attribute:lexeme "c")))))
+             (tk:pred
+               ((at:source rule-pred "test-session" (1 1 0) (57 1 56))
+                 (at:value "qed"))
+               (tk:operand
+                 ((at:source rule-operand "test-session" (5 1 4) (6 1 5)))
+                 (tk:symbol
+                   ((at:source source-generator-lex "test-session" (5 1 4) (6 1 5))
+                     (at:lexeme "a"))))
+               (tk:operand
+                 ((at:source rule-operand "test-session" (7 1 6) (8 1 7)))
+                 (tk:pattern
+                   ((at:source rule-pattern "test-session" (7 1 6) (8 1 7)))))
+               (tk:operand
+                 ((at:source rule-operand "test-session" (9 1 8) (10 1 9)))
+                 (tk:symbol
+                   ((at:source source-generator-lex "test-session" (9 1 8) (10 1 9))
+                     (at:lexeme "c")))))
 
-             (tok:pred
-               ((attribute:source rule-pred "test-session" (12 1 11) (57 1 56))
-                 (attribute:value "dlp"))
-               (tok:operand
-                 ((attribute:source rule-operand "test-session" (16 1 15) (19 1 18)))
-                 (tok:string
-                   ((attribute:source
+             (tk:pred
+               ((at:source rule-pred "test-session" (12 1 11) (57 1 56))
+                 (at:value "dlp"))
+               (tk:operand
+                 ((at:source rule-operand "test-session" (16 1 15) (19 1 18)))
+                 (tk:string
+                   ((at:source
                       source-generator-lex
                       "test-session"
                       (16 1 15)
                       (19 1 18))
-                     (attribute:lexeme "\"a\""))))
-               (tok:operand
-                 ((attribute:source rule-operand "test-session" (21 1 20) (22 1 21)))
-                 (tok:number
-                   ((attribute:source
+                     (at:lexeme "\"a\""))))
+               (tk:operand
+                 ((at:source rule-operand "test-session" (21 1 20) (22 1 21)))
+                 (tk:number
+                   ((at:source
                       source-generator-lex
                       "test-session"
                       (21 1 20)
                       (22 1 21))
-                     (attribute:lexeme "3")
-                     (attribute:value 3))))
-               (tok:operand
-                 ((attribute:source rule-operand "test-session" (24 1 23) (29 1 28)))
-                 (tok:symbol
-                   ((attribute:source
+                     (at:lexeme "3")
+                     (at:value 3))))
+               (tk:operand
+                 ((at:source rule-operand "test-session" (24 1 23) (29 1 28)))
+                 (tk:symbol
+                   ((at:source
                       source-generator-lex
                       "test-session"
                       (24 1 23)
                       (29 1 28))
-                     (attribute:lexeme "seven")))))
+                     (at:lexeme "seven")))))
 
-             (tok:pred
-               ((attribute:source rule-pred "test-session" (33 1 32) (57 1 56))
-                 (attribute:value "wikipedia"))
-               (tok:operand
-                 ((attribute:source rule-operand "test-session" (43 1 42) (56 1 55)))
-                 (tok:symbol
-                   ((attribute:source
+             (tk:pred
+               ((at:source rule-pred "test-session" (33 1 32) (57 1 56))
+                 (at:value "wikipedia"))
+               (tk:operand
+                 ((at:source rule-operand "test-session" (43 1 42) (56 1 55)))
+                 (tk:symbol
+                   ((at:source
                       source-generator-lex
                       "test-session"
                       (43 1 42)
                       (56 1 55))
-                     (attribute:lexeme "number_theory"))))))
+                     (at:lexeme "number_theory"))))))
           )))
     (test-hook rule-conjunction-test-0)
 
@@ -331,41 +331,41 @@
              )
         (.eq.
           the-parse
-          '(tok:conjunction
-             ((attribute:source rule-conjunction "test-session" (1 1 0) (29 1 28)))
-             (tok:pred
-                ((attribute:source rule-pred "test-session" (1 1 0) (29 1 28))
-                  (attribute:value "who"))
-                (tok:operand
-                  ((attribute:source rule-operand "test-session" (5 1 4) (10 1 9)))
-                  (tok:string
-                    ((attribute:source source-generator-lex "test-session" (5 1 4) (10 1 9))
-                      (attribute:lexeme "\"jim\""))))
-                (tok:operand
-                  ((attribute:source rule-operand "test-session" (12 1 11) (13 1 12)))
-                  (tok:pattern
-                    ((attribute:source rule-pattern "test-session" (12 1 11) (13 1 12))))))
-             (tok:pred
-               ((attribute:source rule-pred "test-session" (17 1 16) (29 1 28))
-                 (attribute:value "writes"))
-               (tok:operand
-                 ((attribute:source rule-operand "test-session" (24 1 23) (25 1 24)))
-                 (tok:symbol
-                   ((attribute:source
+          '(tk:conjunction
+             ((at:source rule-conjunction "test-session" (1 1 0) (29 1 28)))
+             (tk:pred
+                ((at:source rule-pred "test-session" (1 1 0) (29 1 28))
+                  (at:value "who"))
+                (tk:operand
+                  ((at:source rule-operand "test-session" (5 1 4) (10 1 9)))
+                  (tk:string
+                    ((at:source source-generator-lex "test-session" (5 1 4) (10 1 9))
+                      (at:lexeme "\"jim\""))))
+                (tk:operand
+                  ((at:source rule-operand "test-session" (12 1 11) (13 1 12)))
+                  (tk:pattern
+                    ((at:source rule-pattern "test-session" (12 1 11) (13 1 12))))))
+             (tk:pred
+               ((at:source rule-pred "test-session" (17 1 16) (29 1 28))
+                 (at:value "writes"))
+               (tk:operand
+                 ((at:source rule-operand "test-session" (24 1 23) (25 1 24)))
+                 (tk:symbol
+                   ((at:source
                       source-generator-lex
                       "test-session"
                       (24 1 23)
                       (25 1 24))
-                     (attribute:lexeme "x"))))
-               (tok:operand
-                 ((attribute:source rule-operand "test-session" (27 1 26) (28 1 27)))
-                 (tok:symbol
-                   ((attribute:source
+                     (at:lexeme "x"))))
+               (tk:operand
+                 ((at:source rule-operand "test-session" (27 1 26) (28 1 27)))
+                 (tk:symbol
+                   ((at:source
                       source-generator-lex
                       "test-session"
                       (27 1 26)
                       (28 1 27))
-                     (attribute:lexeme "y"))))))
+                     (at:lexeme "y"))))))
           )))
       (test-hook parser-test-0)
 
@@ -378,7 +378,7 @@
       (
         [in (open-input-string the-query)]
         [parse (parser in)]
-        [parse-errors (trim-tok-err parse)]
+        [parse-errors (trim-nd-err parse)]
         )
       (list parse parse-errors)
       ))
