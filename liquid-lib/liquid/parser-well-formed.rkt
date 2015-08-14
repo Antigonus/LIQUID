@@ -23,20 +23,20 @@
 ;;
    (define (well-formed-operand op) ; should add more checks ..
      (and
-       (eqv? (type op) (tk:operand))
-       (length= (ndchildren op) 1)
+       (eqv? (type op) (ndql0:operand))
+       (length= (nd-children op) 1)
        (let*(
-              [child (car (ndchildren op))]
+              [child (car (nd-children op))]
               [child-type (type child)]
               )
          (or
-           (eqv? child-type (tk:symbol))
+           (eqv? child-type (nd:symbol))
            (and 
-             (eqv? child-type (tk:number))
-             (length= (ndvalue child) 1)
+             (eqv? child-type (nd:number))
+             (length= (nd-value child) 1)
              )
-           (eqv? child-type (tk:string))
-           (eqv? child-type (tk:pattern))
+           (eqv? child-type (nd:string))
+           (eqv? child-type (ndql0:pattern))
            )
          )))
 
@@ -45,36 +45,36 @@
         [(not (well-formed-operand op)) #f]
         [else
           (let*(
-                 [child (car (ndchildren op))]
+                 [child (car (nd-children op))]
                  [child-type (type child)]
                  )
             (cond
-              [(eqv? child-type (tk:symbol))  (car (ndlexeme child))]
-              [(eqv? child-type (tk:number))  (number->string (car (ndvalue child)))]
-              [(eqv? child-type (tk:string))  (car (ndlexeme child))]
-              [(eqv? child-type (tk:pattern))  "_"]
+              [(eqv? child-type (nd:symbol))  (car (nd-lexeme child))]
+              [(eqv? child-type (nd:number))  (number->string (car (nd-value child)))]
+              [(eqv? child-type (nd:string))  (car (nd-lexeme child))]
+              [(eqv? child-type (ndql0:pattern))  "_"]
               ))
           ]
         ))
 
     (define test-ops-0
-      '((tk:operand
+      '((ndql0:operand
           ((at:source rule-operand "test-session" (6 1 5) (12 1 11)))
-          (tk:string
+          (nd:string
             ((at:source source-generator-lex "test-session" (6 1 5) (12 1 11))
               (at:lexeme "\"Dali\""))))
-         (tk:operand
+         (ndql0:operand
            ((at:source rule-operand "test-session" (19 1 12) (14 1 19)))
-           (tk:pattern
+           (ndql0:pattern
              ((at:source rule-pattern "test-session" (19 1 12) (14 1 19)))))
-         (tk:operand
+         (ndql0:operand
            ((at:source rule-operand "test-session" (5 1 4) (6 1 5)))
-           (tk:symbol
+           (nd:symbol
              ((at:source source-generator-lex "test-session" (5 1 4) (6 1 5))
                (at:lexeme "a"))))
-         (tk:operand
+         (ndql0:operand
            ((at:source rule-operand "test-session" (21 1 20) (22 1 21)))
-           (tk:number
+           (nd:number
              ((at:source
                 source-generator-lex
                 "test-session"
@@ -82,9 +82,9 @@
                 (22 1 21))
                (at:lexeme "3")
                (at:value 3))))
-         (tk:operand
+         (ndql0:operand
            ((at:source rule-operand "test-session" (6 1 5) (12 1 11)))
-           (tk:string
+           (nd:string
              ((at:source source-generator-lex "test-session" (6 1 5) (12 1 11))
                (at:lexeme "\"Salvadore\"")))))
       )
@@ -97,8 +97,8 @@
 
     (define (well-formed-pred a-pred)
       (and
-        (eqv? (type a-pred) (tk:pred))
-        (andmap well-formed-operand (ndchildren a-pred))
+        (eqv? (type a-pred) (ndql0:pred))
+        (andmap well-formed-operand (nd-children a-pred))
         ))
 
     (define (well-formed-pred-test-0)
@@ -106,7 +106,7 @@
              [parse/errors (parser* "qed(a,_,c)")]
              [parse (car parse/errors)] 
              [errors (cadr parse/errors)]
-             [the-pred (car (ndchildren parse))]; the parse result is a conjunction
+             [the-pred (car (nd-children parse))]; the parse result is a conjunction
              )
         ;(pretty-print parse)
         (well-formed-pred the-pred)

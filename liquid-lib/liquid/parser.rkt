@@ -50,13 +50,13 @@
                   )
               (cond
                 [(and 
-                   (eqv? t0-type (tk:punc))
-                   (nd-attribute-is (at:lexeme) t0 "_")
+                   (eqv? t0-type (nd:punc))
+                   (equal? (nd-lexeme-1 t0) (list "_"))
                    )
-                  (nd-make-parse ts (tk:pattern) 'rule-pattern)
+                  (nd-make-parse ts (ndql0:pattern) 'rule-pattern)
                   ]
                 [else
-                  (rule-errsyn-expected ts imperative (tk:pattern) 'rule-pattern)
+                  (rule-errsyn-expected ts imperative (ndql0:pattern) 'rule-pattern)
                   ]
                 ))
             ]
@@ -68,9 +68,9 @@
                [ts (qp-lex in (current-file-name))]
                [the-parse (rule-pattern ts)]
                )
-          (.eq.
+          (nds-equal?
             the-parse
-            '(tk:pattern ((at:source rule-pattern "test-session" (1 1 0) (2 1 1))))
+            '(ndql0:pattern ((at:source rule-pattern "test-session" (1 1 0) (2 1 1))))
             )
           ))
 
@@ -83,7 +83,7 @@
       (define (rule-operand ts [imperative (imperative:test)])
         (cond
           [(null? ts) 
-            (rule-errsyn-expected ts imperative (tk:operand) 'rule-operand)
+            (rule-errsyn-expected ts imperative (ndql0:operand) 'rule-operand)
             ]
           [else
             (let*(
@@ -92,13 +92,13 @@
                    )
               (cond 
                 [(or
-                   (eqv? t0-type (tk:symbol))
-                   (eqv? t0-type (tk:number))
-                   (eqv? t0-type (tk:string))
+                   (eqv? t0-type (nd:symbol))
+                   (eqv? t0-type (nd:number))
+                   (eqv? t0-type (nd:string))
                    )
                   (let*(
-                         [tnew (nd-make-parse ts (tk:operand) 'rule-operand)]
-                         [tret (nd-append-children tnew t0)]
+                         [tnew (nd-make-parse ts (ndql0:operand) 'rule-operand)]
+                         [tret (on-children tnew bcons t0)]
                          )
                     tret
                     )]
@@ -110,13 +110,13 @@
                     (cond 
                       [pat
                         (let*(
-                               [tnew (nd-make-parse ts (tk:operand) 'rule-operand)]
-                               [tret (nd-append-children tnew pat)]
+                               [tnew (nd-make-parse ts (ndql0:operand) 'rule-operand)]
+                               [tret (on-children tnew bcons pat)]
                                )
                           tret
                           )]
                       [else
-                        (rule-errsyn-expected ts imperative (tk:operand) 'rule-operand)
+                        (rule-errsyn-expected ts imperative (ndql0:operand) 'rule-operand)
                         ]))]))]))
 
     (define (rule-operand-test-0)
@@ -125,11 +125,11 @@
              [ts (qp-lex in (current-file-name))]
              [the-parse (rule-operand ts)]
              )
-        (.eq.
+        (nds-equal?
           the-parse
-          '(tk:operand
+          '(ndql0:operand
              ((at:source rule-operand "test-session" (1 1 0) (6 1 5)))
-             (tk:string
+             (nd:string
                ((at:source source-generator-lex "test-session" (1 1 0) (6 1 5))
                  (at:lexeme "\"abc\""))))
           )
@@ -141,11 +141,11 @@
               [ts (qp-lex in (current-file-name))]
               [the-parse (rule-operand ts)]
               )
-        (.eq.
+        (nds-equal?
           the-parse
-          '(tk:operand
+          '(ndql0:operand
              ((at:source rule-operand "test-session" (1 1 0) (2 1 1)))
-             (tk:pattern
+             (ndql0:pattern
                ((at:source rule-pattern "test-session" (1 1 0) (2 1 1)))))
           )
         ))
@@ -160,25 +160,25 @@
       (cond
         [(and
            (length= ts 2)
-           (($tok (tk:symbol)) (car ts))
-           (($tok (tk:paren-node)) (cadr ts)))
+           (($nd-type-is (nd:symbol)) (car ts))
+           (($nd-type-is (ndql0:paren-node)) (cadr ts)))
 
           (let*(
                  [separator (λ(t) (punc-is t ","))]
                  [ts-of-operand-list (nd-children (cadr ts))]
                  [item-list (framed-items-sep ts-of-operand-list separator)]
                  [operand-list (map (λ(ts) (rule-operand ts (imperative:force))) item-list)]
-                 [new-t0  (nd-make-parse ts (tk:pred) 'rule-pred)]
-                 [new-t1  (nd-append-children* new-t0 operand-list)]
+                 [new-t0  (nd-make-parse ts (ndql0:pred) 'rule-pred)]
+                 [new-t1  (on-children new-t0 append operand-list)]
                  [pname   (nd-lexeme (car ts))]
                  [at0     (attribute-make* (at:value) pname)]
-                 [new-t2  (nd-ascribe-attribute new-t1 at0)]
+                 [new-t2  (on-attributes new-t1 bcons at0)]
                  )
             new-t2
             )
           ]
         [else  
-          (rule-errsyn-expected ts imperative (tk:pred) 'rule-pred)
+          (rule-errsyn-expected ts imperative (ndql0:pred) 'rule-pred)
           ]
         ))
 
@@ -189,23 +189,23 @@
              [framed-ts (framed-by-parens ts)]
              [the-parse (rule-pred framed-ts)]
              )
-        (.eq.
+        (nds-equal?
           the-parse
-          '(tk:pred
+          '(ndql0:pred
              ((at:source rule-pred "test-session" (1 1 0) (11 1 10))
                (at:value "qed"))
-             (tk:operand
+             (ndql0:operand
                ((at:source rule-operand "test-session" (5 1 4) (6 1 5)))
-               (tk:symbol
+               (nd:symbol
                  ((at:source source-generator-lex "test-session" (5 1 4) (6 1 5))
                    (at:lexeme "a"))))
-             (tk:operand
+             (ndql0:operand
                ((at:source rule-operand "test-session" (7 1 6) (8 1 7)))
-               (tk:pattern
+               (ndql0:pattern
                  ((at:source rule-pattern "test-session" (7 1 6) (8 1 7)))))
-             (tk:operand
+             (ndql0:operand
                ((at:source rule-operand "test-session" (9 1 8) (10 1 9)))
-               (tk:symbol
+               (nd:symbol
                  ((at:source source-generator-lex "test-session" (9 1 8) (10 1 9))
                    (at:lexeme "c")))))
           )
@@ -217,7 +217,7 @@
   ;;
     (define (rule-conjunction ts  [imperative (imperative:test)]) 
       (cond
-        [(null? ts)  (rule-errsyn-expected ts imperative (tk:conjunction) 'rule-conjunction)]
+        [(null? ts)  (rule-errsyn-expected ts imperative (ndql0:conjunction) 'rule-conjunction)]
         [else
           (let*(
                  [separator (λ(t) (punc-is t "&"))]
@@ -226,12 +226,12 @@
                  )
             (cond
               [(null? item-list) 
-                (rule-errsyn-expected ts imperative (tk:conjunction) 'rule-conjunction)
+                (rule-errsyn-expected ts imperative (ndql0:conjunction) 'rule-conjunction)
                 ]
               [else
                 (let*(
-                       [new-t0  (nd-make-parse ts (tk:conjunction) 'rule-conjunction)]
-                       [new-t1  (nd-append-children* new-t0 pred-list)]
+                       [new-t0  (nd-make-parse ts (ndql0:conjunction) 'rule-conjunction)]
+                       [new-t1  (on-children new-t0 append pred-list)]
                        )
                   new-t1
                   )
@@ -243,43 +243,43 @@
              [framed-ts (framed-by-parens ts)]
              [the-parse (rule-conjunction framed-ts)]
              )
-        (.eq. the-parse
-          '(tk:conjunction
+        (nds-equal? the-parse
+          '(ndql0:conjunction
              ((at:source rule-conjunction "test-session" (1 1 0) (57 1 56)))
 
-             (tk:pred
+             (ndql0:pred
                ((at:source rule-pred "test-session" (1 1 0) (57 1 56))
                  (at:value "qed"))
-               (tk:operand
+               (ndql0:operand
                  ((at:source rule-operand "test-session" (5 1 4) (6 1 5)))
-                 (tk:symbol
+                 (nd:symbol
                    ((at:source source-generator-lex "test-session" (5 1 4) (6 1 5))
                      (at:lexeme "a"))))
-               (tk:operand
+               (ndql0:operand
                  ((at:source rule-operand "test-session" (7 1 6) (8 1 7)))
-                 (tk:pattern
+                 (ndql0:pattern
                    ((at:source rule-pattern "test-session" (7 1 6) (8 1 7)))))
-               (tk:operand
+               (ndql0:operand
                  ((at:source rule-operand "test-session" (9 1 8) (10 1 9)))
-                 (tk:symbol
+                 (nd:symbol
                    ((at:source source-generator-lex "test-session" (9 1 8) (10 1 9))
                      (at:lexeme "c")))))
 
-             (tk:pred
+             (ndql0:pred
                ((at:source rule-pred "test-session" (12 1 11) (57 1 56))
                  (at:value "dlp"))
-               (tk:operand
+               (ndql0:operand
                  ((at:source rule-operand "test-session" (16 1 15) (19 1 18)))
-                 (tk:string
+                 (nd:string
                    ((at:source
                       source-generator-lex
                       "test-session"
                       (16 1 15)
                       (19 1 18))
                      (at:lexeme "\"a\""))))
-               (tk:operand
+               (ndql0:operand
                  ((at:source rule-operand "test-session" (21 1 20) (22 1 21)))
-                 (tk:number
+                 (nd:number
                    ((at:source
                       source-generator-lex
                       "test-session"
@@ -287,9 +287,9 @@
                       (22 1 21))
                      (at:lexeme "3")
                      (at:value 3))))
-               (tk:operand
+               (ndql0:operand
                  ((at:source rule-operand "test-session" (24 1 23) (29 1 28)))
-                 (tk:symbol
+                 (nd:symbol
                    ((at:source
                       source-generator-lex
                       "test-session"
@@ -297,12 +297,12 @@
                       (29 1 28))
                      (at:lexeme "seven")))))
 
-             (tk:pred
+             (ndql0:pred
                ((at:source rule-pred "test-session" (33 1 32) (57 1 56))
                  (at:value "wikipedia"))
-               (tk:operand
+               (ndql0:operand
                  ((at:source rule-operand "test-session" (43 1 42) (56 1 55)))
-                 (tk:symbol
+                 (nd:symbol
                    ((at:source
                       source-generator-lex
                       "test-session"
@@ -329,37 +329,37 @@
              [in (open-input-string "who(\"jim\", _) & writes(x, y)")]
              [the-parse (parser in)]
              )
-        (.eq.
+        (nds-equal?
           the-parse
-          '(tk:conjunction
+          '(ndql0:conjunction
              ((at:source rule-conjunction "test-session" (1 1 0) (29 1 28)))
-             (tk:pred
+             (ndql0:pred
                 ((at:source rule-pred "test-session" (1 1 0) (29 1 28))
                   (at:value "who"))
-                (tk:operand
+                (ndql0:operand
                   ((at:source rule-operand "test-session" (5 1 4) (10 1 9)))
-                  (tk:string
+                  (nd:string
                     ((at:source source-generator-lex "test-session" (5 1 4) (10 1 9))
                       (at:lexeme "\"jim\""))))
-                (tk:operand
+                (ndql0:operand
                   ((at:source rule-operand "test-session" (12 1 11) (13 1 12)))
-                  (tk:pattern
+                  (ndql0:pattern
                     ((at:source rule-pattern "test-session" (12 1 11) (13 1 12))))))
-             (tk:pred
+             (ndql0:pred
                ((at:source rule-pred "test-session" (17 1 16) (29 1 28))
                  (at:value "writes"))
-               (tk:operand
+               (ndql0:operand
                  ((at:source rule-operand "test-session" (24 1 23) (25 1 24)))
-                 (tk:symbol
+                 (nd:symbol
                    ((at:source
                       source-generator-lex
                       "test-session"
                       (24 1 23)
                       (25 1 24))
                      (at:lexeme "x"))))
-               (tk:operand
+               (ndql0:operand
                  ((at:source rule-operand "test-session" (27 1 26) (28 1 27)))
-                 (tk:symbol
+                 (nd:symbol
                    ((at:source
                       source-generator-lex
                       "test-session"

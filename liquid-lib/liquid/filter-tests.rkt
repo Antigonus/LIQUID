@@ -16,22 +16,22 @@
 
 ;;--------------------------------------------------------------------------------
 ;;
-  (define (marked-toks-test-0)
+  (define (marked-nds-test-0)
     (let*(
            [          in (open-input-string "d(n_t,)")]
            [       parse (parser in)]
            [          ts (list parse)]
-           [the-marked-toks (marked-toks ts ndhas-err)]
-           [expected-marked-toks 
-             '((tk:operand
+           [the-marked-nds (marked-nds ts nd-has-err)]
+           [expected-marked-nds 
+             '((ndql0:operand
                  ((at:source rule-operand "test-session" (6 1 5) (7 1 6))
-                   (attribute:errsyn-mess "expected tk:operand but found:")
+                   (attribute:errsyn-mess "expected ndql0:operand but found:")
                    (attribute:errsyn-nds
-                     ((tk:errsyn
+                     ((ndql0:errsyn
                         ((at:source framed-items-sep-0 "test-session" (6 1 5) (7 1 6))
                           (attribute:errsyn-mess "list ended with a separator: ")
                           (attribute:errsyn-nds
-                            ((tk:punc
+                            ((ndql0:punc
                                ((at:source
                                   source-generator-lex
                                   "test-session"
@@ -40,40 +40,40 @@
                                  (at:lexeme ","))))))))))))
              ]
            )
-      (.eq. the-marked-toks expected-marked-toks)
+      (nds-equal? the-marked-nds expected-marked-nds)
       ))
-  (test-hook marked-toks-test-0)
+  (test-hook marked-nds-test-0)
 
-  (define (marked-toks-test-1)
+  (define (marked-nds-test-1)
     (let*(
            [         in (open-input-string "qed(a,_,c)&dlp(\"a\", __ , seven) & wikipedia(number_theory,)")]
            [       parse (parser in)]
            [          ts (list parse)]
-           [the-marked-toks (marked-toks ts ndhas-err)]
-           [expected-marked-toks 
-             '((tk:operand
+           [the-marked-nds (marked-nds ts nd-has-err)]
+           [expected-marked-nds 
+             '((ndql0:operand
                  ((at:source rule-operand "test-session" (21 1 20) (23 1 22))
-                   (attribute:errsyn-mess "expected tk:operand but found:")
+                   (attribute:errsyn-mess "expected ndql0:operand but found:")
                    (attribute:errsyn-nds
-                     ((tk:punc
+                     ((ndql0:punc
                         ((at:source
                            source-generator-lex
                            "test-session"
                            (21 1 20)
                            (22 1 21))
                           (at:lexeme "_")))
-                       (tk:punc
+                       (ndql0:punc
                          ((at:source
                             source-generator-lex
                             "test-session"
                             (22 1 21)
                             (23 1 22))
                            (at:lexeme "_")))))))
-                (tk:operand
+                (ndql0:operand
                   ((at:source rule-operand "test-session" (58 1 57) (59 1 58))
-                    (attribute:errsyn-mess "expected tk:operand but found:")
+                    (attribute:errsyn-mess "expected ndql0:operand but found:")
                     (attribute:errsyn-nds
-                      ((tk:errsyn
+                      ((ndql0:errsyn
                          ((at:source
                             framed-items-sep-0
                             "test-session"
@@ -81,7 +81,7 @@
                             (59 1 58))
                            (attribute:errsyn-mess "list ended with a separator: ")
                            (attribute:errsyn-nds
-                             ((tk:punc
+                             ((ndql0:punc
                                 ((at:source
                                    source-generator-lex
                                    "test-session"
@@ -90,32 +90,32 @@
                                   (at:lexeme ","))))))))))))
              ]
            )
-      (.eq. the-marked-toks expected-marked-toks)
+      (nds-equal? the-marked-nds expected-marked-nds)
       ))
-    (test-hook marked-toks-test-1)
+    (test-hook marked-nds-test-1)
 
 ;;--------------------------------------------------------------------------------
 ;;
-  (define (trim-nderr-test-0) 
+  (define (trim-nd-err-test-0) 
     (let*(
            [in (open-input-string "d(n_t,)")]
            [parse (parser in)]
-           [trimmed (trim-nderr parse)]
+           [trimmed (trim-nd-err parse)]
            [expected-trimmed 
-             '(tk:conjunction
+             '(ndql0:conjunction
                 ((at:source rule-conjunction "test-session" (1 1 0) (8 1 7)))
-                (tk:pred
+                (ndql0:pred
                   ((at:source rule-pred "test-session" (1 1 0) (8 1 7))
                     (at:value "d"))
-                  (tk:operand
+                  (ndql0:operand
                     ((at:source rule-operand "test-session" (6 1 5) (7 1 6))
-                      (attribute:errsyn-mess "expected tk:operand but found:")
+                      (attribute:errsyn-mess "expected ndql0:operand but found:")
                       (attribute:errsyn-nds
-                        ((tk:errsyn
+                        ((ndql0:errsyn
                            ((at:source framed-items-sep-0 "test-session" (6 1 5) (7 1 6))
                              (attribute:errsyn-mess "list ended with a separator: ")
                              (attribute:errsyn-nds
-                               ((tk:punc
+                               ((ndql0:punc
                                   ((at:source
                                      source-generator-lex
                                      "test-session"
@@ -124,36 +124,36 @@
                                     (at:lexeme ",")))))))))))))
              ]
            )
-      (.eq. trimmed expected-trimmed)
+      (nds-equal? trimmed expected-trimmed)
       ))
-  (test-hook trim-nderr-test-0)
+  (test-hook trim-nd-err-test-0)
 
-  (define (trim-nderr-test-1) 
+  (define (trim-nd-err-test-1) 
     (let*(
            [in (open-input-string "d(n_t,2)")]
            [parse (parser in)]
-           [trimmed (trim-nderr parse)]
+           [trimmed (trim-nd-err parse)]
            )
       (not trimmed)
       ))
-  (test-hook trim-nderr-test-1)
+  (test-hook trim-nd-err-test-1)
 
-  (define (trim-nderr-test-2) 
+  (define (trim-nd-err-test-2) 
     (let*(
            [in (open-input-string "qed(a,_,c)&dlp(\"a\", 3, seven) & wikipedia(number_theory,)")]
            [parse (parser in)]
-           [trimmed (trim-nderr parse)]
+           [trimmed (trim-nd-err parse)]
            [expected-trimmed 
-             '(tk:conjunction
+             '(ndql0:conjunction
                 ((at:source rule-conjunction "test-session" (1 1 0) (58 1 57)))
-                (tk:pred
+                (ndql0:pred
                   ((at:source rule-pred "test-session" (33 1 32) (58 1 57))
                     (at:value "wikipedia"))
-                  (tk:operand
+                  (ndql0:operand
                     ((at:source rule-operand "test-session" (56 1 55) (57 1 56))
-                      (attribute:errsyn-mess "expected tk:operand but found:")
+                      (attribute:errsyn-mess "expected ndql0:operand but found:")
                       (attribute:errsyn-nds
-                        ((tk:errsyn
+                        ((ndql0:errsyn
                            ((at:source
                               framed-items-sep-0
                               "test-session"
@@ -161,7 +161,7 @@
                               (57 1 56))
                              (attribute:errsyn-mess "list ended with a separator: ")
                              (attribute:errsyn-nds
-                               ((tk:punc
+                               ((ndql0:punc
                                   ((at:source
                                      source-generator-lex
                                      "test-session"
@@ -170,7 +170,7 @@
                                     (at:lexeme ",")))))))))))))
              ]
            )
-      (.eq. trimmed expected-trimmed)
+      (nds-equal? trimmed expected-trimmed)
       ))
-  (test-hook trim-nderr-test-2)
+  (test-hook trim-nd-err-test-2)
 

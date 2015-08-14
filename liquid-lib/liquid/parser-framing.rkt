@@ -69,14 +69,14 @@
               (cond
                 [(and (null? item) (separator t))
                   (let* (
-                          [a-tok (nd-make-errsyn ts (tk:errsyn) 'framed-items-sep-0 "expected item, found separator: ")]
+                          [a-tok (nd-make-errsyn ts (nd:errsyn) 'framed-items-sep-0 "expected item, found separator: ")]
                           [error-item (list a-tok)]
                           )
                     (framed-items-sep-0 cdr-ts (append item-list (list error-item)) '())
                     )]
                 [(and (separator t) (null? cdr-ts))
                   (let* (
-                          [a-tok (nd-make-errsyn ts (tk:errsyn) 'framed-items-sep-0 "list ended with a separator: ")]
+                          [a-tok (nd-make-errsyn ts (nd:errsyn) 'framed-items-sep-0 "list ended with a separator: ")]
                           [error-item (list a-tok)]
                           )
                     (framed-items-sep-0 cdr-ts (append item-list (list error-item)) '())
@@ -100,13 +100,13 @@
                [its (framed-items-sep ts sep)]
                [expected-its
                  `(
-                  ((tk:number ((at:source source-generator-lex "test-session" (1 1 0) (2 1 1))(at:lexeme "1")(at:value 1))))
-                  ((tk:number ((at:source source-generator-lex "test-session" (3 1 2) (4 1 3))(at:lexeme "2")(at:value 2))))
-                  ((tk:number ((at:source source-generator-lex "test-session" (5 1 4) (6 1 5))(at:lexeme "3")(at:value 3))))
+                  ((ndql0:number ((at:source source-generator-lex "test-session" (1 1 0) (2 1 1))(at:lexeme "1")(at:value 1))))
+                  ((ndql0:number ((at:source source-generator-lex "test-session" (3 1 2) (4 1 3))(at:lexeme "2")(at:value 2))))
+                  ((ndql0:number ((at:source source-generator-lex "test-session" (5 1 4) (6 1 5))(at:lexeme "3")(at:value 3))))
                   )
                  ]
                )
-          (.eq. its expected-its)
+          (nds-equal? its expected-its)
           ))
       (test-hook framed-items-sep-test-0)
 
@@ -117,38 +117,38 @@
                [sep (λ(t) (punc-is t ","))]
                [its (framed-items-sep ts sep)]
                [expected-its 
-                 '(((tk:number
+                 '(((ndql0:number
                       ((at:source source-generator-lex "test-session" (1 1 0) (2 1 1))
                         (at:lexeme "1")
                         (at:value 1)))
-                     (tk:number
+                     (ndql0:number
                        ((at:source source-generator-lex "test-session" (3 1 2) (4 1 3))
                          (at:lexeme "2")
                          (at:value 2))))
-                    ((tk:number
+                    ((ndql0:number
                        ((at:source source-generator-lex "test-session" (6 1 5) (7 1 6))
                          (at:lexeme "3")
                          (at:value 3)))
-                      (tk:number
+                      (ndql0:number
                         ((at:source source-generator-lex "test-session" (8 1 7) (9 1 8))
                           (at:lexeme "4")
                           (at:value 4)))
-                      (tk:number
+                      (ndql0:number
                         ((at:source source-generator-lex "test-session" (10 1 9) (11 1 10))
                           (at:lexeme "5")
                           (at:value 5))))
-                    ((tk:errsyn
+                    ((nd:errsyn
                        ((at:source framed-items-sep-0 "test-session" (12 1 11) (14 1 13))
-                         (attribute:errsyn-mess "expected item, found separator: ")
-                         (attribute:errsyn-nds
-                           ((tk:punc
+                         (at:errsyn-mess "expected item, found separator: ")
+                         (at:errsyn-nds
+                           ((ndql0:punc
                               ((at:source
                                  source-generator-lex
                                  "test-session"
                                  (12 1 11)
                                  (13 1 12))
                                 (at:lexeme ",")))
-                             (tk:number
+                             (ndql0:number
                                ((at:source
                                   source-generator-lex
                                   "test-session"
@@ -156,13 +156,13 @@
                                   (14 1 13))
                                  (at:lexeme "7")
                                  (at:value 7))))))))
-                    ((tk:number
+                    ((ndql0:number
                        ((at:source source-generator-lex "test-session" (13 1 12) (14 1 13))
                          (at:lexeme "7")
                          (at:value 7)))))
                  ]
                )
-          (.eq. its expected-its)
+          (nds-equal? its expected-its)
           ))
       (test-hook framed-items-sep-test-1)
 
@@ -208,12 +208,12 @@
   ;;    this could be smarter in helping the user locate mismatched parents, but it is a start
   ;;
   ;; input: a node list
-  ;; output: a tree of nodes, where nodes in the tree are (tk:paren-node)
+  ;; output: a tree of nodes, where nodes in the tree are (ndql0:paren-node)
   ;;
   ;; -currently only look at '('  and ')'
   ;;
-    (define (open? t) (($ndattribute (tk:punc) (at:lexeme) "(") t))
-    (define (close? t) (($ndattribute (tk:punc) (at:lexeme) ")") t))
+    (define (open? n) (($nd-has-value (nd:punc) (at:lexeme) "(") n))
+    (define (close? n) (($nd-has-value (nd:punc) (at:lexeme) ")") n))
 
     ;;;
     ;;;  input: a list of ts with balanced parens, outside parens (car and last of ts) are optional
@@ -240,7 +240,7 @@
               (cond
                 [(open? t)
                   (let*(
-                         [empty-paren-node       (nd-make-parse cdr-ts (tk:paren-node) 'framed-by-parens)]
+                         [empty-paren-node       (nd-make-parse cdr-ts (ndql0:paren-node) 'framed-by-parens)]
                          [paren-node-and-tail-ts (framed-by-parens-open cdr-ts empty-paren-node)]
                          [paren-node             (car paren-node-and-tail-ts)]
                          [tail-ts                (cadr paren-node-and-tail-ts)]
@@ -249,9 +249,9 @@
                   ]
                 [(close? t) ;; this is one of two places we might learn of unmatched parens (other in framed-by-parens-open null case)
                   (let*(
-                         [err-tok      (nd-make-parse (list t) (tk:errsyn) 'framed-by-parens)]
-                         [mess         (attribute-make (attribute:errsyn-mess) "unexpected ')'")]
-                         [err-nd-mess (nd-ascribe-attribute err-tok mess)]
+                         [err-tok      (nd-make-parse (list t) (nd:errsyn) 'framed-by-parens)]
+                         [mess         (attribute-make (at:errsyn-mess) "unexpected ')'")]
+                         [err-nd-mess (on-attributes err-tok bcons mess)]
                          )
                     (cons err-tok (framed-by-parens cdr-ts)))
                   ]
@@ -271,7 +271,7 @@
         (cond 
           [(null? ts) ; oops we didn't get to see the closing paren
             (list 
-              (append-errsyn '() paren-node "paren still open at end of stream") 
+              (ascribe-errsyn '() paren-node "paren still open at end of stream") 
               '()
               )
             ]
@@ -283,11 +283,11 @@
               (cond
                 [(open? t)
                   (let*(
-                         [new-paren-node         (nd-make-parse cdr-ts (tk:paren-node) 'framed-by-parens-open)]
+                         [new-paren-node         (nd-make-parse cdr-ts (ndql0:paren-node) 'framed-by-parens-open)]
                          [descend-paren-and-tail (framed-by-parens-open cdr-ts new-paren-node)]
                          [descend-paren          (car descend-paren-and-tail)]
                          [descend-tail           (cadr descend-paren-and-tail)]
-                         [updated-paren          (nd-append-child paren-node descend-paren)]
+                         [updated-paren          (on-children paren-node bcons descend-paren)]
                          )
                     (framed-by-parens-open descend-tail updated-paren))
                   ]
@@ -296,7 +296,7 @@
                   ]
                 [else
                   (let*(
-                         [updated-paren  (ndappend-child paren-node t)]
+                         [updated-paren  (on-children paren-node bcons t)]
                          )
                     (framed-by-parens-open cdr-ts updated-paren))
                   ]
@@ -311,24 +311,24 @@
                [ts (qp-lex in (current-file-name))]
                [fts (framed-by-parens ts)]
                )
-          (.eq. fts
-            '((tk:paren-node
+          (nds-equal? fts
+            '((ndql0:paren-node
                 ((at:source framed-by-parens "test-session" (2 1 1) (20 1 19)))
-                (tk:number
+                (nd:number
                   ((at:source source-generator-lex "test-session" (2 1 1) (4 1 3))
                     (at:lexeme "10")
                     (at:value 10)))
-                (tk:paren-node
+                (ndql0:paren-node
                   ((at:source framed-by-parens-open "test-session" (7 1 6) (20 1 19)))
-                  (tk:number
+                  (nd:number
                     ((at:source source-generator-lex "test-session" (7 1 6) (9 1 8))
                       (at:lexeme "21")
                       (at:value 21)))
-                  (tk:number
+                  (nd:number
                     ((at:source source-generator-lex "test-session" (10 1 9) (12 1 11))
                       (at:lexeme "22")
                       (at:value 22)))
-                  (tk:number
+                  (nd:number
                     ((at:source
                        source-generator-lex
                        "test-session"
@@ -336,7 +336,7 @@
                        (15 1 14))
                       (at:lexeme "23")
                       (at:value 23))))
-                (tk:number
+                (nd:number
                   ((at:source source-generator-lex "test-session" (17 1 16) (19 1 18))
                     (at:lexeme "30")
                     (at:value 30))))))

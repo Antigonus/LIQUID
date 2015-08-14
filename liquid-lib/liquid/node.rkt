@@ -308,6 +308,21 @@
       (ascribed-attributes-equal? (nd-attributes x) (nd-attributes y))
       ))
 
+   ;; input two lists of nodes
+   (define (nds-equal? x y)
+     (or
+       (and 
+         (null? x)
+         (null? y)
+         )
+       (and
+         (pair? x)
+         (pair? y)
+         (nd-equal? (car x) (car y))
+         (nds-equal? (cdr x) (cdr y))
+         )))
+
+
   ;;;  input: a node, a-lambda and arg for the lambda
   ;;;  output: a modified node
   ;;;
@@ -345,10 +360,10 @@
   ;;
     (define (nd-make-value the-type the-source v)
       (let*(
-             [new-tok (nd-make-source the-type the-source)]
+             [new-nd (nd-make-source the-type the-source)]
              [value-attribute (attribute-make (at:value) v)]
              )
-        (on-attributes new-tok bcons value-attribute)
+        (on-attributes new-nd bcons value-attribute)
         ))
 
   ;; used by the lexer to make nodes
@@ -379,7 +394,7 @@
         nd0
         ))
 
-  ;; the tok examples are used in testing
+  ;; the node examples are used in testing
   (define nd-example-0
     (nd-make-source
       (nd:example-0) 
@@ -456,6 +471,9 @@
 ;;
 ;;   match predicates take one operand so these routines return a function that takes one
 ;;   operand
+;;
+;;    ... should write a general curry form that takes any function and returns a
+;;   lambda against unassigned operands
 ;;
   (define ($nd-type-is type)
     (λ(t) (and (pair? t) (type-is t type))))
@@ -542,7 +560,7 @@
     (define (at:errsyn-mess) 'at:errsyn-mess) ; syntax error message
 
     ;;. a higher level parse, for example the parser that looks at the lexer output, may not
-    ;;. be able to make sense out of a series of tokens, and can put those tokens in this attribute
+    ;;. be able to make sense out of a series of nodes, and can put those nodes in this attribute
     (define (at:errsyn-nds) 'at:errsyn-nds)
 
     (attribute-hook
@@ -642,11 +660,11 @@
   ;;.
     (define (rule-errparser ts imperative nd-type generator [mess ""])
       (let* (
-            [err-tok (nd-make-errint ts nd-type generator mess)]
+            [err-nd (nd-make-errint ts nd-type generator mess)]
             )
       (cond
          [(eqv? imperative (imperative:test)) #f]
-         [else err-tok]
+         [else err-nd]
          )
       ))
 
@@ -744,6 +762,7 @@
     nd-is-well-formed
 
     nd-equal?
+    nds-equal?
 
     on-attributes
     on-children
@@ -798,6 +817,9 @@
 
     ascribe-errsyn
     ascribe-errint
+
+    nd-make-errsyn
+    nd-make-errint
 
     rule-errsyn
     rule-errsyn-expected

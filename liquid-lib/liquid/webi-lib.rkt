@@ -147,7 +147,7 @@
       [(not (well-formed-pred pred)) not-found-webi]
       [else
         (let*(
-               [pred-name (car (ndvalue pred))]
+               [pred-name (car (nd-value-1 pred))]
                [the-webi (webi-lookup pred-name)]
                )
           the-webi

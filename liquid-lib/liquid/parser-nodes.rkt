@@ -1,5 +1,5 @@
 #|
- nodes for the query lexer and parser
+ nodes for the query language 0 lexer and parser
 
  created: 2014-12-10T15:11:10Z twl
 
@@ -21,20 +21,20 @@
 ;;
   ;; node children
   ;;
-  (define (tk:conjunction) 'tk:conjunction) ; query conjunction
-  (define (tk:operand) 'tk:operand); predicate operand - value must be a node list
-  (define (tk:operand-list) 'tk:operand-list) ; a list of predicate operands - value must be a list of operands
-  (define (tk:pattern) 'tk:pattern) ; we use this to make the operands that need to be filled in
-  (define (tk:pred) 'tk:pred)  ; search predicate
-  (define (tk:paren-node) 'tk:paren-node)
+  (define (ndql0:conjunction) 'ndql0:conjunction) ; query conjunction
+  (define (ndql0:operand) 'ndql0:operand); predicate operand - value must be a node list
+  (define (ndql0:operand-list) 'ndql0:operand-list) ; a list of predicate operands - value must be a list of operands
+  (define (ndql0:pattern) 'ndql0:pattern) ; we use this to make the operands that need to be filled in
+  (define (ndql0:pred) 'ndql0:pred)  ; search predicate
+  (define (ndql0:paren-node) 'ndql0:paren-node)
 
-  (ndhook
-    (tk:conjunction)
-    (tk:operand)
-    (tk:operand-list)
-    (tk:pattern)
-    (tk:pred)
-    (tk:paren-node)
+  (nd-hook
+    (ndql0:conjunction)
+    (ndql0:operand)
+    (ndql0:operand-list)
+    (ndql0:pattern)
+    (ndql0:pred)
+    (ndql0:paren-node)
     )
 
 ;;--------------------------------------------------------------------------------
