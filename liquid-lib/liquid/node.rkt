@@ -57,7 +57,7 @@
   (test-hook type-is-test-1)
 
   (define (typed-list-test-0)
-
+    (equal?
       (typed-list-make 'a 1 2)
       '(a 1 2)))  ; doesn't actually do much ;-), but user is required to provide a type or function args won't match
   (test-hook typed-list-test-0)
@@ -83,6 +83,7 @@
 
   (define (at:lexeme) 'at:lexeme)
   (define (at:source) 'at:source)
+  (define (at:source-nds) 'at:source-nds)
   (define (at:value) 'at:value)
   (define attribute-type-enumeration
     (list
@@ -118,11 +119,11 @@
   (define (remove-attribute aa a-type) (filter (λ(e)(not (type-is e a-type))) aa))
 
   ;; ascribes an attribute or attributes
-  (define (ascribe-attribute aa . new-at) (attribute-acribe* aa new-at))
-  (define (ascribe-attribute* aa new-ats) (append new-ats aa))
+  (define (ascribe aa . new-at) (ascribe* aa new-at))
+  (define (ascribe* aa new-ats) (append new-ats aa))
 
   ;; removes and acribes
-  (define (update-attribute aa new-at) (insert (remove-attribute aa (type new-at)) new-at))
+  (define (update-attribute aa new-at) (ascribe (remove-attribute aa (type new-at)) new-at))
 
   ;; returns (first rest) for an attribute
   (define (attribute-iterate aa)
@@ -164,14 +165,14 @@
 
   (define (test-gather-values-0)
     (equal?
-      (append-values '((a 1 2 3) (b 10 20) (c 101 102)))
+      (gather-values '((a 1 2 3) (b 10 20) (c 101 102)))
       '(1 2 3 10 20 101 102)
       ))
   (test-hook test-gather-values-0)
              
 
   ;; there is no order between attributes
-  (define (ascribed-attribues-equal? a b) (set= (list->set a) (list->set b)))
+  (define (ascribed-attributes-equal? a b) (set=? (list->set a) (list->set b)))
 
   (define (test-ascribed-attributes-equal?-0)
     (let(
@@ -258,7 +259,7 @@
 
 
 ;;--------------------------------------------------------------------------------
-;; nodes
+;; node
 ;;
 ;;  A node is a typed list with ascribed attributes, where value items, if any, are also nodes.
 ;;
@@ -281,21 +282,20 @@
       (nd:example-0)
       (nd:example-1)
       ))
-  (define (is-nd-type test-type) (memv test-type nd-list))
+  (define (is-nd-type test-type) (memv test-type nd-type-enumeration))
 
   (define (nd-hook . nd-types) (nd-hook* nd-types))
-  (define (nd-hook* nd-type-list) (set! nd-list (append nd-list nd-type-list)))
+  (define (nd-hook* nd-type-list) (set! nd-type-enumeration (append nd-type-enumeration nd-type-list)))
 
   (define (nd-children t) (cddr t))
   (define (nd-attributes t) (cadr t))
 
   (define (nd-is-well-formed n)
     (and 
-      (typed-list-is-well-formed nl nd-type-enumertion))
+      (typed-list-is-well-formed n nd-type-enumeration)
       (length≥ n 2)
       (pair? (nd-attributes n))
       (andmap attribute-is-well-formed (nd-attributes n))
-      (pair? (nd-children n))
       ;;; (andmap nd-is-well-formed (nd-children n))  ; noo intensive, do nhis instead:
       (andmap (λ(e)(typed-list-is-well-formed e nd-type-enumeration)) (nd-children n))
       ))
@@ -315,17 +315,17 @@
   ;;; it must return the modified attributes list.
   ;;;
     (define (on-attributes t the-lambda . args)
-      (nd-make 
+      (nd-make* 
         (type t)
-        (apply a-lambda (cons (nd-attributes t) args))
+        (apply the-lambda (cons (nd-attributes t) args))
         (nd-children t)
         ))
 
     (define (on-children t the-lambda . args)
-      (nd-make 
+      (nd-make*
         (type t)
         (nd-attributes t)
-        (apply a-lambda (cons (nd-children t) args))
+        (apply the-lambda (cons (nd-children t) args))
         ))
 
 ;;--------------------------------------------------------------------------------
@@ -337,7 +337,7 @@
     (define (nd-make-source the-type the-source) 
       (let*(
              [t0 (nd-make the-type '())]
-             [t1 (nd-ascribe-attribute t0 the-source)]
+             [t1 (on-attributes t0 bcons the-source)]
              )
         t1))
 
@@ -348,17 +348,17 @@
              [new-tok (nd-make-source the-type the-source)]
              [value-attribute (attribute-make (at:value) v)]
              )
-        (nd-ascribe-attribute new-tok value-attribute)
+        (on-attributes new-tok bcons value-attribute)
         ))
 
   ;; used by the lexer to make nodes
   ;;
-    (define (nd-make-lex the-type start end lexeme)
+    (define (nd-make-lex generator the-type start end lexeme)
       (let*(
-             [source-at (source-make (source-generator-lex) (current-file-name) start end)]
+             [source-at (source-make generator (current-file-name) start end)]
              [lexeme-at (attribute-make (at:lexeme) lexeme)]
              [nd0     (nd-make-source the-type source-at)]
-             [nd1     (nd-ascribe-attribute nd0 lexeme-at)]
+             [nd1     (on-attributes nd0 bcons lexeme-at)]
              )
         nd1
         ))
@@ -371,8 +371,8 @@
                (source-make
                  generator
                  (current-file-name)
-                 (nd-start-pos* (car ts))
-                 (nd-end-pos* (last ts))
+                 (nd-start-pos (car ts))
+                 (nd-end-pos (last ts))
                  )]
              [nd0 (nd-make-source the-type source-at)]
              )
@@ -418,35 +418,35 @@
 ;;  utilities for manipulating nodes
 ;;
                                                     
-   (define (nd-source t) (get-attribute (nd-attributes t) (at:value)))
-   (define (nd-lexeme t) (get-attribute (nd-attributes t) (at:lexeme)))
-   (define (nd-value t) (get-attribute (nd-attributes t) (at:value)))
+   (define (nd-source n) (get-attribute (nd-attributes n) (at:value)))
+   (define (nd-lexeme n) (get-attribute (nd-attributes n) (at:lexeme)))
+   (define (nd-value n) (get-attribute (nd-attributes n) (at:value)))
 
-   ;; commonly a parser guarantees there will be exactly one source, lexeme or at:value
-   ;; these routines have that assumption built in
+   ;; commonly a parser guarantees nhere will be exactly one source, lexeme or at:value
+   ;; nhese routines have nhat assumption built in
    ;;
-     (define (nd-source-1 t) (value (first (get-attribute (nd-attributes t) (at:value)))))
-     (define (nd-lexeme-1 t) (value (first (get-attribute (nd-attributes t) (at:lexeme)))))
-     (define (nd-value-1 t) (value (first ((get-attribute (nd-attributes t) (at:value))))))
+     (define (nd-source-1 n) (value (first (get-attribute (nd-attributes n) (at:value)))))
+     (define (nd-lexeme-1 n) (value (first (get-attribute (nd-attributes n) (at:lexeme)))))
+     (define (nd-value-1 n) (value (first ((get-attribute (nd-attributes n) (at:value))))))
 
-   (define (nd-start-pos* t)
+   (define (nd-start-pos n)
      (let(
-           [source-attribute (on-attribute t get-attribute (at:source))]
+           [source-attribute (on-attributes n get-attribute (at:source))]
            )
        (by-arity source-attribute
          (λ() (position-null))
          (λ(a) (source-start a))
-         (λ(a-list) (map source-start a-list))
+         (λ(a-list) (raise 'nd:multiple-sources))
          )))
 
-   (define (nd-end-pos* t)
+   (define (nd-end-pos n)
      (let(
-           [source-attribute (on-attribute t get-attribute (at:source))]
+           [source-attribute (on-attributes n get-attribute (at:source))]
            )
        (by-arity source-attribute
          (λ() (position-null))
          (λ(a) (source-end a))
-         (λ(a-list) (map source-end a-list))
+         (λ(a-list) (raise 'nd:multiple-sources))
          )))
 
 ;;--------------------------------------------------------------------------------
@@ -464,8 +464,8 @@
     (λ(t) (and (pair? t) (length≥ t 2) (has-attribute (nd-attributes t) attribute-type))))
 
   (define ($nd-has-value nd-type attribute-type . attribute-val)
-     (λ(t)
-       (and
+    (λ(t)
+      (and
          (nd-is-well-formed t)
          (type-is t nd-type)
          (cond 
@@ -484,7 +484,7 @@
             )
        (pred t)
        ))
-   (test-hook $nd-attribute-test-0)
+   (test-hook $nd-has-value-test-0)
 
 
 ;;--------------------------------------------------------------------------------
@@ -512,20 +512,20 @@
     (nd:symbol)
     )
 
-   (define (punc-is t p)
+   (define (punc-is n p)
      (and
-       (type-is t (nd:punc))
-       (string=? (nd-lexeme-1 t) p)
+       (type-is n (nd:punc))
+       (equal? (nd-lexeme-1 n) (list p))
        ))
 
    (define (punc-is-test-0)
      (punc-is nd-example-2 ","))
    (test-hook punc-is-test-0)
  
-   (define (symbol-is t s) 
+   (define (symbol-is n s) 
      (and
-       (type-is t (nd:symbol))
-       (string=? (nd-lexeme-1 t) s)
+       (type-is n (nd:symbol))
+       (string=? (nd-lexeme-1 n) (list s))
        ))
 
 
@@ -539,19 +539,19 @@
     ;;. a rule can create try nodes, maybe keeping them, so we keep the error message in the node
     ;;. then later we scan all the error messages out
     ;;.
-    (define (attribute:errsyn-mess) 'attribute:errsyn-mess) ; syntax error message
+    (define (at:errsyn-mess) 'at:errsyn-mess) ; syntax error message
 
     ;;. a higher level parse, for example the parser that looks at the lexer output, may not
     ;;. be able to make sense out of a series of tokens, and can put those tokens in this attribute
-    (define (attribute:errsyn-nds) 'attribute:errsyn-nds)
+    (define (at:errsyn-nds) 'at:errsyn-nds)
 
     (attribute-hook
-      (attribute:errsyn-mess) 
-      (attribute:errsyn-nds)
+      (at:errsyn-mess) 
+      (at:errsyn-nds)
       )
 
   ;;. in order to facilitate errsyn reporting we give rules  an 'imperative' setting
-  ;;. withtout imparatives grammar rules will simply not match when there is an error
+  ;;. withtout imperatives grammar rules will simply not match when there is an error
   ;;.
     (define (imperative:test) 'imperative:test) ; on nomatch, returns false there can be no errsyn
     (define (imperative:force) 'imperative:force) ; on nomatch, returns place holder with errsyn
@@ -565,28 +565,28 @@
   ;;.  The ts are only for annotation of the error, and are not read.
   ;;.  If you do not have the ts use a null list
   ;;.
-    (define (append-errsyn ns n mess)
+    (define (ascribe-errsyn ns n mess)
       (let*(
-            [a0 (attribute-make (attribute:errsyn-mess) mess)]
+            [a0 (attribute-make (at:errsyn-mess) mess)]
             [n0 (on-attributes n bcons a0)]
             )
         (cond
           [(null? ns) n0]
           [else
             (let*(
-                  [a1 (attribute-make* (attribute:errsyn-nds) ns)]
+                  [a1 (attribute-make* (at:errsyn-nds) ns)]
                   [n1 (on-attributes n0 bcons a1)]
                   )
               n1
               )]
           )))
 
-  (define (append-errint ns n mess)
+  (define (ascribe-errint ns n mess)
     (let*(
            [umess (string-append "internal errsyn when parsing" (if (string=? mess "") "" " ") mess)]
-           [err-nd (append-errsyn ns n umess)]
+           [err-nd (ascribe-errsyn ns n umess)]
             )
-      (log (nd>string err-nd))
+      (log (->string err-nd))
       err-nd
       ))
 
@@ -600,7 +600,7 @@
       (let (
             [new-nd (nd-make-parse ts nd-type generator)]
             )
-        (append-errsyn ts new-nd message)
+        (ascribe-errsyn ts new-nd message)
         )
       )
 
@@ -609,7 +609,7 @@
               [umess (string-append "internal errsyn when parsing" (if (string=? mess "") "" " ") mess)]
               [err-nd (nd-make-errsyn ns nd-type generator umess)]
               )
-        (log (nd>string err-nd))
+        (log (->string err-nd))
         err-nd
         ))
 
@@ -653,17 +653,16 @@
   ;; flat check for error conditions on a node or list of nodes
   ;;    see filter.rkt (filter-nd-err) for a tree search
   ;;
-    (define (nd-has-err t) 
+    (define (nd-has-err n) 
       (or
-        (not (nd-is-well-formed t))
-        (type-is t (nd:errsyn))
-        (pair? (nd-find-attribute (attribute:errsyn-mess) t))
+        (type-is n (nd:errsyn))
+        (pair? (has-attribute (nd-attributes n) (at:errsyn-mess)))
         ))
 
-    (define (nds-has-err ts)
+    (define (nds-has-err ns)
       (and
-        (not (null? ts))
-        (ormap nd-has-err ts)
+        (not (null? ns))
+        (ormap nd-has-err ns)
         ))
     ;note test framed-item-sep-test-2 & 3 in "parser-framing.rkt"
 
@@ -673,9 +672,6 @@
 ;;
 ;;   typed list, attributes, nodes and supporting routines
 ;;
-(provide (all-defined-out))
-
-#|
   (provide 
     )
 
@@ -698,17 +694,23 @@
 
     at:lexeme
     at:source
+    at:source-nds
     at:value
 
     attribute-hook
     attribute-hook*
     attribute-is-well-formed
 
-  ;; ascribed attribute list
+  ;; ascribed attributes
   ;;
+    has-attribute
     get-attribute
+    remove-attribute
+    ascribe    
+    update-attribute
     attribute-iterate
     gather-values
+    ascribed-attributes-equal?
 
 
   ;; source attribute
@@ -726,6 +728,84 @@
     source-is-well-formed
     source-make
 
-  )
+  ;; node
+  ;;
+    nd-make
+    nd-make*
   
-|#
+    nd:null
+
+    is-nd-type
+    nd-hook
+    nd-hook*
+
+    nd-children
+    nd-attributes
+    nd-is-well-formed
+
+    nd-equal?
+
+    on-attributes
+    on-children
+
+  ;; node utilities/helpers
+  ;;
+    nd-make-source
+    nd-make-value
+    nd-make-lex
+    nd-make-parse
+
+    nd-source
+    nd-lexeme
+    nd-value
+
+    nd-source-1
+    nd-lexeme-1
+    nd-value-1
+
+    nd-start-pos
+    nd-end-pos
+
+  ;; currying functions for match
+  ;;
+    $nd-type-is
+    $nd-has-attribute
+    $nd-has-value
+
+
+  ;; common nodes
+  ;;
+    nd:comment
+    nd:errsyn
+    nd:lex-other
+    nd:number
+    nd:punc
+    nd:string
+    nd:symbol
+
+    nd-hook
+    punc-is
+    symbol-is
+    
+  ;; errorr facility
+  ;;
+    at:errsyn-mess
+    at:errsyn-nds
+
+    imperative:test
+    imperative:force
+    imperative:committed
+
+    ascribe-errsyn
+    ascribe-errint
+
+    rule-errsyn
+    rule-errsyn-expected
+    rule-errparser
+
+    nd-has-err
+    nds-has-err
+
+
+  )
+

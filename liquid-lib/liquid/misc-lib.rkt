@@ -97,7 +97,7 @@
   (test-hook example-exception-test) ; adds the example test to the test suit
 
 
-  (displayln "running example tests.. car passes, cadr fails, caddr has an exception ..")
+  (displayln "running example tests.. first passes, second fails, third has an exception ..")
   (test-all)
   (test-remove example-pass-test)
   (test-remove example-fail-test)
@@ -744,6 +744,7 @@
         identity
         boolify  ;; (not #f) -> #t,  #f -> #f
         no-error ;; same as (not)
+        by-arity
 
       ;; putting messages into the log
       ;;
@@ -757,6 +758,8 @@
 
       ;; list manipulation
       ;;
+          bcons
+
         ;; efficient length compares 
         ;;   something like (length a-list) > 3  would take the length of the entire list before comparing
         ;;
