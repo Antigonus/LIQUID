@@ -67,6 +67,24 @@
   (define typed-list-example-1 (typed-list-make 'b 3 4))
 
 
+   ;; each typed list type may define its own equal function
+   ;;
+    (define typed-list-equal-dictionary (make-hash))
+    (define (typed-list-equal-hook type-a type-b the-equal-function)
+      (hash-set! typed-list-equal-dictionary (cons type-a type-b) the-equal-function))
+    (define (typed-list-equal-lookup type-a type-b)
+      (hash-ref typed-list-equal-dictionary (cons type-a type-b) #f))
+
+    (define (typed-list=? a b)
+      (let(
+            [equal-fun (typed-list-equal-lookup (type a) (type b))]
+            )
+        (cond
+          [equal-fun (equal-fun a b)]
+          [else (equal? a b)])))
+
+
+
 ;;--------------------------------------------------------------------------------
 ;; attribute
 ;;
@@ -170,9 +188,61 @@
       ))
   (test-hook test-gather-values-0)
              
+  ;; this is complicated by the facts that attributes can appear in any order,
+  ;; and that comparison of attributes is type dependent
+  ;; forunately this is not a commonly used function, mainly occurs in testing
+  ;;
+  ;;  all rows and columns in the outer product should have a true element
+  ;;
+   (define (ascribed-attributes-equal? a b)
+     (let(
+           [a0 (car a)]
+           [ar (cdr a)]
+           )
+       (let(
+             [v (map (λ(bi)(typed-list=? a0 bi)) b)]
+             )
+         (cond
+           [(not (or-form* v)) #f]
+           [else
+             (ascribed-attributes-equal-1 ar b v)
+             ]
+           ))))
 
-  ;; there is no order between attributes
-  (define (ascribed-attributes-equal? a b) (set=? (list->set a) (list->set b)))
+  (define (ascribed-attributes-equal-1 a b v)
+    (cond
+      [(null? a) (and-form* v)] ; if all v are true, then every b was equal to something
+      [else
+        (let(
+              [a0 (car a)]
+              [ar (cdr a)]
+              )
+          (let*(
+                 [afit/v 
+                   (foldr 
+                     (λ(bi vi r)
+                       (let(
+                             [a0=bi (typed-list=? a0 bi)]
+                             [afit-i0 (first r)]
+                             [v0 (second r)]
+                             )
+                         (list
+                           (or afit-i0 a0=bi) ; afit-i1
+                           (cons (or vi a0=bi) v0)    ; v1
+                           )))
+                     '(#f ())
+                     b v
+                     )
+                   ]
+                 [afit (first afit/v)]
+                 [v (second afit/v)]
+                 )
+            (cond
+              [(not afit) #f] ; if a0 wansn't equal to any b, then we short circuit out
+              [else
+                (ascribed-attributes-equal-1 ar b v)
+                ]
+              )))]))
 
   (define (test-ascribed-attributes-equal?-0)
     (let(
@@ -304,18 +374,18 @@
   (define (nd-equal? x y)
     (and
       (eqv? (type x) (type y))
-      (equal? (nd-children x) (nd-children y))
+      (nds-equal? (nd-children x) (nd-children y))
       (ascribed-attributes-equal? (nd-attributes x) (nd-attributes y))
       ))
 
   (define (nd-equal?-test-0)
     (nd-equal? 
-      '(nd:number ((at:source lexer-qpl0 "test-session" (1 1 0) (2 1 1))(at:lexeme "1")(at:value 1)))
-      '(nd:number ((at:value 1) (at:lexeme "1") (at:source lexer-qpl0 "test-session" (1 1 0) (2 1 1))))
+      '(nd:number ((at:source lexer-qpl0-name "test-session" (1 1 0) (2 1 1))(at:lexeme "1")(at:value 1)))
+      '(nd:number ((at:value 1) (at:lexeme "1") (at:source lexer-qpl0-name "test-session" (1 1 0) (2 1 1))))
       ))
   (test-hook nd-equal?-test-0)
 
-   ;; input two lists of nodes
+   ;; input two lists of nodes, order matters
    (define (nds-equal? x y)
      (or
        (and 
@@ -336,7 +406,7 @@
   (not
     (nds-equal?
             '((nd:number
-          ((at:source lexer-qpl0 "test-session" (1 1 0) (2 1 1))
+          ((at:source lexer-qpl0-name "test-session" (1 1 0) (2 1 1))
             (at:lexeme "1")
             (at:value 1))))
       '())))
@@ -345,13 +415,13 @@
   (define (nds-equal?-test-2)
     (nds-equal? 
       '((nd:number
-          ((at:source lexer-qpl0 "test-session" (1 1 0) (2 1 1))
+          ((at:source lexer-qpl0-name "test-session" (1 1 0) (2 1 1))
             (at:lexeme "1")
             (at:value 1))))
       '((nd:number
           ((at:value 1)
             (at:lexeme "1")
-            (at:source lexer-qpl0 "test-session" (1 1 0) (2 1 1)))))
+            (at:source lexer-qpl0-name "test-session" (1 1 0) (2 1 1)))))
       ))
   (test-hook nds-equal?-test-2)
 
@@ -478,7 +548,7 @@
 
    (define (nd-start-pos n)
      (let(
-           [source-attribute (on-attributes n get-attribute (at:source))]
+           [source-attribute (get-attribute (nd-attributes n) (at:source))]
            )
        (by-arity source-attribute
          (λ() (position-null))
@@ -486,15 +556,38 @@
          (λ(a-list) (raise 'nd:multiple-sources))
          )))
 
+  (define (nd-start-pos-test-0)
+    (let(
+          [n '(nd:punc
+                ( (at:lexeme ",")
+                  (at:source lexer-qpl0-name "test-session" (12 1 11) (13 1 12))))]
+          )
+      (equal?
+        (nd-start-pos n)
+        '(12 1 11))))
+  (test-hook nd-start-pos-test-0)
+
+
    (define (nd-end-pos n)
      (let(
-           [source-attribute (on-attributes n get-attribute (at:source))]
+           [source-attribute (get-attribute (nd-attributes n) (at:source))]
            )
        (by-arity source-attribute
          (λ() (position-null))
          (λ(a) (source-end a))
          (λ(a-list) (raise 'nd:multiple-sources))
          )))
+
+  (define (nd-end-pos-test-0)
+    (let(
+          [n '(nd:punc
+                ( (at:lexeme ",")
+                  (at:source lexer-qpl0-name "test-session" (12 1 11) (13 1 12))))]
+          )
+      (equal?
+        (nd-end-pos n)
+        '(13 1 12))))
+  (test-hook nd-end-pos-test-0)
 
 ;;--------------------------------------------------------------------------------
 ;; routines for matching nodes
@@ -762,7 +855,8 @@
     gather-values
     ascribed-attributes-equal?
 
-
+  ascribed-attributes-equal-1
+  
   ;; source attribute
   ;;
     position-deconstruct

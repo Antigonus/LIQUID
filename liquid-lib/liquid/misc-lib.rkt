@@ -155,6 +155,9 @@
       (not (and-form #t #f #t))))
   (test-hook and-form-test-0)
 
+  (define (or-form . args) (or-form* args))
+  (define (or-form* arg-list) (ormap identity arg-list))
+
 
    ;;; variable output arity function, returns a symbol on error, or a a variable length
    ;;; list.  This routine is used splices in multiple continuations baed on the return
@@ -751,6 +754,12 @@
         boolify  ;; (not #f) -> #t,  #f -> #f
         no-error ;; same as (not)
         by-arity
+
+        and-form
+        and-form*
+        or-form
+        or-form*
+
 
       ;; putting messages into the log
       ;;

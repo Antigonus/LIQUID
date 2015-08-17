@@ -33,7 +33,7 @@
                           (attribute:errsyn-nds
                             ((ndql0:punc
                                ((at:source
-                                  (lexer-qpl0)
+                                  (lexer-qpl0-name)
                                   "test-session"
                                   (6 1 5)
                                   (7 1 6))
@@ -57,14 +57,14 @@
                    (attribute:errsyn-nds
                      ((ndql0:punc
                         ((at:source
-                           (lexer-qpl0)
+                           (lexer-qpl0-name)
                            "test-session"
                            (21 1 20)
                            (22 1 21))
                           (at:lexeme "_")))
                        (ndql0:punc
                          ((at:source
-                            (lexer-qpl0)
+                            (lexer-qpl0-name)
                             "test-session"
                             (22 1 21)
                             (23 1 22))
@@ -83,7 +83,7 @@
                            (attribute:errsyn-nds
                              ((ndql0:punc
                                 ((at:source
-                                   (lexer-qpl0)
+                                   (lexer-qpl0-name)
                                    "test-session"
                                    (58 1 57)
                                    (59 1 58))
@@ -117,7 +117,7 @@
                              (attribute:errsyn-nds
                                ((ndql0:punc
                                   ((at:source
-                                     (lexer-qpl0)
+                                     (lexer-qpl0-name)
                                      "test-session"
                                      (6 1 5)
                                      (7 1 6))
@@ -163,7 +163,7 @@
                              (attribute:errsyn-nds
                                ((ndql0:punc
                                   ((at:source
-                                     (lexer-qpl0)
+                                     (lexer-qpl0-name)
                                      "test-session"
                                      (56 1 55)
                                      (57 1 56))

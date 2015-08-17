@@ -61,7 +61,7 @@
       '((ndql0:operand
           ((at:source rule-operand "test-session" (6 1 5) (12 1 11)))
           (nd:string
-            ((at:source (lexer-qpl0) "test-session" (6 1 5) (12 1 11))
+            ((at:source (lexer-qpl0-name) "test-session" (6 1 5) (12 1 11))
               (at:lexeme "\"Dali\""))))
          (ndql0:operand
            ((at:source rule-operand "test-session" (19 1 12) (14 1 19)))
@@ -70,13 +70,13 @@
          (ndql0:operand
            ((at:source rule-operand "test-session" (5 1 4) (6 1 5)))
            (nd:symbol
-             ((at:source (lexer-qpl0) "test-session" (5 1 4) (6 1 5))
+             ((at:source (lexer-qpl0-name) "test-session" (5 1 4) (6 1 5))
                (at:lexeme "a"))))
          (ndql0:operand
            ((at:source rule-operand "test-session" (21 1 20) (22 1 21)))
            (nd:number
              ((at:source
-                (lexer-qpl0)
+                (lexer-qpl0-name)
                 "test-session"
                 (21 1 20)
                 (22 1 21))
@@ -85,7 +85,7 @@
          (ndql0:operand
            ((at:source rule-operand "test-session" (6 1 5) (12 1 11)))
            (nd:string
-             ((at:source (lexer-qpl0) "test-session" (6 1 5) (12 1 11))
+             ((at:source (lexer-qpl0-name) "test-session" (6 1 5) (12 1 11))
                (at:lexeme "\"Salvadore\"")))))
       )
 

@@ -52,10 +52,10 @@
   ;;| output: a list of items, where each item is a list of nodes
   ;;|
   ;;|
-    (define (framed-items-sep ts separator)
-      (define (framed-items-sep-0 ts item-list item)
+    (define (framed-items-sep nds separator)
+      (define (framed-items-sep-0 nds item-list item)
         (cond 
-          [(null? ts) 
+          [(null? nds) 
             (cond
               [(null? item) item-list]
               [else (append item-list (list item))]
@@ -63,52 +63,54 @@
             ]
           [else
             (let(
-                  [t (car ts)]
-                  [cdr-ts (cdr ts)]
+                  [n (car nds)]
+                  [cdr-nds (cdr nds)]
                   )
               (cond
-                [(and (null? item) (separator t))
+                [(and (null? item) (separator n))
                   (let* (
-                          [a-tok (nd-make-errsyn ts (nd:errsyn) 'framed-items-sep-0 "expected item, found separator: ")]
+                          [a-tok (nd-make-errsyn nds (nd:errsyn) 'framed-items-sep-0 "expected item, found separator: ")]
                           [error-item (list a-tok)]
                           )
-                    (framed-items-sep-0 cdr-ts (append item-list (list error-item)) '())
+                    (framed-items-sep-0 cdr-nds (append item-list (list error-item)) '())
                     )]
-                [(and (separator t) (null? cdr-ts))
+                [(and (separator n) (null? cdr-nds))
                   (let* (
-                          [a-tok (nd-make-errsyn ts (nd:errsyn) 'framed-items-sep-0 "list ended with a separator: ")]
+                          [a-tok (nd-make-errsyn nds (nd:errsyn) 'framed-items-sep-0 "list ended with a separator: ")]
                           [error-item (list a-tok)]
                           )
-                    (framed-items-sep-0 cdr-ts (append item-list (list error-item)) '())
+                    (framed-items-sep-0 cdr-nds (append item-list (list error-item)) '())
                     )]
-                [(and (pair? item) (separator t))
-                  (framed-items-sep-0 cdr-ts (append item-list (list item)) '())
+                [(and (pair? item) (separator n))
+                  (framed-items-sep-0 cdr-nds (append item-list (list item)) '())
                   ]
-                [else ; in this case (separator t) must be false
-                  (framed-items-sep-0 cdr-ts item-list (append item (list t)))
+                [else ; in nhis case (separator n) must be false
+                  (framed-items-sep-0 cdr-nds item-list (append item (list n)))
                   ]
                 ))
             ]
           ))
-        (framed-items-sep-0 ts '() '())
+        ;;(trace framed-items-sep-0)
+        (framed-items-sep-0 nds '() '())
       )
+
       (define (framed-items-sep-test-0)
         (let*( 
                [in (open-input-string "1,2,3")]
-               [nds (qp-lex in (current-file-name))]
+               [nds (lexer-qpl0 in (current-file-name))]
                [sep (λ(n) (punc-is n ","))]
                [actual-items (framed-items-sep nds sep)]
                [expected-items
                  `(
-                  ((nd:number ((at:source ,(lexer-qpl0) "test-session" (1 1 0) (2 1 1))(at:lexeme "1")(at:value 1))))
-                  ((nd:number ((at:source ,(lexer-qpl0) "test-session" (3 1 2) (4 1 3))(at:lexeme "2")(at:value 2))))
-                  ((nd:number ((at:source ,(lexer-qpl0) "test-session" (5 1 4) (6 1 5))(at:lexeme "3")(at:value 3))))
+                  ((nd:number ((at:source ,(lexer-qpl0-name) "test-session" (1 1 0) (2 1 1))(at:lexeme "1")(at:value 1))))
+                  ((nd:number ((at:source ,(lexer-qpl0-name) "test-session" (3 1 2) (4 1 3))(at:lexeme "2")(at:value 2))))
+                  ((nd:number ((at:source ,(lexer-qpl0-name) "test-session" (5 1 4) (6 1 5))(at:lexeme "3")(at:value 3))))
                   )
                  ]
                )
           (foldl
             (λ(a b r)
-              (pretty-print (list a b r))
+              ;;(pretty-print (list a b r))
               (and r (nds-equal? a b))
               ) 
             #t
@@ -119,58 +121,59 @@
       (define (framed-items-sep-test-1)
         (let*( 
                [in (open-input-string "1 2, 3 4 5,,7")]
-               [ts (qp-lex in (current-file-name))]
+               [ts (lexer-qpl0 in (current-file-name))]
                [sep (λ(t) (punc-is t ","))]
                [its (framed-items-sep ts sep)]
                [expected-its 
                  `(((nd:number
-                      ((at:source ,(lexer-qpl0) "test-session" (1 1 0) (2 1 1))
+                      ((at:source ,(lexer-qpl0-name) "test-session" (1 1 0) (2 1 1))
                         (at:lexeme "1")
                         (at:value 1)))
                      (nd:number
-                       ((at:source ,(lexer-qpl0) "test-session" (3 1 2) (4 1 3))
+                       ((at:source ,(lexer-qpl0-name) "test-session" (3 1 2) (4 1 3))
                          (at:lexeme "2")
                          (at:value 2))))
                     ((nd:number
-                       ((at:source ,(lexer-qpl0) "test-session" (6 1 5) (7 1 6))
+                       ((at:source ,(lexer-qpl0-name) "test-session" (6 1 5) (7 1 6))
                          (at:lexeme "3")
                          (at:value 3)))
                       (nd:number
-                        ((at:source ,(lexer-qpl0) "test-session" (8 1 7) (9 1 8))
+                        ((at:source ,(lexer-qpl0-name) "test-session" (8 1 7) (9 1 8))
                           (at:lexeme "4")
                           (at:value 4)))
                       (nd:number
-                        ((at:source ,(lexer-qpl0) "test-session" (10 1 9) (11 1 10))
+                        ((at:source ,(lexer-qpl0-name) "test-session" (10 1 9) (11 1 10))
                           (at:lexeme "5")
                           (at:value 5))))
+                    
                     ((nd:errsyn
                        ((at:source framed-items-sep-0 "test-session" (12 1 11) (14 1 13))
                          (at:errsyn-mess "expected item, found separator: ")
                          (at:errsyn-nds
                            ((ndql0:punc
                               ((at:source
-                                 ,(lexer-qpl0)
+                                 ,(lexer-qpl0-name)
                                  "test-session"
                                  (12 1 11)
                                  (13 1 12))
                                 (at:lexeme ",")))
                              (nd:number
                                ((at:source
-                                  ,(lexer-qpl0)
+                                  ,(lexer-qpl0-name)
                                   "test-session"
                                   (13 1 12)
                                   (14 1 13))
                                  (at:lexeme "7")
                                  (at:value 7))))))))
                     ((nd:number
-                       ((at:source ,(lexer-qpl0) "test-session" (13 1 12) (14 1 13))
+                       ((at:source ,(lexer-qpl0-name) "test-session" (13 1 12) (14 1 13))
                          (at:lexeme "7")
                          (at:value 7)))))
                  ]
                )
           (foldl
             (λ(a b r)
-              (pretty-print (list a b r))
+              ;; (pretty-print (list a b r))
               (and r (nds-equal? a b))
               ) 
             #t
@@ -181,7 +184,7 @@
       (define (framed-items-sep-test-2)
         (let*( 
                [in (open-input-string "2 3, 3 4 5,,7")]
-               [ts (qp-lex in (current-file-name))]
+               [ts (lexer-qpl0 in (current-file-name))]
                [sep (λ(t) (punc-is t ","))]
                [its (framed-items-sep ts sep)]
                [has-err (ormap (λ(item) (ormap nd-has-err item)) its)] ; each item is a list
@@ -192,7 +195,7 @@
       (define (framed-items-sep-test-3)
         (let*( 
                [in (open-input-string "3,")]
-               [ts (qp-lex in (current-file-name))]
+               [ts (lexer-qpl0 in (current-file-name))]
                [sep (λ(t) (punc-is t ","))]
                [its (framed-items-sep ts sep)]
                [has-err (ormap (λ(item) (ormap nd-has-err item)) its)] ; each item is a list
@@ -204,7 +207,7 @@
       (define (framed-items-sep-test-4)
         (let*( 
                [in (open-input-string "3,4")]
-               [ts (qp-lex in (current-file-name))]
+               [ts (lexer-qpl0 in (current-file-name))]
                [sep (λ(t) (punc-is t ","))]
                [its (framed-items-sep ts sep)]
                [has-err (ormap (λ(item) (ormap nd-has-err item)) its)] ; each item is a list
@@ -320,36 +323,36 @@
       (define (framed-by-parens-test-0)
         (let*( 
                [in (open-input-string "(10  (21 22 23) 30)")]
-               [ts (qp-lex in (current-file-name))]
+               [ts (lexer-qpl0 in (current-file-name))]
                [fts (framed-by-parens ts)]
                )
           (nds-equal? fts
             '((ndql0:paren-node
                 ((at:source framed-by-parens "test-session" (2 1 1) (20 1 19)))
                 (nd:number
-                  ((at:source (lexer-qpl0) "test-session" (2 1 1) (4 1 3))
+                  ((at:source (lexer-qpl0-name) "test-session" (2 1 1) (4 1 3))
                     (at:lexeme "10")
                     (at:value 10)))
                 (ndql0:paren-node
                   ((at:source framed-by-parens-open "test-session" (7 1 6) (20 1 19)))
                   (nd:number
-                    ((at:source (lexer-qpl0) "test-session" (7 1 6) (9 1 8))
+                    ((at:source (lexer-qpl0-name) "test-session" (7 1 6) (9 1 8))
                       (at:lexeme "21")
                       (at:value 21)))
                   (nd:number
-                    ((at:source (lexer-qpl0) "test-session" (10 1 9) (12 1 11))
+                    ((at:source (lexer-qpl0-name) "test-session" (10 1 9) (12 1 11))
                       (at:lexeme "22")
                       (at:value 22)))
                   (nd:number
                     ((at:source
-                       (lexer-qpl0)
+                       (lexer-qpl0-name)
                        "test-session"
                        (13 1 12)
                        (15 1 14))
                       (at:lexeme "23")
                       (at:value 23))))
                 (nd:number
-                  ((at:source (lexer-qpl0) "test-session" (17 1 16) (19 1 18))
+                  ((at:source (lexer-qpl0-name) "test-session" (17 1 16) (19 1 18))
                     (at:lexeme "30")
                     (at:value 30))))))
           ))
