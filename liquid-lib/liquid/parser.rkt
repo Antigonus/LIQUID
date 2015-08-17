@@ -130,7 +130,7 @@
           '(ndql0:operand
              ((at:source rule-operand "test-session" (1 1 0) (6 1 5)))
              (nd:string
-               ((at:source source-generator-lex "test-session" (1 1 0) (6 1 5))
+               ((at:source (lexer-qpl0) "test-session" (1 1 0) (6 1 5))
                  (at:lexeme "\"abc\""))))
           )
         ))
@@ -197,7 +197,7 @@
              (ndql0:operand
                ((at:source rule-operand "test-session" (5 1 4) (6 1 5)))
                (nd:symbol
-                 ((at:source source-generator-lex "test-session" (5 1 4) (6 1 5))
+                 ((at:source (lexer-qpl0) "test-session" (5 1 4) (6 1 5))
                    (at:lexeme "a"))))
              (ndql0:operand
                ((at:source rule-operand "test-session" (7 1 6) (8 1 7)))
@@ -206,7 +206,7 @@
              (ndql0:operand
                ((at:source rule-operand "test-session" (9 1 8) (10 1 9)))
                (nd:symbol
-                 ((at:source source-generator-lex "test-session" (9 1 8) (10 1 9))
+                 ((at:source (lexer-qpl0) "test-session" (9 1 8) (10 1 9))
                    (at:lexeme "c")))))
           )
         ))
@@ -253,7 +253,7 @@
                (ndql0:operand
                  ((at:source rule-operand "test-session" (5 1 4) (6 1 5)))
                  (nd:symbol
-                   ((at:source source-generator-lex "test-session" (5 1 4) (6 1 5))
+                   ((at:source (lexer-qpl0) "test-session" (5 1 4) (6 1 5))
                      (at:lexeme "a"))))
                (ndql0:operand
                  ((at:source rule-operand "test-session" (7 1 6) (8 1 7)))
@@ -262,7 +262,7 @@
                (ndql0:operand
                  ((at:source rule-operand "test-session" (9 1 8) (10 1 9)))
                  (nd:symbol
-                   ((at:source source-generator-lex "test-session" (9 1 8) (10 1 9))
+                   ((at:source (lexer-qpl0) "test-session" (9 1 8) (10 1 9))
                      (at:lexeme "c")))))
 
              (ndql0:pred
@@ -272,7 +272,7 @@
                  ((at:source rule-operand "test-session" (16 1 15) (19 1 18)))
                  (nd:string
                    ((at:source
-                      source-generator-lex
+                      (lexer-qpl0)
                       "test-session"
                       (16 1 15)
                       (19 1 18))
@@ -281,7 +281,7 @@
                  ((at:source rule-operand "test-session" (21 1 20) (22 1 21)))
                  (nd:number
                    ((at:source
-                      source-generator-lex
+                      (lexer-qpl0)
                       "test-session"
                       (21 1 20)
                       (22 1 21))
@@ -291,7 +291,7 @@
                  ((at:source rule-operand "test-session" (24 1 23) (29 1 28)))
                  (nd:symbol
                    ((at:source
-                      source-generator-lex
+                      (lexer-qpl0)
                       "test-session"
                       (24 1 23)
                       (29 1 28))
@@ -304,7 +304,7 @@
                  ((at:source rule-operand "test-session" (43 1 42) (56 1 55)))
                  (nd:symbol
                    ((at:source
-                      source-generator-lex
+                      (lexer-qpl0)
                       "test-session"
                       (43 1 42)
                       (56 1 55))
@@ -339,7 +339,7 @@
                 (ndql0:operand
                   ((at:source rule-operand "test-session" (5 1 4) (10 1 9)))
                   (nd:string
-                    ((at:source source-generator-lex "test-session" (5 1 4) (10 1 9))
+                    ((at:source (lexer-qpl0) "test-session" (5 1 4) (10 1 9))
                       (at:lexeme "\"jim\""))))
                 (ndql0:operand
                   ((at:source rule-operand "test-session" (12 1 11) (13 1 12)))
@@ -352,7 +352,7 @@
                  ((at:source rule-operand "test-session" (24 1 23) (25 1 24)))
                  (nd:symbol
                    ((at:source
-                      source-generator-lex
+                      (lexer-qpl0)
                       "test-session"
                       (24 1 23)
                       (25 1 24))
@@ -361,7 +361,7 @@
                  ((at:source rule-operand "test-session" (27 1 26) (28 1 27)))
                  (nd:symbol
                    ((at:source
-                      source-generator-lex
+                      (lexer-qpl0)
                       "test-session"
                       (27 1 26)
                       (28 1 27))

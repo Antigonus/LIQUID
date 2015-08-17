@@ -30,15 +30,9 @@
   (define test-routines '())
   (define (test-name a-test) (symbol->string (object-name a-test)))
 
-  (define (test-hook a-test) 
-    (cond 
-      [(not (memv a-test test-routines))
-        (display "hooking test: ") (displayln (test-name a-test))
-        (set! test-routines (cons a-test test-routines))
-        (void)
-        ]
-      [else (void)]
-      ))
+  (define (test-hook a-test)
+    (display "hooking test: ") (displayln (test-name a-test))
+    (set! test-routines (cons a-test (remove a-test test-routines (λ(e f) (string=? (test-name e) (test-name f)))))))
 
   (define (test-remove a-test) 
     (display "removing test ") (displayln (test-name a-test))
@@ -149,6 +143,18 @@
   (define identity values)
   (define (boolify b) (not (not b))) ; outputs either #t or #f
   (define no-error not) ; useful when returning exception values on fail
+
+  ;; and can not be used with apply,  and-form can be
+  ;; and-form does not short circuit
+  (define (and-form . args) (and-form* args))
+  (define (and-form* arg-list) (andmap identity arg-list))
+
+  (define (and-form-test-0)
+    (and
+      (and-form #t #t #t)
+      (not (and-form #t #f #t))))
+  (test-hook and-form-test-0)
+
 
    ;;; variable output arity function, returns a symbol on error, or a a variable length
    ;;; list.  This routine is used splices in multiple continuations baed on the return

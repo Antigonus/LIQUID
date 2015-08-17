@@ -95,18 +95,24 @@
       (define (framed-items-sep-test-0)
         (let*( 
                [in (open-input-string "1,2,3")]
-               [ts (qp-lex in (current-file-name))]
-               [sep (λ(t) (punc-is t ","))]
-               [its (framed-items-sep ts sep)]
-               [expected-its
+               [nds (qp-lex in (current-file-name))]
+               [sep (λ(n) (punc-is n ","))]
+               [actual-items (framed-items-sep nds sep)]
+               [expected-items
                  `(
-                  ((ndql0:number ((at:source source-generator-lex "test-session" (1 1 0) (2 1 1))(at:lexeme "1")(at:value 1))))
-                  ((ndql0:number ((at:source source-generator-lex "test-session" (3 1 2) (4 1 3))(at:lexeme "2")(at:value 2))))
-                  ((ndql0:number ((at:source source-generator-lex "test-session" (5 1 4) (6 1 5))(at:lexeme "3")(at:value 3))))
+                  ((nd:number ((at:source ,(lexer-qpl0) "test-session" (1 1 0) (2 1 1))(at:lexeme "1")(at:value 1))))
+                  ((nd:number ((at:source ,(lexer-qpl0) "test-session" (3 1 2) (4 1 3))(at:lexeme "2")(at:value 2))))
+                  ((nd:number ((at:source ,(lexer-qpl0) "test-session" (5 1 4) (6 1 5))(at:lexeme "3")(at:value 3))))
                   )
                  ]
                )
-          (nds-equal? its expected-its)
+          (foldl
+            (λ(a b r)
+              (pretty-print (list a b r))
+              (and r (nds-equal? a b))
+              ) 
+            #t
+            expected-items actual-items)
           ))
       (test-hook framed-items-sep-test-0)
 
@@ -117,24 +123,24 @@
                [sep (λ(t) (punc-is t ","))]
                [its (framed-items-sep ts sep)]
                [expected-its 
-                 '(((ndql0:number
-                      ((at:source source-generator-lex "test-session" (1 1 0) (2 1 1))
+                 `(((nd:number
+                      ((at:source ,(lexer-qpl0) "test-session" (1 1 0) (2 1 1))
                         (at:lexeme "1")
                         (at:value 1)))
-                     (ndql0:number
-                       ((at:source source-generator-lex "test-session" (3 1 2) (4 1 3))
+                     (nd:number
+                       ((at:source ,(lexer-qpl0) "test-session" (3 1 2) (4 1 3))
                          (at:lexeme "2")
                          (at:value 2))))
-                    ((ndql0:number
-                       ((at:source source-generator-lex "test-session" (6 1 5) (7 1 6))
+                    ((nd:number
+                       ((at:source ,(lexer-qpl0) "test-session" (6 1 5) (7 1 6))
                          (at:lexeme "3")
                          (at:value 3)))
-                      (ndql0:number
-                        ((at:source source-generator-lex "test-session" (8 1 7) (9 1 8))
+                      (nd:number
+                        ((at:source ,(lexer-qpl0) "test-session" (8 1 7) (9 1 8))
                           (at:lexeme "4")
                           (at:value 4)))
-                      (ndql0:number
-                        ((at:source source-generator-lex "test-session" (10 1 9) (11 1 10))
+                      (nd:number
+                        ((at:source ,(lexer-qpl0) "test-session" (10 1 9) (11 1 10))
                           (at:lexeme "5")
                           (at:value 5))))
                     ((nd:errsyn
@@ -143,26 +149,32 @@
                          (at:errsyn-nds
                            ((ndql0:punc
                               ((at:source
-                                 source-generator-lex
+                                 ,(lexer-qpl0)
                                  "test-session"
                                  (12 1 11)
                                  (13 1 12))
                                 (at:lexeme ",")))
-                             (ndql0:number
+                             (nd:number
                                ((at:source
-                                  source-generator-lex
+                                  ,(lexer-qpl0)
                                   "test-session"
                                   (13 1 12)
                                   (14 1 13))
                                  (at:lexeme "7")
                                  (at:value 7))))))))
-                    ((ndql0:number
-                       ((at:source source-generator-lex "test-session" (13 1 12) (14 1 13))
+                    ((nd:number
+                       ((at:source ,(lexer-qpl0) "test-session" (13 1 12) (14 1 13))
                          (at:lexeme "7")
                          (at:value 7)))))
                  ]
                )
-          (nds-equal? its expected-its)
+          (foldl
+            (λ(a b r)
+              (pretty-print (list a b r))
+              (and r (nds-equal? a b))
+              ) 
+            #t
+            expected-its its)
           ))
       (test-hook framed-items-sep-test-1)
 
@@ -315,29 +327,29 @@
             '((ndql0:paren-node
                 ((at:source framed-by-parens "test-session" (2 1 1) (20 1 19)))
                 (nd:number
-                  ((at:source source-generator-lex "test-session" (2 1 1) (4 1 3))
+                  ((at:source (lexer-qpl0) "test-session" (2 1 1) (4 1 3))
                     (at:lexeme "10")
                     (at:value 10)))
                 (ndql0:paren-node
                   ((at:source framed-by-parens-open "test-session" (7 1 6) (20 1 19)))
                   (nd:number
-                    ((at:source source-generator-lex "test-session" (7 1 6) (9 1 8))
+                    ((at:source (lexer-qpl0) "test-session" (7 1 6) (9 1 8))
                       (at:lexeme "21")
                       (at:value 21)))
                   (nd:number
-                    ((at:source source-generator-lex "test-session" (10 1 9) (12 1 11))
+                    ((at:source (lexer-qpl0) "test-session" (10 1 9) (12 1 11))
                       (at:lexeme "22")
                       (at:value 22)))
                   (nd:number
                     ((at:source
-                       source-generator-lex
+                       (lexer-qpl0)
                        "test-session"
                        (13 1 12)
                        (15 1 14))
                       (at:lexeme "23")
                       (at:value 23))))
                 (nd:number
-                  ((at:source source-generator-lex "test-session" (17 1 16) (19 1 18))
+                  ((at:source (lexer-qpl0) "test-session" (17 1 16) (19 1 18))
                     (at:lexeme "30")
                     (at:value 30))))))
           ))

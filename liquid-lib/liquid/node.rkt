@@ -308,6 +308,13 @@
       (ascribed-attributes-equal? (nd-attributes x) (nd-attributes y))
       ))
 
+  (define (nd-equal?-test-0)
+    (nd-equal? 
+      '(nd:number ((at:source lexer-qpl0 "test-session" (1 1 0) (2 1 1))(at:lexeme "1")(at:value 1)))
+      '(nd:number ((at:value 1) (at:lexeme "1") (at:source lexer-qpl0 "test-session" (1 1 0) (2 1 1))))
+      ))
+  (test-hook nd-equal?-test-0)
+
    ;; input two lists of nodes
    (define (nds-equal? x y)
      (or
@@ -322,6 +329,31 @@
          (nds-equal? (cdr x) (cdr y))
          )))
 
+  (define (nds-equal?-test-0) (nds-equal? '() '()))
+  (test-hook nds-equal?-test-0)
+
+(define (nds-equal?-test-1)
+  (not
+    (nds-equal?
+            '((nd:number
+          ((at:source lexer-qpl0 "test-session" (1 1 0) (2 1 1))
+            (at:lexeme "1")
+            (at:value 1))))
+      '())))
+  (test-hook nds-equal?-test-1)
+
+  (define (nds-equal?-test-2)
+    (nds-equal? 
+      '((nd:number
+          ((at:source lexer-qpl0 "test-session" (1 1 0) (2 1 1))
+            (at:lexeme "1")
+            (at:value 1))))
+      '((nd:number
+          ((at:value 1)
+            (at:lexeme "1")
+            (at:source lexer-qpl0 "test-session" (1 1 0) (2 1 1)))))
+      ))
+  (test-hook nds-equal?-test-2)
 
   ;;;  input: a node, a-lambda and arg for the lambda
   ;;;  output: a modified node
