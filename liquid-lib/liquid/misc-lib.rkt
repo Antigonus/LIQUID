@@ -201,8 +201,6 @@
 ;;--------------------------------------------------------------------------------
 ;; list manipulation
 ;;
-  (define (bcons a b) (cons b a)) ; we like to specifiy the object being worked on first
-
   ;; efficient length compares
   ;;
     (define (length* l limit [n 0])
@@ -286,6 +284,105 @@
             ))))
     (test-hook list<-test-0)         
 
+
+  ;;  all rows and columns in the outer product should have a true element
+  ;;  I didn't use list->set because set didn't provide n equal lambda (or did I miss that?)
+  ;;  surely this is in a library somewhere ..
+  ;;
+    (define (unordered-equal? a b [the-eq-fun equal?])
+      (define (unordered-equal-1 a v)
+        (cond
+          [(null? a) (and-form* v)] ; if all v are true, then every b was equal to something
+          [else
+            (let(
+                  [a0 (car a)]
+                  [ar (cdr a)]
+                  )
+              (let*(
+                     [afit/v 
+                       (foldr 
+                         (λ(bi vi r)
+                           (let(
+                                 [a0=bi (the-eq-fun a0 bi)]
+                                 [afit-i0 (first r)]
+                                 [v0 (second r)]
+                                 )
+                             (list
+                               (or afit-i0 a0=bi) ; afit-i1
+                               (cons (or vi a0=bi) v0)    ; v1
+                               )))
+                         '(#f ())
+                         b v
+                         )
+                       ]
+                     [afit (first afit/v)]
+                     [v (second afit/v)]
+                     )
+                (cond
+                  [(not afit) #f] ; if a0 wansn't equal to any b, then we short circuit out
+                  [else
+                    (unordered-equal-1 ar v)
+                    ]
+                  )))]))
+
+      (let(
+            [a0 (car a)]
+            [ar (cdr a)]
+            )
+        (let(
+              [v (map (λ(bi)(the-eq-fun a0 bi)) b)]
+              )
+          (cond
+            [(not (or-form* v)) #f]
+            [else
+              (unordered-equal-1 ar v)
+              ]
+            ))))
+
+  (define (test-unordered-equal?-0)
+    (let(
+          [a1  '(a1 1 2 3)]
+          [a10 '(a10 10 20 30)]
+          [a11 '(a10 11 21 31)]
+          [a2  '(a2 7 89)]
+          )
+      (let*(
+             [i0 (list a1 a10 a11 a2)]
+             [i1 (list a11 a1 a10 a2)]
+             )
+        (unordered-equal? i0 i1))))
+  (test-hook test-unordered-equal?-0)
+
+  (define (test-unordered-equal?-1)
+    (let(
+          [a1  '(a1 1 2 3)]
+          [a1b  '(a1 1 2 3 4)]
+          [a10 '(a10 10 20 30)]
+          [a11 '(a10 11 21 31)]
+          [a2  '(a2 7 89)]
+          )
+      (let*(
+             [i0 (list a1 a10 a11 a2)]
+             [i1 (list a11 a1b a10 a2)]
+             )
+        (not (unordered-equal? i0 i1)))))
+  (test-hook test-unordered-equal?-1)
+
+
+  (define (bcons a-list item) (cons item a-list)) ; we like to specifiy the object being worked on first
+
+  (define (cat a-list . items) (append a-list items))
+  (define (cat-test-0)
+    (and
+      (equal?
+        (cat '(a b) 'c)
+        '(a b c))
+      (equal?
+        (cat '(1 3) 5 7)
+        '(1 3 5 7)
+        )
+      ))
+  (test-hook cat-test-0)
 
 ;;--------------------------------------------------------------------------------
 ;;  flatten n levels
@@ -496,6 +593,10 @@
     (define (with-escaped-quotes str)  (string-append (string #\\ #\") str (string #\\ #\")))
     (define (with-squotes str) (string-append "'" str "'"))
     
+    (define-for-syntax (with-quotes str) (string-append "\"" str "\""))
+    (define-for-syntax (with-escaped-quotes str)  (string-append (string #\\ #\") str (string #\\ #\")))
+    (define-for-syntax (with-squotes str) (string-append "'" str "'"))
+
 
     (define (drop-end-chars s) (list->string (drop-right (drop (string->list s) 1) 1))) 
     (define (drop-end-chars-test-0) (string=?  (drop-end-chars "\"abc\"")  "abc"))
@@ -643,6 +744,9 @@
 ;;   lib-name-trace to turn on tracing
 ;;   lib-name-untrace to turn off tracing
 ;;
+
+
+
   (define-syntax (provide-with-trace stx)
     (let(
            [datum  (syntax->datum stx)]
@@ -677,6 +781,8 @@
                     )
                   ]
                 [provide-calls (map (λ(e)`(provide ,e)) interface-functions)]
+                [provide-trace `(provide ,name-trace-fun)]
+                [provide-untrace `(provide ,name-untrace-fun)]
                 )
             #|
             (displayln code-block)
@@ -693,12 +799,12 @@
                        (list trace-fun)
                        (list untrace-fun)
                        provide-calls
+                       (list provide-trace)
+                       (list provide-untrace)
                        )
                      ]
                    )
-;              #|
-              (displayln program)
-;              |#
+              ;;(displayln program)
               (datum->syntax stx program)
               ))))))
 
@@ -773,8 +879,6 @@
 
       ;; list manipulation
       ;;
-          bcons
-
         ;; efficient length compares 
         ;;   something like (length a-list) > 3  would take the length of the entire list before comparing
         ;;
@@ -788,8 +892,12 @@
 
           list<
 
-          filter-fold
+          unordered-equal?
 
+          bcons
+          cat
+          filter-fold
+          
 
       ;; for creating unique to the session numbers or identifiers, might not be unique between sessions
       ;;

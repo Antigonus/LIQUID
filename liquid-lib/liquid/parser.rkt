@@ -98,7 +98,7 @@
                    )
                   (let*(
                          [tnew (nd-make-parse ts (ndql0:operand) 'rule-operand)]
-                         [tret (on-children tnew bcons t0)]
+                         [tret (on-children tnew cat t0)]
                          )
                     tret
                     )]
@@ -111,7 +111,7 @@
                       [pat
                         (let*(
                                [tnew (nd-make-parse ts (ndql0:operand) 'rule-operand)]
-                               [tret (on-children tnew bcons pat)]
+                               [tret (on-children tnew cat pat)]
                                )
                           tret
                           )]

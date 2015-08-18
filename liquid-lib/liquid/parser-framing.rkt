@@ -7,12 +7,6 @@
 #lang racket
 
 ;;--------------------------------------------------------------------------------
-;; provides
-;;
-  (provide framed-items-sep)
-  (provide framed-by-parens)
-
-;;--------------------------------------------------------------------------------
 ;; uses these libraries
 ;;
   (require parser-tools/lex)
@@ -145,26 +139,17 @@
                         ((at:source ,(lexer-qpl0-name) "test-session" (10 1 9) (11 1 10))
                           (at:lexeme "5")
                           (at:value 5))))
-                    
                     ((nd:errsyn
-                       ((at:source framed-items-sep-0 "test-session" (12 1 11) (14 1 13))
-                         (at:errsyn-mess "expected item, found separator: ")
-                         (at:errsyn-nds
-                           ((ndql0:punc
-                              ((at:source
-                                 ,(lexer-qpl0-name)
-                                 "test-session"
-                                 (12 1 11)
-                                 (13 1 12))
-                                (at:lexeme ",")))
-                             (nd:number
-                               ((at:source
-                                  ,(lexer-qpl0-name)
-                                  "test-session"
-                                  (13 1 12)
-                                  (14 1 13))
-                                 (at:lexeme "7")
-                                 (at:value 7))))))))
+                        ((at:source framed-items-sep-0 "test-session" (12 1 11) (14 1 13))
+                          (at:errsyn-mess "expected item, found separator: ")
+                          (at:errsyn-nds
+                            (nd:punc
+                               ((at:source lexer-qpl0 "test-session" (12 1 11) (13 1 12))
+                                 (at:lexeme ",")))
+                              (nd:number
+                                ((at:source lexer-qpl0 "test-session" (13 1 12) (14 1 13))
+                                  (at:lexeme "7")
+                                  (at:value 7)))))))
                     ((nd:number
                        ((at:source ,(lexer-qpl0-name) "test-session" (13 1 12) (14 1 13))
                          (at:lexeme "7")
@@ -173,7 +158,7 @@
                )
           (foldl
             (λ(a b r)
-              ;; (pretty-print (list a b r))
+              ;;(pretty-print (list a b r))
               (and r (nds-equal? a b))
               ) 
             #t
@@ -264,8 +249,8 @@
                   ]
                 [(close? t) ;; this is one of two places we might learn of unmatched parens (other in framed-by-parens-open null case)
                   (let*(
-                         [err-tok      (nd-make-parse (list t) (nd:errsyn) 'framed-by-parens)]
-                         [mess         (attribute-make (at:errsyn-mess) "unexpected ')'")]
+                         [err-tok     (nd-make-parse (list t) (nd:errsyn) 'framed-by-parens)]
+                         [mess        (attribute-make (at:errsyn-mess) "unexpected ')'")]
                          [err-nd-mess (on-attributes err-tok bcons mess)]
                          )
                     (cons err-tok (framed-by-parens cdr-ts)))
@@ -302,7 +287,7 @@
                          [descend-paren-and-tail (framed-by-parens-open cdr-ts new-paren-node)]
                          [descend-paren          (car descend-paren-and-tail)]
                          [descend-tail           (cadr descend-paren-and-tail)]
-                         [updated-paren          (on-children paren-node bcons descend-paren)]
+                         [updated-paren          (on-children paren-node cat descend-paren)]
                          )
                     (framed-by-parens-open descend-tail updated-paren))
                   ]
@@ -311,7 +296,7 @@
                   ]
                 [else
                   (let*(
-                         [updated-paren  (on-children paren-node bcons t)]
+                         [updated-paren  (on-children paren-node cat t)]
                          )
                     (framed-by-parens-open cdr-ts updated-paren))
                   ]
@@ -327,34 +312,42 @@
                [fts (framed-by-parens ts)]
                )
           (nds-equal? fts
-            '((ndql0:paren-node
+            `((ndql0:paren-node
                 ((at:source framed-by-parens "test-session" (2 1 1) (20 1 19)))
                 (nd:number
-                  ((at:source (lexer-qpl0-name) "test-session" (2 1 1) (4 1 3))
+                  ((at:source ,(lexer-qpl0-name) "test-session" (2 1 1) (4 1 3))
                     (at:lexeme "10")
                     (at:value 10)))
                 (ndql0:paren-node
                   ((at:source framed-by-parens-open "test-session" (7 1 6) (20 1 19)))
                   (nd:number
-                    ((at:source (lexer-qpl0-name) "test-session" (7 1 6) (9 1 8))
+                    ((at:source ,(lexer-qpl0-name) "test-session" (7 1 6) (9 1 8))
                       (at:lexeme "21")
                       (at:value 21)))
                   (nd:number
-                    ((at:source (lexer-qpl0-name) "test-session" (10 1 9) (12 1 11))
+                    ((at:source ,(lexer-qpl0-name) "test-session" (10 1 9) (12 1 11))
                       (at:lexeme "22")
                       (at:value 22)))
                   (nd:number
                     ((at:source
-                       (lexer-qpl0-name)
+                       ,(lexer-qpl0-name)
                        "test-session"
                        (13 1 12)
                        (15 1 14))
                       (at:lexeme "23")
                       (at:value 23))))
                 (nd:number
-                  ((at:source (lexer-qpl0-name) "test-session" (17 1 16) (19 1 18))
+                  ((at:source ,(lexer-qpl0-name) "test-session" (17 1 16) (19 1 18))
                     (at:lexeme "30")
                     (at:value 30))))))
           ))
         (test-hook framed-by-parens-test-0)
+
+;;--------------------------------------------------------------------------------
+;; provides
+;;
+  (provide-with-trace "parser-framing"
+    framed-items-sep
+    framed-by-parens
+    )
 

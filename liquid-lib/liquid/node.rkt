@@ -18,22 +18,22 @@
   (require parser-tools/lex) ; for the position structure
 
 ;;--------------------------------------------------------------------------------
-;; typed-list
+;; typed
 ;;
 ;; a 'list' is either null, has one 'item', or has an ordered list of items.  For
 ;; linquistic convience, items may also be called 'members', or 'elements'.
 ;;
 ;; The type of the null list, or a list that does not start with a symbol, is #f,
 ;; otherwise the type of the list is the car item.  The type is not considered
-;; to be a member of the typed-list (though it is a member of the base list).
+;; to be a member of the typed (though it is a member of the base list).
 ;;
-;; typed-list is the parent for attributes and nodes.
+;; typed is the parent for attributes and nodes.
 ;;
 ;;
-  (define (typed-list-make the-type . the-items) (typed-list-make* the-type the-items))
-  (define (typed-list-make* the-type the-items) (cons the-type the-items))
+  (define (typed-make the-type . the-items) (typed-make* the-type the-items))
+  (define (typed-make* the-type the-items) (cons the-type the-items))
   
-  (define (typed-list-is-well-formed tlst [a-type-enumeration '()])
+  (define (typed-is-well-formed tlst [a-type-enumeration '()])
     (and
       (pair? tlst)
       (let(
@@ -46,8 +46,8 @@
             (memv should-be-type a-type-enumeration)
             )))))
 
-  (define (type a-typed-list) (car a-typed-list))
-  (define (value a-typed-list) (cdr a-typed-list))
+  (define (type a-typed) (car a-typed))
+  (define (value a-typed) (cdr a-typed))
   (define (type-is t a-type) (eqv? (type t) a-type))
 
   (define (type-is-test-0) (type-is (list 'a 1 2) 'a))
@@ -56,32 +56,36 @@
   (define (type-is-test-1) (not (type-is '(b 2 3) 'a)))
   (test-hook type-is-test-1)
 
-  (define (typed-list-test-0)
+  (define (typed-test-0)
     (equal?
-      (typed-list-make 'a 1 2)
+      (typed-make 'a 1 2)
       '(a 1 2)))  ; doesn't actually do much ;-), but user is required to provide a type or function args won't match
-  (test-hook typed-list-test-0)
+  (test-hook typed-test-0)
 
   ;; these are used in tests further down
-  (define typed-list-example-0 (typed-list-make 'a 1 2))
-  (define typed-list-example-1 (typed-list-make 'b 3 4))
+  (define typed-example-0 (typed-make 'a 1 2))
+  (define typed-example-1 (typed-make 'b 3 4))
 
 
    ;; each typed list type may define its own equal function
    ;;
-    (define typed-list-equal-dictionary (make-hash))
-    (define (typed-list-equal-hook type-a type-b the-equal-function)
-      (hash-set! typed-list-equal-dictionary (cons type-a type-b) the-equal-function))
-    (define (typed-list-equal-lookup type-a type-b)
-      (hash-ref typed-list-equal-dictionary (cons type-a type-b) #f))
+    (define typed-equal-dictionary (make-hash))
 
-    (define (typed-list=? a b)
+    (define (typed-equal-hook type-a type-b the-equal-function)
+      (hash-set! typed-equal-dictionary (cons type-a type-b) the-equal-function))
+
+    (define (typed-equal-lookup type-a type-b)
+      (hash-ref typed-equal-dictionary (cons type-a type-b) #f))
+
+    (define (typed-equal? a b)
       (let(
-            [equal-fun (typed-list-equal-lookup (type a) (type b))]
+            [equal-fun (typed-equal-lookup (type a) (type b))]
             )
         (cond
           [equal-fun (equal-fun a b)]
-          [else (equal? a b)])))
+          [(and (is-nd-type a) (is-nd-type b)) (nd-equal? a b)]
+          [else (equal? a b)]
+          )))
 
 
 
@@ -96,8 +100,8 @@
 ;;  makes code a little clearer
 ;;
 
-  (define (attribute-make the-type . items ) (typed-list-make* the-type items))
-  (define (attribute-make* the-type items ) (typed-list-make* the-type items))
+  (define (attribute-make the-type . items ) (typed-make* the-type items))
+  (define (attribute-make* the-type items ) (typed-make* the-type items))
 
   (define (at:lexeme) 'at:lexeme)
   (define (at:source) 'at:source)
@@ -115,7 +119,7 @@
   (define (attribute-hook* introduced-types) (set! attribute-type-enumeration (append attribute-type-enumeration introduced-types)))
 
   (define (attribute-is-well-formed at [the-attribute-type-enumeration attribute-type-enumeration])
-    (typed-list-is-well-formed at the-attribute-type-enumeration))
+    (typed-is-well-formed at the-attribute-type-enumeration))
 
 
 ;;--------------------------------------------------------------------------------
@@ -188,90 +192,6 @@
       ))
   (test-hook test-gather-values-0)
              
-  ;; this is complicated by the facts that attributes can appear in any order,
-  ;; and that comparison of attributes is type dependent
-  ;; forunately this is not a commonly used function, mainly occurs in testing
-  ;;
-  ;;  all rows and columns in the outer product should have a true element
-  ;;
-   (define (ascribed-attributes-equal? a b)
-     (let(
-           [a0 (car a)]
-           [ar (cdr a)]
-           )
-       (let(
-             [v (map (λ(bi)(typed-list=? a0 bi)) b)]
-             )
-         (cond
-           [(not (or-form* v)) #f]
-           [else
-             (ascribed-attributes-equal-1 ar b v)
-             ]
-           ))))
-
-  (define (ascribed-attributes-equal-1 a b v)
-    (cond
-      [(null? a) (and-form* v)] ; if all v are true, then every b was equal to something
-      [else
-        (let(
-              [a0 (car a)]
-              [ar (cdr a)]
-              )
-          (let*(
-                 [afit/v 
-                   (foldr 
-                     (λ(bi vi r)
-                       (let(
-                             [a0=bi (typed-list=? a0 bi)]
-                             [afit-i0 (first r)]
-                             [v0 (second r)]
-                             )
-                         (list
-                           (or afit-i0 a0=bi) ; afit-i1
-                           (cons (or vi a0=bi) v0)    ; v1
-                           )))
-                     '(#f ())
-                     b v
-                     )
-                   ]
-                 [afit (first afit/v)]
-                 [v (second afit/v)]
-                 )
-            (cond
-              [(not afit) #f] ; if a0 wansn't equal to any b, then we short circuit out
-              [else
-                (ascribed-attributes-equal-1 ar b v)
-                ]
-              )))]))
-
-  (define (test-ascribed-attributes-equal?-0)
-    (let(
-          [a1  '(a1 1 2 3)]
-          [a10 '(a10 10 20 30)]
-          [a11 '(a10 11 21 31)]
-          [a2  '(a2 7 89)]
-          )
-      (let*(
-             [i0 (list a1 a10 a11 a2)]
-             [i1 (list a11 a1 a10 a2)]
-             )
-        (ascribed-attributes-equal? i0 i1))))
-  (test-hook test-ascribed-attributes-equal?-0)
-
-  (define (test-ascribed-attributes-equal?-1)
-    (let(
-          [a1  '(a1 1 2 3)]
-          [a1b  '(a1 1 2 3 4)]
-          [a10 '(a10 10 20 30)]
-          [a11 '(a10 11 21 31)]
-          [a2  '(a2 7 89)]
-          )
-      (let*(
-             [i0 (list a1 a10 a11 a2)]
-             [i1 (list a11 a1b a10 a2)]
-             )
-        (not (ascribed-attributes-equal? i0 i1)))))
-  (test-hook test-ascribed-attributes-equal?-1)
 
 
 ;;-----------------------------------------------------------------------------------------
@@ -340,7 +260,7 @@
 ;;  'at:lexeme'  and 'at:value'.
 ;;
   (define (nd-make the-type attributes . children)  (nd-make* the-type attributes children))
-  (define (nd-make* the-type attributes [children '()]) (typed-list-make* the-type (cons attributes children)))
+  (define (nd-make* the-type attributes [children '()]) (typed-make* the-type (cons attributes children)))
 
   (define (nd:null) 'nd:null) ; this node has no semmantic
   (define (nd:example-0) 'nd:example-0)
@@ -362,12 +282,12 @@
 
   (define (nd-is-well-formed n)
     (and 
-      (typed-list-is-well-formed n nd-type-enumeration)
+      (typed-is-well-formed n nd-type-enumeration)
       (length≥ n 2)
       (pair? (nd-attributes n))
       (andmap attribute-is-well-formed (nd-attributes n))
       ;;; (andmap nd-is-well-formed (nd-children n))  ; noo intensive, do nhis instead:
-      (andmap (λ(e)(typed-list-is-well-formed e nd-type-enumeration)) (nd-children n))
+      (andmap (λ(e)(typed-is-well-formed e nd-type-enumeration)) (nd-children n))
       ))
 
   ;; used in testing
@@ -375,7 +295,7 @@
     (and
       (eqv? (type x) (type y))
       (nds-equal? (nd-children x) (nd-children y))
-      (ascribed-attributes-equal? (nd-attributes x) (nd-attributes y))
+      (unordered-equal? (nd-attributes x) (nd-attributes y) typed-equal?)
       ))
 
   (define (nd-equal?-test-0)
@@ -693,6 +613,30 @@
       (at:errsyn-nds)
       )
 
+    (define (at:errsyn-nds-equal? a b) (nds-equal? (value a) (value b)))
+    (typed-equal-hook (at:errsyn-nds) (at:errsyn-nds) at:errsyn-nds-equal?)
+
+    (define (at:errsyn-nds-equal?-test-0)
+      (at:errsyn-nds-equal? 
+        '(at:errsyn-nds
+           (nd:punc
+             ((at:lexeme ",")
+               (at:source lexer-qpl0 "test-session" (12 1 11) (13 1 12))))
+           (nd:number
+             ((at:value 7)
+               (at:lexeme "7")
+               (at:source lexer-qpl0 "test-session" (13 1 12) (14 1 13)))))
+        '(at:errsyn-nds
+           (nd:punc
+             ((at:source lexer-qpl0 "test-session" (12 1 11) (13 1 12))
+               (at:lexeme ",")))
+           (nd:number
+             ((at:source lexer-qpl0 "test-session" (13 1 12) (14 1 13))
+               (at:lexeme "7")
+               (at:value 7))))))
+      (test-hook at:errsyn-nds-equal?-test-0)  
+
+
   ;;. in order to facilitate errsyn reporting we give rules  an 'imperative' setting
   ;;. withtout imperatives grammar rules will simply not match when there is an error
   ;;.
@@ -724,14 +668,14 @@
               )]
           )))
 
-  (define (ascribe-errint ns n mess)
-    (let*(
-           [umess (string-append "internal errsyn when parsing" (if (string=? mess "") "" " ") mess)]
-           [err-nd (ascribe-errsyn ns n umess)]
-            )
-      (log (->string err-nd))
-      err-nd
-      ))
+    (define (ascribe-errint ns n mess)
+      (let*(
+             [umess (string-append "internal errsyn when parsing" (if (string=? mess "") "" " ") mess)]
+             [err-nd (ascribe-errsyn ns n umess)]
+              )
+        (log (->string err-nd))
+        err-nd
+        ))
 
 
   ;;. makes a new node of nd-type and appends errsyn attribute with message
@@ -822,13 +766,17 @@
 
   ;; typed list
   ;;
-    typed-list-make
-    typed-list-make*
-    typed-list-is-well-formed
+    typed-make
+    typed-make*
+    typed-is-well-formed
 
     type 
     value
     type-is
+
+    typed-equal-hook
+    typed-equal?
+  
 
   ;; attribute
   ;;
@@ -853,9 +801,6 @@
     update-attribute
     attribute-iterate
     gather-values
-    ascribed-attributes-equal?
-
-  ascribed-attributes-equal-1
   
   ;; source attribute
   ;;
@@ -936,6 +881,8 @@
   ;;
     at:errsyn-mess
     at:errsyn-nds
+
+    at:errsyn-nds-equal?
 
     imperative:test
     imperative:force
