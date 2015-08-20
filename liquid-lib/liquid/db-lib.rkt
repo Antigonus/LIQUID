@@ -124,7 +124,7 @@
       #f  ;; false - no errors exist
       ))
 
-  (define (db-lib-init-test-0) (db-lib-init))
+  (define (db-lib-init-test-0) (not (db-lib-init)))
   (test-hook db-lib-init-test-0)
   
 
