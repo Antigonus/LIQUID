@@ -300,8 +300,8 @@
 
   (define (nd-equal?-test-0)
     (nd-equal? 
-      '(nd:number ((at:source lexer-qpl0-name "test-session" (1 1 0) (2 1 1))(at:lexeme "1")(at:value 1)))
-      '(nd:number ((at:value 1) (at:lexeme "1") (at:source lexer-qpl0-name "test-session" (1 1 0) (2 1 1))))
+      '(nd:number ((at:source lexer-ql0-name "test-session" (1 1 0) (2 1 1))(at:lexeme "1")(at:value 1)))
+      '(nd:number ((at:value 1) (at:lexeme "1") (at:source lexer-ql0-name "test-session" (1 1 0) (2 1 1))))
       ))
   (test-hook nd-equal?-test-0)
 
@@ -326,7 +326,7 @@
   (not
     (nds-equal?
             '((nd:number
-          ((at:source lexer-qpl0-name "test-session" (1 1 0) (2 1 1))
+          ((at:source lexer-ql0-name "test-session" (1 1 0) (2 1 1))
             (at:lexeme "1")
             (at:value 1))))
       '())))
@@ -335,13 +335,13 @@
   (define (nds-equal?-test-2)
     (nds-equal? 
       '((nd:number
-          ((at:source lexer-qpl0-name "test-session" (1 1 0) (2 1 1))
+          ((at:source lexer-ql0-name "test-session" (1 1 0) (2 1 1))
             (at:lexeme "1")
             (at:value 1))))
       '((nd:number
           ((at:value 1)
             (at:lexeme "1")
-            (at:source lexer-qpl0-name "test-session" (1 1 0) (2 1 1)))))
+            (at:source lexer-ql0-name "test-session" (1 1 0) (2 1 1)))))
       ))
   (test-hook nds-equal?-test-2)
 
@@ -480,7 +480,7 @@
     (let(
           [n '(nd:punc
                 ( (at:lexeme ",")
-                  (at:source lexer-qpl0-name "test-session" (12 1 11) (13 1 12))))]
+                  (at:source lexer-ql0-name "test-session" (12 1 11) (13 1 12))))]
           )
       (equal?
         (nd-start-pos n)
@@ -502,7 +502,7 @@
     (let(
           [n '(nd:punc
                 ( (at:lexeme ",")
-                  (at:source lexer-qpl0-name "test-session" (12 1 11) (13 1 12))))]
+                  (at:source lexer-ql0-name "test-session" (12 1 11) (13 1 12))))]
           )
       (equal?
         (nd-end-pos n)
@@ -621,17 +621,17 @@
         '(at:errsyn-nds
            (nd:punc
              ((at:lexeme ",")
-               (at:source lexer-qpl0 "test-session" (12 1 11) (13 1 12))))
+               (at:source lexer-ql0 "test-session" (12 1 11) (13 1 12))))
            (nd:number
              ((at:value 7)
                (at:lexeme "7")
-               (at:source lexer-qpl0 "test-session" (13 1 12) (14 1 13)))))
+               (at:source lexer-ql0 "test-session" (13 1 12) (14 1 13)))))
         '(at:errsyn-nds
            (nd:punc
-             ((at:source lexer-qpl0 "test-session" (12 1 11) (13 1 12))
+             ((at:source lexer-ql0 "test-session" (12 1 11) (13 1 12))
                (at:lexeme ",")))
            (nd:number
-             ((at:source lexer-qpl0 "test-session" (13 1 12) (14 1 13))
+             ((at:source lexer-ql0 "test-session" (13 1 12) (14 1 13))
                (at:lexeme "7")
                (at:value 7))))))
       (test-hook at:errsyn-nds-equal?-test-0)  
@@ -743,7 +743,7 @@
     (define (nd-has-err n) 
       (or
         (type-is n (nd:errsyn))
-        (pair? (has-attribute (nd-attributes n) (at:errsyn-mess)))
+        (has-attribute (nd-attributes n) (at:errsyn-mess))
         ))
 
     (define (nds-has-err ns)
@@ -751,7 +751,38 @@
         (not (null? ns))
         (ormap nd-has-err ns)
         ))
-    ;note test framed-item-sep-test-2 & 3 in "parser-framing.rkt"
+
+    (define (nd-has-err-test-0)
+      (nd-has-err
+        '(ndql0:operand
+           ((at:errsyn-nds
+              (nd:errsyn
+                ((at:errsyn-nds
+                   (nd:punc
+                     ((at:lexeme ",")
+                       (at:source lexer-ql0 "test-session" (6 1 5) (7 1 6)))))
+                  (at:errsyn-mess "list ended with a separator: ")
+                  (at:source framed-items-sep-0 "test-session" (6 1 5) (7 1 6)))))
+             (at:errsyn-mess "expected ndql0:operand but found:")
+             (at:source rule-operand "test-session" (6 1 5) (7 1 6))))
+        ))
+   (test-hook nd-has-err-test-0)
+
+    (define (nd-has-err-test-1)
+      (not
+      (nd-has-err
+        '(ndql0:operand
+           ((at:errsyn-nds  ; wonder if this should be checked for also
+              (nd:errsyn
+                ((at:errsyn-nds
+                   (nd:punc
+                     ((at:lexeme ",")
+                       (at:source lexer-ql0 "test-session" (6 1 5) (7 1 6)))))
+                  (at:errsyn-mess "list ended with a separator: ")
+                  (at:source framed-items-sep-0 "test-session" (6 1 5) (7 1 6)))))
+             (at:source rule-operand "test-session" (6 1 5) (7 1 6))))
+        )))
+   (test-hook nd-has-err-test-1)
 
       
 ;;--------------------------------------------------------------------------------

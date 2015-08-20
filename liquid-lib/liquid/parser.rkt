@@ -65,10 +65,10 @@
       (define (rule-pattern-test-0)
         (let*(
                [in (open-input-string "_")]
-               [ts (lexer-qpl0 in (current-file-name))]
+               [ts (lexer-ql0 in (current-file-name))]
                [the-parse (rule-pattern ts)]
                )
-          (nds-equal?
+          (nd-equal?
             the-parse
             '(ndql0:pattern ((at:source rule-pattern "test-session" (1 1 0) (2 1 1))))
             )
@@ -122,15 +122,15 @@
     (define (rule-operand-test-0)
       (let*(
              [in (open-input-string "\"abc\"")]
-             [ts (lexer-qpl0 in (current-file-name))]
+             [ts (lexer-ql0 in (current-file-name))]
              [the-parse (rule-operand ts)]
              )
-        (nds-equal?
+        (nd-equal?
           the-parse
-          '(ndql0:operand
+          `(ndql0:operand
              ((at:source rule-operand "test-session" (1 1 0) (6 1 5)))
              (nd:string
-               ((at:source (lexer-qpl0-name) "test-session" (1 1 0) (6 1 5))
+               ((at:source ,(lexer-ql0-name) "test-session" (1 1 0) (6 1 5))
                  (at:lexeme "\"abc\""))))
           )
         ))
@@ -138,10 +138,10 @@
 
     (define (rule-operand-test-1)
       (let* ([in (open-input-string "_")]
-              [ts (lexer-qpl0 in (current-file-name))]
+              [ts (lexer-ql0 in (current-file-name))]
               [the-parse (rule-operand ts)]
               )
-        (nds-equal?
+        (nd-equal?
           the-parse
           '(ndql0:operand
              ((at:source rule-operand "test-session" (1 1 0) (2 1 1)))
@@ -170,7 +170,7 @@
                  [operand-list (map (λ(ts) (rule-operand ts (imperative:force))) item-list)]
                  [new-t0  (nd-make-parse ts (ndql0:pred) 'rule-pred)]
                  [new-t1  (on-children new-t0 append operand-list)]
-                 [pname   (nd-lexeme (car ts))]
+                 [pname   (nd-lexeme-1 (car ts))]
                  [at0     (attribute-make* (at:value) pname)]
                  [new-t2  (on-attributes new-t1 bcons at0)]
                  )
@@ -182,22 +182,23 @@
           ]
         ))
 
+
     (define (rule-pred-test-0)
       (let*(
              [in (open-input-string "qed(a,_,c)")]
-             [ts (lexer-qpl0 in (current-file-name))]
+             [ts (lexer-ql0 in (current-file-name))]
              [framed-ts (framed-by-parens ts)]
              [the-parse (rule-pred framed-ts)]
              )
-        (nds-equal?
+        (nd-equal?
           the-parse
-          '(ndql0:pred
+          `(ndql0:pred
              ((at:source rule-pred "test-session" (1 1 0) (11 1 10))
                (at:value "qed"))
              (ndql0:operand
                ((at:source rule-operand "test-session" (5 1 4) (6 1 5)))
                (nd:symbol
-                 ((at:source (lexer-qpl0-name) "test-session" (5 1 4) (6 1 5))
+                 ((at:source ,(lexer-ql0-name) "test-session" (5 1 4) (6 1 5))
                    (at:lexeme "a"))))
              (ndql0:operand
                ((at:source rule-operand "test-session" (7 1 6) (8 1 7)))
@@ -206,7 +207,7 @@
              (ndql0:operand
                ((at:source rule-operand "test-session" (9 1 8) (10 1 9)))
                (nd:symbol
-                 ((at:source (lexer-qpl0-name) "test-session" (9 1 8) (10 1 9))
+                 ((at:source ,(lexer-ql0-name) "test-session" (9 1 8) (10 1 9))
                    (at:lexeme "c")))))
           )
         ))
@@ -239,12 +240,12 @@
     (define (rule-conjunction-test-0)
       (let*(
              [in (open-input-string "qed(a,_,c)&dlp(\"a\", 3, seven) & wikipedia(number_theory)")]
-             [ts (lexer-qpl0 in (current-file-name))]
+             [ts (lexer-ql0 in (current-file-name))]
              [framed-ts (framed-by-parens ts)]
              [the-parse (rule-conjunction framed-ts)]
              )
-        (nds-equal? the-parse
-          '(ndql0:conjunction
+        (nd-equal? the-parse
+          `(ndql0:conjunction
              ((at:source rule-conjunction "test-session" (1 1 0) (57 1 56)))
 
              (ndql0:pred
@@ -253,7 +254,7 @@
                (ndql0:operand
                  ((at:source rule-operand "test-session" (5 1 4) (6 1 5)))
                  (nd:symbol
-                   ((at:source (lexer-qpl0-name) "test-session" (5 1 4) (6 1 5))
+                   ((at:source ,(lexer-ql0-name) "test-session" (5 1 4) (6 1 5))
                      (at:lexeme "a"))))
                (ndql0:operand
                  ((at:source rule-operand "test-session" (7 1 6) (8 1 7)))
@@ -262,7 +263,7 @@
                (ndql0:operand
                  ((at:source rule-operand "test-session" (9 1 8) (10 1 9)))
                  (nd:symbol
-                   ((at:source (lexer-qpl0-name) "test-session" (9 1 8) (10 1 9))
+                   ((at:source ,(lexer-ql0-name) "test-session" (9 1 8) (10 1 9))
                      (at:lexeme "c")))))
 
              (ndql0:pred
@@ -272,7 +273,7 @@
                  ((at:source rule-operand "test-session" (16 1 15) (19 1 18)))
                  (nd:string
                    ((at:source
-                      (lexer-qpl0-name)
+                      ,(lexer-ql0-name)
                       "test-session"
                       (16 1 15)
                       (19 1 18))
@@ -281,7 +282,7 @@
                  ((at:source rule-operand "test-session" (21 1 20) (22 1 21)))
                  (nd:number
                    ((at:source
-                      (lexer-qpl0-name)
+                      ,(lexer-ql0-name)
                       "test-session"
                       (21 1 20)
                       (22 1 21))
@@ -291,7 +292,7 @@
                  ((at:source rule-operand "test-session" (24 1 23) (29 1 28)))
                  (nd:symbol
                    ((at:source
-                      (lexer-qpl0-name)
+                      ,(lexer-ql0-name)
                       "test-session"
                       (24 1 23)
                       (29 1 28))
@@ -304,7 +305,7 @@
                  ((at:source rule-operand "test-session" (43 1 42) (56 1 55)))
                  (nd:symbol
                    ((at:source
-                      (lexer-qpl0-name)
+                      ,(lexer-ql0-name)
                       "test-session"
                       (43 1 42)
                       (56 1 55))
@@ -317,7 +318,7 @@
   ;;
     (define (parser in)
       (let*(
-             [ts (lexer-qpl0 in (current-file-name))]
+             [ts (lexer-ql0 in (current-file-name))]
              [framed-ts (framed-by-parens ts)]
              [the-parse (rule-conjunction framed-ts)] ; currently the top level must be a conjunction
              )
@@ -329,9 +330,9 @@
              [in (open-input-string "who(\"jim\", _) & writes(x, y)")]
              [the-parse (parser in)]
              )
-        (nds-equal?
+        (nd-equal?
           the-parse
-          '(ndql0:conjunction
+          `(ndql0:conjunction
              ((at:source rule-conjunction "test-session" (1 1 0) (29 1 28)))
              (ndql0:pred
                 ((at:source rule-pred "test-session" (1 1 0) (29 1 28))
@@ -339,7 +340,7 @@
                 (ndql0:operand
                   ((at:source rule-operand "test-session" (5 1 4) (10 1 9)))
                   (nd:string
-                    ((at:source (lexer-qpl0-name) "test-session" (5 1 4) (10 1 9))
+                    ((at:source ,(lexer-ql0-name) "test-session" (5 1 4) (10 1 9))
                       (at:lexeme "\"jim\""))))
                 (ndql0:operand
                   ((at:source rule-operand "test-session" (12 1 11) (13 1 12)))
@@ -352,7 +353,7 @@
                  ((at:source rule-operand "test-session" (24 1 23) (25 1 24)))
                  (nd:symbol
                    ((at:source
-                      (lexer-qpl0-name)
+                      ,(lexer-ql0-name)
                       "test-session"
                       (24 1 23)
                       (25 1 24))
@@ -361,7 +362,7 @@
                  ((at:source rule-operand "test-session" (27 1 26) (28 1 27)))
                  (nd:symbol
                    ((at:source
-                      (lexer-qpl0-name)
+                      ,(lexer-ql0-name)
                       "test-session"
                       (27 1 26)
                       (28 1 27))
