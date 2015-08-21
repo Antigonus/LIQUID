@@ -12,6 +12,5 @@ than alphabetic order.  This facilitates top to bottom reading.
 @local-table-of-contents[]
 @include-section{db-lib-concepts.scrbl}
 @include-section{dataplex-concepts.scrbl}
-@include-section{token-concepts.scrbl}
+@include-section{node-concepts.scrbl}
 @include-section{parser-concepts.scrbl}
-

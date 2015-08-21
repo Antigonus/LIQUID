@@ -114,6 +114,7 @@
       (at:value)
       ))
   (define (is-attribute-type test-type) (memv test-type attribute-type-enumeration))
+  (define (is-attribute at) (is-attribute-type (type at)))
 
   (define (attribute-hook . introduced-types) (attribute-hook* introduced-types))
   (define (attribute-hook* introduced-types) (set! attribute-type-enumeration (append attribute-type-enumeration introduced-types)))
@@ -273,6 +274,8 @@
       (nd:example-1)
       ))
   (define (is-nd-type test-type) (memv test-type nd-type-enumeration))
+  (define (is-nd n) (is-nd-type (type n)))
+
 
   (define (nd-hook . nd-types) (nd-hook* nd-types))
   (define (nd-hook* nd-type-list) (set! nd-type-enumeration (append nd-type-enumeration nd-type-list)))
@@ -740,17 +743,14 @@
   ;; flat check for error conditions on a node or list of nodes
   ;;    see filter.rkt (filter-nd-err) for a tree search
   ;;
-    (define (nd-has-err n) 
+    (define (nd-has-err-1 n)
       (or
         (type-is n (nd:errsyn))
         (has-attribute (nd-attributes n) (at:errsyn-mess))
         ))
 
-    (define (nds-has-err ns)
-      (and
-        (not (null? ns))
-        (ormap nd-has-err ns)
-        ))
+    (define (nd-has-err . n) (nd-has-err* n))
+    (define (nd-has-err* ns) (ormap nd-has-err-1 ns))
 
     (define (nd-has-err-test-0)
       (nd-has-err
@@ -819,6 +819,9 @@
     at:source-nds
     at:value
 
+    is-attribute-type
+    is-attribute
+
     attribute-hook
     attribute-hook*
     attribute-is-well-formed
@@ -856,6 +859,7 @@
     nd:null
 
     is-nd-type
+    is-nd
     nd-hook
     nd-hook*
 
@@ -904,7 +908,6 @@
     nd:string
     nd:symbol
 
-    nd-hook
     punc-is
     symbol-is
     
@@ -930,7 +933,7 @@
     rule-errparser
 
     nd-has-err
-    nds-has-err
+    nd-has-err*
 
 
   )
