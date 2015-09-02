@@ -40,9 +40,9 @@
   As another feature of our objects, we support lazy copying.  With lazy copying 
   reading a value from an object continues to return the value from the copied from
   object instead of the new object until a write occurs. We use a hack to implment this
-  feature, we reserve the key 'copied-from'  in all elemetnary objects.  The value for 
-  this key is then the objid for the object being copied from.  If the elementary object
-  has no such key entry, then the object is not being copied from another.
+  feature, we reserve the field 'copied-from'  in all elemetnary objects.  The value for 
+  this field is then the objid for the object being copied from.  If the elementary object
+  has no such field entry, then the object is not being copied from another.
   
   --
 
@@ -97,11 +97,11 @@
 ;;
   (define obj:debug #f)
   (define obj:names (make-hash))
-  (define (obj:name-hook key name)
-    (display "(")(display key) (display ".")(display name)(displayln ")")
-    (hash-set! obj:names key name))
-  (define (obj:name-lookup key)
-    (hash-ref obj:names key "no-name"))
+  (define (obj:name-hook field name)
+    (display "(")(display field) (display ".")(display name)(displayln ")")
+    (hash-set! obj:names field name))
+  (define (obj:name-lookup field)
+    (hash-ref obj:names field "no-name"))
 
 
 ;;--------------------------------------------------------------------------------
@@ -119,16 +119,16 @@
 ;;
   (define obj:exception:no-such-object 'obj:exception:no-such-object)
   (define obj:exception:no-such-type 'obj:exception:no-such-type)
-  (define obj:exception:no-such-key 'obj:exception:no-such-key)
+  (define obj:exception:no-such-field 'obj:exception:no-such-field)
 
   (define (raise:no-such-object) (raise obj:exception:no-such-object))
   (define (raise:no-such-type) (raise obj:exception:no-such-type))
-  (define (raise:no-such-key) (raise obj:exception:no-such-key))
+  (define (raise:no-such-field) (raise obj:exception:no-such-field))
 
 ;;--------------------------------------------------------------------------------
-;; elementary objects have these keys reserved:
+;; elementary objects have these fields reserved:
 ;;
-  (define key:copied-from 'field:copied-from) ; holds an object
+  (define field:copied-from 'field:copied-from) ; holds an object
 
 
 ;;--------------------------------------------------------------------------------
@@ -197,10 +197,10 @@
       ))
 
   ; imposes type on an object then returns a field value from the selected component
-  (define (obj:set! type objid Λkey-val)
+  (define (obj:set! type objid Λfield-val)
     (get-elementary type objid
       (λ(e) 
-        (apply hash-set*! (cons e Λkey-val))
+        (apply hash-set*! (cons e Λfield-val))
         objid
         )
       raise:no-such-type
@@ -208,9 +208,9 @@
     objid
     )
 
-  (define (obj:remove! type objid key)
+  (define (obj:remove! type objid field)
     (get-elementary type objid
-      (λ(elementary) (hash-remove! elementary key))
+      (λ(elementary) (hash-remove! elementary field))
       void
       )
     objid
@@ -218,17 +218,17 @@
 
   ;; reference object to return a value
   ;;
-    (define (obj:ref type objid key continue-ok continue-no-key continue-no-type)
+    (define (obj:ref type objid field continue-ok continue-no-field continue-no-type)
 
       (define (obj:ref-1 objid)
         (get-elementary type objid
           (λ(e-obj)
-            (x-hash-ref e-obj key
+            (x-hash-ref e-obj field
               continue-ok
               (λ()
-                (x-hash-ref e-obj key:copied-from
+                (x-hash-ref e-obj field:copied-from
                   (λ(original) (obj:ref-1 original))
-                  continue-no-key
+                  continue-no-field
                   ))))
           continue-no-type
           ))
@@ -236,26 +236,32 @@
       (obj:ref-1 objid)
       )
   
-  (define (obj:ref* type objid key)
-    (obj:ref type objid key identity raise:no-such-key raise:no-such-type)
+  (define (obj:ref* type objid field)
+    (obj:ref type objid field identity raise:no-such-field raise:no-such-type)
     )
 
+  ;; in conventional object oriented programming, this would be a 'method call' where the
+  ;; field is the name of the method.
+  ;;
   ;; reference object to find a value, that value is a function, applies the 
   ;; function to the arguments.  args is a list.
   ;;
-    (define (obj:apply type objid key Λargs continue-ok continue-no-key continue-no-type)
-      (obj:ref type objid key
+  ;; the result of the function is returned
+  ;;
+    (define (obj:apply type objid field Λargs continue-ok continue-no-field continue-no-type)
+      (obj:ref type objid field
         (λ(f)(continue-ok (apply f Λargs)))
-        continue-no-key
+        continue-no-field
         continue-no-type
         ))
 
-    (define (obj:apply* type objid key Λargs)
-      (obj:apply type objid key Λargs identity raise:no-such-key raise:no-such-type))
+    (define (obj:apply* type objid field Λargs)
+      (obj:apply type objid field Λargs identity raise:no-such-field raise:no-such-type))
+
 
   (define (obj:copy-element type source-objid target-objid)
     (obj:add-type target-objid type)
-    (obj:set! type target-objid (Λ key:copied-from source-objid))
+    (obj:set! type target-objid (Λ field:copied-from source-objid))
     )
 
   ;; returns a set of types
@@ -282,27 +288,27 @@
     target-objid
     )
     
-  (define (obj:keys type objid)
+  (define (obj:fields type objid)
     (get-elementary type objid
       (λ(e)
         (let*(
-               [keys-list (hash-keys e)]
-               [keys (apply mutable-seteqv keys-list)]
+               [fields-list (hash-keys e)]
+               [fields (apply mutable-seteqv fields-list)]
               )
-          (x-hash-ref e key:copied-from
-            (λ(source) (set-union! keys (obj:keys type source)))
-            (λ() keys)
+          (x-hash-ref e field:copied-from
+            (λ(source) (set-union! fields (obj:fields type source)))
+            (λ() fields)
             )))
       (λ() (mutable-seteqv)) ; returns an empty set
       ))
   
-   (define (obj:has-key type objid key)
+   (define (obj:has-field type objid field)
      (get-elementary type objid
        (λ(e)
          (or
-           (hash-has-key? e key)
-           (x-hash-ref e key:copied-from
-             (λ(source) (obj:has-key type source key))
+           (hash-has-key? e field)
+           (x-hash-ref e field:copied-from
+             (λ(source) (obj:has-field type source field))
              is-false
              )))
        is-false
@@ -310,7 +316,7 @@
     
 
 
-  ;;--------------------------------------------------------------------------------
+;;--------------------------------------------------------------------------------
 ;;  tests
 ;;
 
@@ -415,8 +421,8 @@
     obj:debug
     obj:name-hook
     obj:name-lookup
-    key:copied-from
-    obj:exception:no-such-key
+    field:copied-from
+    obj:exception:no-such-field
     obj:exception:no-such-object
     obj:exception:no-such-type
     type-type
@@ -430,15 +436,15 @@
     obj:copy-element
     obj:element-types
     obj:has
-    obj:has-key
+    obj:has-field
     obj:is
-    obj:keys
+    obj:fields
     obj:make
     obj:ref
     obj:ref*
     obj:remove!
     obj:set!
-    raise:no-such-key
+    raise:no-such-field
     raise:no-such-object
     raise:no-such-type
     )

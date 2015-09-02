@@ -1,5 +1,5 @@
-7319
-((3) 0 () 3 ((q lib "liquid/node.rkt") (q lib "liquid/db-lib.rkt") (q lib "liquid/dataplex-lib.rkt")) () (h ! (equal) ((c def c (c (? . 0) q attribute-make)) q (6513 . 5)) ((c def c (c (? . 1) q db:alloc-name)) q (70 . 2)) ((c def c (c (? . 0) q nd-make*)) q (9357 . 5)) ((c def c (c (? . 0) q $nd-has-value)) q (12160 . 5)) ((c def c (c (? . 1) q keyspace:alloc-number)) q (925 . 3)) ((c def c (c (? . 1) q db:delete-table)) q (541 . 3)) ((c def c (c (? . 0) q nd-make)) q (9203 . 5)) ((c def c (c (? . 0) q at:errsyn-mess)) q (12761 . 2)) ((c def c (c (? . 2) q db:is-dataplex-name)) q (3324 . 4)) ((c form c (c (? . 1) q as-transaction)) q (0 . 2)) ((c def c (c (? . 0) q nd-make-value)) q (10843 . 5)) ((c def c (c (? . 0) q attribute-is-well-formed)) q (7358 . 3)) ((c def c (c (? . 1) q table:insert*)) q (1338 . 4)) ((c def c (c (? . 0) q nd-hook)) q (9671 . 3)) ((c def c (c (? . 1) q db:create-table)) q (355 . 4)) ((c def c (c (? . 0) q at:lexeme)) q (6873 . 2)) ((c def c (c (? . 0) q nd-has-err)) q (14982 . 3)) ((c def c (c (? . 0) q nd-hook*)) q (9738 . 3)) ((c def c (c (? . 0) q is-attribute-type)) q (7016 . 3)) ((c def c (c (? . 1) q db:alloc-number)) q (175 . 2)) ((c def c (c (? . 0) q typed-make)) q (5648 . 4)) ((c def c (c (? . 0) q at:source)) q (6908 . 2)) ((c def c (c (? . 0) q nd:null)) q (9523 . 2)) ((c def c (c (? . 0) q nd:lex-other)) q (12417 . 2)) ((c def c (c (? . 0) q nd:errsyn)) q (12382 . 2)) ((c def c (c (? . 0) q at:errsyn-nds)) q (12801 . 2)) ((c def c (c (? . 0) q rule-errsyn)) q (13945 . 11)) ((c def c (c (? . 0) q is-of-type)) q (6148 . 4)) ((c def c (c (? . 1) q table:match)) q (1457 . 5)) ((c def c (c (? . 0) q attribute-hook*)) q (7242 . 3)) ((c def c (c (? . 0) q nd-lexeme)) q (11506 . 3)) ((c def c (c (? . 2) q dataplex-lib-init)) q (1678 . 2)) ((c def c (c (? . 1) q db:tables)) q (848 . 3)) ((c def c (c (? . 2) q db:is-dataplex-name*)) q (3431 . 4)) ((c def c (c (? . 1) q table:insert)) q (1227 . 4)) ((c def c (c (? . 0) q nd:symbol)) q (12558 . 2)) ((c def c (c (? . 2) q dataplex:create-semantic-relation)) q (1719 . 8)) ((c def c (c (? . 0) q source-generator)) q (8703 . 3)) ((c def c (c (? . 0) q nd-end-pos)) q (11905 . 3)) ((c def c (c (? . 0) q $nd-type-is)) q (11968 . 3)) ((c def c (c (? . 1) q table:delete)) q (1114 . 4)) ((c def c (c (? . 2) q db:delete-dataplex*)) q (4389 . 3)) ((c def c (c (? . 0) q value)) q (6084 . 3)) ((c def c (c (? . 0) q symbol-is)) q (12674 . 4)) ((c def c (c (? . 0) q get-attribute)) q (7556 . 4)) ((c def c (c (? . 0) q nd-lexeme-1)) q (11713 . 3)) ((c def c (c (? . 0) q source-start)) q (8832 . 3)) ((c def c (c (? . 0) q nd:punc)) q (12490 . 2)) ((c def c (c (? . 0) q at:source-nds)) q (6943 . 2)) ((c def c (c (? . 2) q db:create-dataplex)) q (4015 . 4)) ((c def c (c (? . 0) q source-end)) q (8897 . 3)) ((c def c (c (? . 0) q typed-equal-hook)) q (6240 . 5)) ((c def c (c (? . 0) q is-nd)) q (9621 . 3)) ((c def c (c (? . 0) q nd-children)) q (9819 . 3)) ((c def c (c (? . 0) q on-attributes)) q (10233 . 8)) ((c def c (c (? . 0) q nd-make-errsyn)) q (13375 . 9)) ((c def c (c (? . 2) q semantic-relation:match)) q (5354 . 8)) ((c def c (c (? . 0) q type)) q (6027 . 3)) ((c def c (c (? . 1) q db:create-keyspace)) q (278 . 3)) ((c def c (c (? . 0) q $nd-has-attribute)) q (12053 . 3)) ((c def c (c (? . 0) q nd-value-1)) q (11773 . 3)) ((c def c (c (? . 1) q db:delete-table*)) q (624 . 3)) ((c def c (c (? . 0) q at:errsyn-nds-equal?)) q (12840 . 4)) ((c def c (c (? . 0) q imperative:committed)) q (13031 . 2)) ((c def c (c (? . 1) q db:is-table)) q (783 . 3)) ((c def c (c (? . 0) q nd-source)) q (11433 . 3)) ((c def c (c (? . 0) q nd:number)) q (12455 . 2)) ((c def c (c (? . 0) q source-pathname)) q (8768 . 3)) ((c def c (c (? . 0) q nd-make-lex)) q (10954 . 11)) ((c def c (c (? . 0) q nd-equal?)) q (10030 . 4)) ((c def c (c (? . 0) q attribute-make*)) q (6690 . 5)) ((c def c (c (? . 0) q nds-equal?)) q (10105 . 4)) ((c def c (c (? . 0) q position-is-well-formed)) q (8631 . 3)) ((c def c (c (? . 2) q dataplex:delete-shape-relation*)) q (3023 . 5)) ((c def c (c (? . 0) q punc-is)) q (12593 . 4)) ((c def c (c (? . 0) q nd-has-err*)) q (15044 . 3)) ((c def c (c (? . 1) q keyspace:dealloc-number)) q (1007 . 4)) ((c def c (c (? . 0) q nd-is-well-formed)) q (9966 . 3)) ((c def c (c (? . 2) q db:is-dataplex)) q (3805 . 3)) ((c def c (c (? . 0) q position-null)) q (8588 . 2)) ((c def c (c (? . 1) q db-lib-init)) q (35 . 2)) ((c def c (c (? . 0) q source-make)) q (9028 . 6)) ((c def c (c (? . 0) q has-attribute)) q (7434 . 4)) ((c def c (c (? . 0) q nd-attributes)) q (9889 . 3)) ((c def c (c (? . 0) q typed-equal?)) q (6415 . 4)) ((c def c (c (? . 0) q imperative:test)) q (12948 . 2)) ((c def c (c (? . 1) q db:delete-keyspace)) q (464 . 3)) ((c def c (c (? . 0) q nd:comment)) q (12346 . 2)) ((c def c (c (? . 0) q nd-make-parse)) q (11259 . 5)) ((c def c (c (? . 0) q nd-source-1)) q (11651 . 3)) ((c def c (c (? . 0) q ascribe-errsyn)) q (13077 . 5)) ((c def c (c (? . 2) q db:delete-dataplex)) q (4299 . 3)) ((c def c (c (? . 0) q nd-make-source)) q (10749 . 4)) ((c def c (c (? . 0) q position-deconstruct)) q (8507 . 3)) ((c def c (c (? . 0) q rule-errsyn-expected)) q (14282 . 9)) ((c def c (c (? . 2) q db:is-dataplex*)) q (3906 . 3)) ((c def c (c (? . 0) q at:value)) q (6982 . 2)) ((c def c (c (? . 0) q rule-errparser)) q (14606 . 11)) ((c form c (c (? . 1) q with-db)) q (1641 . 2)) ((c def c (c (? . 2) q semantic-relation:insert)) q (5054 . 8)) ((c def c (c (? . 1) q db:is-keyspace)) q (715 . 3)) ((c def c (c (? . 0) q nd:string)) q (12523 . 2)) ((c def c (c (? . 2) q dataplex:delete-semantic-relation*)) q (2285 . 5)) ((c def c (c (? . 2) q dataplex:create-shape-relation)) q (2519 . 8)) ((c def c (c (? . 0) q attribute-iterate)) q (8261 . 4)) ((c def c (c (? . 0) q is-attribute)) q (7088 . 3)) ((c def c (c (? . 2) q db:find-dataplex)) q (3672 . 4) (3546 . 4)) ((c def c (c (? . 1) q db:dealloc-name)) q (109 . 3)) ((c def c (c (? . 0) q gather-values)) q (8408 . 3)) ((c def c (c (? . 0) q attribute-hook)) q (7152 . 3)) ((c def c (c (? . 2) q db:create-dataplex*)) q (4153 . 4)) ((c def c (c (? . 2) q shape-relation:delete)) q (4662 . 6)) ((c def c (c (? . 0) q typed-is-well-formed)) q (5884 . 4)) ((c def c (c (? . 0) q update-attribute)) q (8122 . 4)) ((c def c (c (? . 2) q db:dataplexes)) q (3239 . 3)) ((c def c (c (? . 0) q ascribe)) q (7820 . 4)) ((c def c (c (? . 2) q shape-relation:insert)) q (4485 . 5)) ((c def c (c (? . 0) q ascribe-errint)) q (13226 . 5)) ((c def c (c (? . 0) q remove-attribute)) q (7695 . 4)) ((c def c (c (? . 0) q typed-make*)) q (5767 . 4)) ((c def c (c (? . 0) q source-is-well-formed)) q (8960 . 3)) ((c def c (c (? . 0) q imperative:force)) q (12989 . 2)) ((c def c (c (? . 2) q dataplex:delete-semantic-relation)) q (2055 . 6)) ((c def c (c (? . 0) q is-nd-type)) q (9556 . 3)) ((c def c (c (? . 2) q shape-relation:match)) q (4862 . 5)) ((c def c (c (? . 1) q db:dealloc-number)) q (216 . 3)) ((c def c (c (? . 0) q nd-value)) q (11579 . 3)) ((c def c (c (? . 0) q nd-make-errint)) q (13660 . 9)) ((c def c (c (? . 0) q on-children)) q (10535 . 6)) ((c def c (c (? . 2) q dataplex:delete-shape-relation)) q (2807 . 5)) ((c def c (c (? . 0) q ascribe*)) q (7967 . 4)) ((c def c (c (? . 0) q nd-start-pos)) q (11840 . 3))))
+8123
+((3) 0 () 4 ((q lib "liquid/db-lib.rkt") (q lib "liquid/node.rkt") (q lib "liquid/dataplex-lib.rkt") (q lib "liquid/object.rkt")) () (h ! (equal) ((c def c (c (? . 3) q obj:ref*)) q (6617 . 5)) ((c def c (c (? . 0) q db:alloc-number)) q (175 . 2)) ((c def c (c (? . 0) q db:dealloc-number)) q (216 . 3)) ((c def c (c (? . 1) q $nd-has-attribute)) q (14295 . 3)) ((c def c (c (? . 1) q at:errsyn-mess)) q (15003 . 2)) ((c def c (c (? . 1) q attribute-hook)) q (9394 . 3)) ((c def c (c (? . 1) q nd-source)) q (13675 . 3)) ((c def c (c (? . 2) q dataplex-lib-init)) q (1678 . 2)) ((c def c (c (? . 1) q attribute-iterate)) q (10503 . 4)) ((c def c (c (? . 0) q db:delete-table*)) q (624 . 3)) ((c def c (c (? . 1) q symbol-is)) q (14916 . 4)) ((c def c (c (? . 1) q nd:punc)) q (14732 . 2)) ((c def c (c (? . 0) q table:insert*)) q (1338 . 4)) ((c def c (c (? . 1) q ascribe-errsyn)) q (15319 . 5)) ((c def c (c (? . 2) q db:delete-dataplex)) q (4299 . 3)) ((c def c (c (? . 1) q get-attribute)) q (9798 . 4)) ((c def c (c (? . 1) q nd-hook*)) q (11980 . 3)) ((c def c (c (? . 1) q at:source)) q (9150 . 2)) ((c def c (c (? . 1) q value)) q (8326 . 3)) ((c def c (c (? . 1) q attribute-is-well-formed)) q (9600 . 3)) ((c def c (c (? . 1) q nd:symbol)) q (14800 . 2)) ((c def c (c (? . 0) q db:create-keyspace)) q (278 . 3)) ((c def c (c (? . 3) q obj:ref)) q (6203 . 13)) ((c def c (c (? . 0) q db-lib-init)) q (35 . 2)) ((c def c (c (? . 1) q nd-attributes)) q (12131 . 3)) ((c def c (c (? . 1) q at:errsyn-nds-equal?)) q (15082 . 4)) ((c def c (c (? . 1) q typed-make*)) q (8009 . 4)) ((c def c (c (? . 1) q is-nd-type)) q (11798 . 3)) ((c def c (c (? . 2) q dataplex:delete-semantic-relation*)) q (2285 . 5)) ((c def c (c (? . 1) q imperative:force)) q (15231 . 2)) ((c def c (c (? . 2) q db:is-dataplex)) q (3805 . 3)) ((c def c (c (? . 0) q table:insert)) q (1227 . 4)) ((c def c (c (? . 1) q punc-is)) q (14835 . 4)) ((c def c (c (? . 2) q dataplex:delete-semantic-relation)) q (2055 . 6)) ((c def c (c (? . 2) q db:create-dataplex*)) q (4153 . 4)) ((c def c (c (? . 3) q obj:make)) q (5648 . 2)) ((c def c (c (? . 3) q obj:element-types)) q (7609 . 3)) ((c def c (c (? . 2) q shape-relation:match)) q (4862 . 5)) ((c def c (c (? . 1) q type)) q (8269 . 3)) ((c def c (c (? . 1) q nd-start-pos)) q (14082 . 3)) ((c def c (c (? . 3) q obj:set!)) q (5915 . 5)) ((c def c (c (? . 1) q nd-make-parse)) q (13501 . 5)) ((c def c (c (? . 1) q nd-equal?)) q (12272 . 4)) ((c def c (c (? . 3) q obj:apply*)) q (7233 . 6)) ((c def c (c (? . 3) q obj:add-type)) q (5739 . 4)) ((c def c (c (? . 0) q db:alloc-name)) q (70 . 2)) ((c def c (c (? . 1) q is-attribute-type)) q (9258 . 3)) ((c def c (c (? . 3) q obj:has)) q (5830 . 4)) ((c def c (c (? . 1) q update-attribute)) q (10364 . 4)) ((c def c (c (? . 2) q dataplex:delete-shape-relation*)) q (3023 . 5)) ((c def c (c (? . 1) q source-start)) q (11074 . 3)) ((c def c (c (? . 1) q gather-values)) q (10650 . 3)) ((c def c (c (? . 1) q source-generator)) q (10945 . 3)) ((c def c (c (? . 1) q rule-errparser)) q (16848 . 11)) ((c def c (c (? . 1) q nds-equal?)) q (12347 . 4)) ((c def c (c (? . 0) q db:dealloc-name)) q (109 . 3)) ((c def c (c (? . 1) q nd:string)) q (14765 . 2)) ((c def c (c (? . 1) q at:lexeme)) q (9115 . 2)) ((c def c (c (? . 1) q nd-make*)) q (11599 . 5)) ((c def c (c (? . 1) q nd-make-errsyn)) q (15617 . 9)) ((c def c (c (? . 3) q obj:is)) q (5681 . 3)) ((c def c (c (? . 1) q ascribe-errint)) q (15468 . 5)) ((c def c (c (? . 1) q nd-hook)) q (11913 . 3)) ((c def c (c (? . 2) q db:delete-dataplex*)) q (4389 . 3)) ((c def c (c (? . 1) q nd:lex-other)) q (14659 . 2)) ((c def c (c (? . 1) q nd-value-1)) q (14015 . 3)) ((c def c (c (? . 0) q keyspace:dealloc-number)) q (1007 . 4)) ((c def c (c (? . 2) q semantic-relation:insert)) q (5054 . 8)) ((c def c (c (? . 1) q nd:null)) q (11765 . 2)) ((c def c (c (? . 2) q shape-relation:delete)) q (4662 . 6)) ((c def c (c (? . 1) q attribute-make*)) q (8932 . 5)) ((c def c (c (? . 1) q position-null)) q (10830 . 2)) ((c def c (c (? . 1) q nd-make-lex)) q (13196 . 11)) ((c def c (c (? . 0) q db:tables)) q (848 . 3)) ((c def c (c (? . 1) q nd-lexeme-1)) q (13955 . 3)) ((c def c (c (? . 1) q on-children)) q (12777 . 6)) ((c def c (c (? . 0) q db:is-keyspace)) q (715 . 3)) ((c def c (c (? . 3) q obj:copy)) q (7516 . 4)) ((c def c (c (? . 2) q dataplex:create-shape-relation)) q (2519 . 8)) ((c def c (c (? . 1) q rule-errsyn-expected)) q (16524 . 9)) ((c def c (c (? . 1) q at:source-nds)) q (9185 . 2)) ((c def c (c (? . 1) q nd-source-1)) q (13893 . 3)) ((c def c (c (? . 1) q imperative:committed)) q (15273 . 2)) ((c def c (c (? . 1) q nd:comment)) q (14588 . 2)) ((c def c (c (? . 2) q db:find-dataplex)) q (3672 . 4) (3546 . 4)) ((c def c (c (? . 0) q db:is-table)) q (783 . 3)) ((c def c (c (? . 2) q db:create-dataplex)) q (4015 . 4)) ((c def c (c (? . 1) q nd-has-err*)) q (17286 . 3)) ((c def c (c (? . 0) q db:create-table)) q (355 . 4)) ((c def c (c (? . 3) q obj:fields)) q (7680 . 4)) ((c def c (c (? . 1) q ascribe*)) q (10209 . 4)) ((c def c (c (? . 2) q shape-relation:insert)) q (4485 . 5)) ((c def c (c (? . 1) q at:value)) q (9224 . 2)) ((c def c (c (? . 1) q typed-is-well-formed)) q (8126 . 4)) ((c def c (c (? . 1) q $nd-type-is)) q (14210 . 3)) ((c def c (c (? . 1) q is-attribute)) q (9330 . 3)) ((c def c (c (? . 3) q obj:copy-element)) q (7389 . 5)) ((c def c (c (? . 0) q table:delete)) q (1114 . 4)) ((c def c (c (? . 1) q attribute-hook*)) q (9484 . 3)) ((c def c (c (? . 1) q remove-attribute)) q (9937 . 4)) ((c def c (c (? . 2) q db:dataplexes)) q (3239 . 3)) ((c def c (c (? . 1) q nd-value)) q (13821 . 3)) ((c def c (c (? . 1) q nd-children)) q (12061 . 3)) ((c def c (c (? . 1) q on-attributes)) q (12475 . 8)) ((c def c (c (? . 1) q nd-make)) q (11445 . 5)) ((c def c (c (? . 1) q has-attribute)) q (9676 . 4)) ((c def c (c (? . 3) q obj:apply)) q (6732 . 15)) ((c def c (c (? . 0) q db:delete-keyspace)) q (464 . 3)) ((c def c (c (? . 2) q db:is-dataplex-name)) q (3324 . 4)) ((c def c (c (? . 1) q attribute-make)) q (8755 . 5)) ((c def c (c (? . 1) q typed-equal-hook)) q (8482 . 5)) ((c def c (c (? . 1) q ascribe)) q (10062 . 4)) ((c def c (c (? . 2) q db:is-dataplex-name*)) q (3431 . 4)) ((c form c (c (? . 0) q as-transaction)) q (0 . 2)) ((c def c (c (? . 1) q position-is-well-formed)) q (10873 . 3)) ((c def c (c (? . 0) q keyspace:alloc-number)) q (925 . 3)) ((c def c (c (? . 1) q imperative:test)) q (15190 . 2)) ((c def c (c (? . 1) q source-pathname)) q (11010 . 3)) ((c def c (c (? . 1) q typed-equal?)) q (8657 . 4)) ((c def c (c (? . 1) q source-make)) q (11270 . 6)) ((c def c (c (? . 1) q rule-errsyn)) q (16187 . 11)) ((c def c (c (? . 1) q is-nd)) q (11863 . 3)) ((c def c (c (? . 2) q dataplex:create-semantic-relation)) q (1719 . 8)) ((c def c (c (? . 0) q table:match)) q (1457 . 5)) ((c def c (c (? . 2) q dataplex:delete-shape-relation)) q (2807 . 5)) ((c def c (c (? . 2) q db:is-dataplex*)) q (3906 . 3)) ((c def c (c (? . 3) q obj:has-field)) q (7770 . 5)) ((c def c (c (? . 1) q source-end)) q (11139 . 3)) ((c def c (c (? . 1) q nd-make-source)) q (12991 . 4)) ((c def c (c (? . 1) q nd-has-err)) q (17224 . 3)) ((c def c (c (? . 1) q is-of-type)) q (8390 . 4)) ((c def c (c (? . 1) q position-deconstruct)) q (10749 . 3)) ((c def c (c (? . 1) q $nd-has-value)) q (14402 . 5)) ((c def c (c (? . 1) q nd-is-well-formed)) q (12208 . 3)) ((c def c (c (? . 1) q nd-make-errint)) q (15902 . 9)) ((c def c (c (? . 1) q nd:errsyn)) q (14624 . 2)) ((c def c (c (? . 3) q obj:remove!)) q (6084 . 5)) ((c def c (c (? . 0) q db:delete-table)) q (541 . 3)) ((c def c (c (? . 1) q nd-end-pos)) q (14147 . 3)) ((c def c (c (? . 1) q at:errsyn-nds)) q (15043 . 2)) ((c def c (c (? . 1) q nd-make-value)) q (13085 . 5)) ((c def c (c (? . 2) q semantic-relation:match)) q (5354 . 8)) ((c def c (c (? . 1) q source-is-well-formed)) q (11202 . 3)) ((c def c (c (? . 1) q nd:number)) q (14697 . 2)) ((c def c (c (? . 1) q nd-lexeme)) q (13748 . 3)) ((c form c (c (? . 0) q with-db)) q (1641 . 2)) ((c def c (c (? . 1) q typed-make)) q (7890 . 4))))
 syntax
 (as-transaction body ...)
 procedure
@@ -175,6 +175,89 @@ procedure
   a-dataplex : is-dataplex
   a-semantic-relation : is-semantic-relation
   a-pattern : is-pattern
+procedure
+(obj:make) -> obj:is
+procedure
+(obj:is objid) -> bool?
+  objid : obj:is
+procedure
+(obj:add-type objid type) -> obj:is
+  objid : obj:is
+  type : obj:is
+procedure
+(obj:has objid type) -> bool?
+  objid : obj:is
+  type : obj:is
+procedure
+(obj:set! type objid Λfield-symbol) -> obj:is
+  type : obj:is
+  objid : obj:is
+  Λfield-symbol : (listof [field symbol?] [value any/c])
+procedure
+(obj:remove! type objid field) -> obj:is
+  type : obj:is
+  objid : obj:is
+  field : symbol?
+procedure
+(obj:ref type                  
+         objid                 
+         field                 
+         continue-ok           
+         continue-no-field     
+         continue-no-type) -> any/c
+  type : obj:is
+  objid : obj:is
+  field : symbol?
+  continue-ok : (-> any/c any/c)
+  continue-no-field : (->any/c)
+  continue-no-type : (-> any/c)
+procedure
+(obj:ref* type objid field) -> any/c
+  type : obj:is
+  objid : obj:is
+  field : symbol?
+procedure
+(obj:apply type                  
+           objid                 
+           field                 
+           Λargs                 
+           continue-ok           
+           continue-no-field     
+           continue-no-type) -> any/c
+  type : obj:is
+  objid : obj:is
+  field : symbol?
+  Λargs : (listof any/c)
+  continue-ok : (-> any/c any/c)
+  continue-no-field : (-> 2any/c)
+  continue-no-type : (-> any/c)
+procedure
+(obj:apply* type objid field Λargs) -> any/c
+  type : obj:is
+  objid : obj:is
+  field : symbol?
+  Λargs : (listof any/c)
+procedure
+(obj:copy-element type source target) -> obj:is
+  type : obj:is
+  source : obj:is
+  target : obj:is
+procedure
+(obj:copy source target) -> obj:is
+  source : obj:is
+  target : obj:is
+procedure
+(obj:element-types objid) -> seteqv?
+  objid : obj:is
+procedure
+(obj:fields type objid) -> seteqv?
+  type : obj:is
+  objid : obj:is
+procedure
+(obj:has-field type objid field) -> bool?
+  type : obj:is
+  objid : obj:is
+  field : symbol?
 procedure
 (typed-make the-type value-item ...) -> is-typed-list
   the-type : symbol?
