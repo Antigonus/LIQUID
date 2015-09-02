@@ -80,3 +80,36 @@ link: bad variable linkage;
    /home/deep/liquid-examples/test-ap/ap.rkt: [traversing imports]
    /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
    /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+5. so somewhere there is an application and that application is given a bad value.  Somewhere ...  It is a run
+time error, and compiled languages will also do the same in such cases, i.e. no line numbers .. a function name maybe?
+don't even know where this is called from.
+
+racket@object.rkt> (obj-test-0)
+application: not a procedure;
+ expected a procedure that can be applied to arguments
+  given: 'field:copied-from
+  arguments...: [none]
+  context...:
+   /home/deep/liquid-lib2/liquid/object.rkt:167:14
+   /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+
+6.  somewhere in the entirety of my program including the many requires, there is a call obj:set! with the wrong number of
+arguments:
+
+  racket@object.rkt> (enter! "node.rkt")
+  obj:set!: arity mismatch;
+   the expected number of arguments does not match the given number
+    expected: 3
+    given: 4
+    arguments...:
+     0
+     9
+     'field:debug
+     "nd:type"
+    context...:
+     /home/deep/liquid-lib/liquid/node.rkt: [running body]
+     /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
+     /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+     /usr/share/racket/collects/racket/private/misc.rkt:87:7

@@ -20,7 +20,7 @@
 ;;
 ;; output: branches leading to marked nodes
 ;;         
-;; After trimming all leaves will be marked. Some intermediate marked takens may appear
+;; After trimming all leaves will be marked. Some intermediate marked nodes may appear
 ;; within branches that lead to marked leaves.
 ;;
 ;; Often used to pull out branches leading to error messages.  The branch gives the 
@@ -95,7 +95,7 @@
 
 
 ;;;--------------------------------------------------------------------------------
-;;; the trim predicate is set to (ndhas-err)
+;;; the trim predicate is set to (nd-has-err)
 ;;;
   (define (trim-nd-err t) (trim-nd t nd-has-err))
 
@@ -198,15 +198,15 @@
 ;;---------------------------------------------------------------------------------
 ;; filter-prefix
 ;;
-;;  returns nodes from tree for which is-prefix is true
+;;  traverse tree looking for nodes, when taken as a tree root, satifies 'is-prefix'
+;;  curried with the prefix tree.
 ;;
 ;;  input: a prefix tree, a tree ; both are lists
+;;  output: list of nodes where prefix matches start
 ;;
-;;  this is similar to marked-nds above, where the predicate is the prefix match, but
-;;  marked-nds operates specifically on node trees and ignores attributes.
+;;  Seems to be the same as  marked-nds above, where the predicate is set to 'is-prefix',
+;;  seems it should be removed from the library.
 ;;
-;;  use repeated applications of fitler-prefix to get order indpendence of such things
-;;  as attributes
 ;;
   (define (filter-prefix prefix tree)
 
@@ -283,7 +283,8 @@
   (define (filter-prefix-test-2)
     (equal?
       (filter-prefix '(@) filter-prefix-test-data-0)
-      '((@ (lang "en"))
+      '(
+         (@ (lang "en"))
          (@ (charset "UTF-8"))
          (@
            (id "favicon")

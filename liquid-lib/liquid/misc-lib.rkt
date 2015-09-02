@@ -142,7 +142,10 @@
   (define (do-nothing . args) void) ; possibly examine a value with trace
   (define identity values)
   (define (boolify b) (not (not b))) ; outputs either #t or #f
-  (define no-error not) ; useful when returning exception values on fail
+  (define no-error not) ; useful when testing returning exception values on fail
+
+  (define (is-true . args) #t)
+  (define (is-false . args) #f)
 
   ;; and can not be used with apply,  and-form can be
   ;; and-form does not short circuit
@@ -201,6 +204,10 @@
 ;;--------------------------------------------------------------------------------
 ;; list manipulation
 ;;
+  (define Λ list)
+  (define-for-syntax Λ list)
+
+
   ;; efficient length compares
   ;;
     (define (length* l limit [n 0])
@@ -283,6 +290,16 @@
             (list< '(5 7 4 3) '(5 7 4 3))
             ))))
     (test-hook list<-test-0)         
+
+  ;; hashs table ext
+  ;;
+    (define (x-hash-ref table field continue-ok continue-no-field)
+      (define ok #t)
+      (define value (hash-ref table field (λ() (set! ok #f))))
+      (cond
+        [ok (continue-ok value)]
+        [else (continue-no-field)]
+          ))
 
 
   ;;  all rows and columns in the outer product should have a true element
@@ -861,6 +878,9 @@
         no-error ;; same as (not)
         by-arity
 
+        is-true
+        is-false
+
         and-form
         and-form*
         or-form
@@ -879,6 +899,8 @@
 
       ;; list manipulation
       ;;
+        Λ
+
         ;; efficient length compares 
         ;;   something like (length a-list) > 3  would take the length of the entire list before comparing
         ;;
@@ -892,6 +914,7 @@
 
           list<
 
+          x-hash-ref
           unordered-equal?
 
           bcons
