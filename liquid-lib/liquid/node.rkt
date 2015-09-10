@@ -40,7 +40,16 @@
         ))
 
     (define (nd:is n) (obj:has n nd:type))
-    (define (nd:make) (obj:add-type (obj:make) nd:type))
+
+    (define (nd:make Λfield-vals) 
+      (let(
+            [objid (obj:make)]
+            )
+        (when obj:debug (obj:name-hook objid "nd"))
+        (obj:add-type objid nd:type)
+        (cond
+          [(not (null? Λfield-vals)) (obj:set! nd:type objid Λfield-vals)]
+          )))
 
 ;;--------------------------------------------------------------------------------
 ;; attribute set
@@ -87,7 +96,7 @@
     (let(
           [objid (obj:make)]
           )
-      (when obj:debug (obj:name-hook objid "ndwat:object"))
+      (when obj:debug (obj:name-hook objid "ndwat"))
       (obj:add-type objid nd:type)
       (obj:add-type objid atset:type)
       (cond
@@ -97,11 +106,11 @@
 
 
 ;;--------------------------------------------------------------------------------
-;; add functions to the types, (code located here in order avoid forward reference problems
-;; on type defiinitions.)
+;; atset methods
 ;;
   (void (obj:set! type-type atset:type
     (Λ 
+
       '= (λ(a b) ; a and b are two data objects that share atset:type
            ;;(displayln (Λ "running equal on two atsets: " a " " b))
            (let(
@@ -134,8 +143,12 @@
                      ))))))
       )))
 
+;;--------------------------------------------------------------------------------
+;; nd methods
+;;
   (void (obj:set! type-type nd:type
     (Λ 
+
       '=  (λ(a b) ; a and b are two data objects that share nd:type
             (let(
                   [tag-a null]
@@ -156,19 +169,32 @@
                           [child-b children-b]
                           )
                   (obj:apply* type-type nd:type '= child-a child-b)
-                  )))))))
+                  ))))
+    
+      
 
+      )))
+
+
+
+
+
+;;--------------------------------------------------------------------------------
+;; ndwat methods
+;;
   (void (obj:set! type-type ndwat:type
-    (Λ '=  (λ( a b)
-             ;;(display "running ndwat::type equal on a/b:")(display a)(display " ")(display b)(newline)
-             (and
-               (obj:apply type-type atset:type '= (Λ a b)
-                 identity
-                 raise:no-such-field
-                 (λ() (not (obj:has b atset:type)))  ; no-such-field is ok if b doesn't have attributes either
-                 )
-               (ndwat-nd-equal a b) ; nodes may have ndwat children, so ndwat has its our own nd equal
-               )))))
+    (Λ 
+
+      '=  (λ( a b)
+            ;;(display "running ndwat::type equal on a/b:")(display a)(display " ")(display b)(newline)
+            (and
+              (obj:apply type-type atset:type '= (Λ a b)
+                identity
+                raise:no-such-field
+                (λ() (not (obj:has b atset:type)))  ; no-such-field is ok if b doesn't have attributes either
+                )
+              (ndwat-nd-equal a b) ; nodes may have ndwat children, so ndwat has its our own nd equal
+              )))))
 
    (define (ndwat-nd-equal a b) ; a and b are two data objects that share nd:type
       (let(
@@ -192,6 +218,11 @@
             (obj:apply* type-type ndwat:type '= child-a child-b)
             ))))
 
+
+;;--------------------------------------------------------------------------------
+;; tests
+;;
+
     (define (nd-equal?-test-0)
       (let(
             [node-a (ndwat:make
@@ -211,78 +242,11 @@
                       (Λ)
                       )]
             )
-
         (obj:apply* type-type ndwat:type '= (Λ node-a node-b))
         ))
       (test-hook nd-equal?-test-0)
 
 
-#|
-
-  ;;;  input: a node, a-lambda and arg for the lambda
-  ;;;  output: a modified node
-  ;;;
-  ;;; a-lambda is given the node attributes as a first argument, and other args as remaining args
-  ;;; it must return the modified attributes list.
-  ;;;
-    (define (on-attributes t the-lambda . args)
-      (nd-make* 
-        (type t)
-        (apply the-lambda (cons (nd-attributes t) args))
-        (nd-children t)
-        ))
-
-    (define (on-children t the-lambda . args)
-      (nd-make*
-        (type t)
-        (nd-attributes t)
-        (apply the-lambda (cons (nd-children t) args))
-        ))
-
-
-;;--------------------------------------------------------------------------------
-;; common nodes
-;;
-;;
-  ;; node children
-  ;;
-  (define (nd:comment) 'nd:comment) ; the lexer creates a node for comments
-  (define (nd:errsyn) 'nd:errsyn) ; a place holder a parser can add if it can't make sense of the syntax
-  (define (nd:lex-other) 'nd:lex-other) ; these characters did not lex to any node
-  (define (nd:number) 'nd:number)
-  (define (nd:punc) 'nd:punc) ; see the lexeme for the punc char or char sequence
-  (define (nd:string) 'nd:string)
-  (define (nd:symbol) 'nd:symbol) ; symbol name is in the lexeme member
-
-  (nd-hook
-    (nd:null)
-    (nd:comment)
-    (nd:errsyn)
-    (nd:lex-other)
-    (nd:number)
-    (nd:punc)
-    (nd:string)
-    (nd:symbol)
-    )
-
-   (define (punc-is n p)
-     (and
-       (type-is n (nd:punc))
-       (equal? (nd-lexeme-1 n) (Λ p))
-       ))
-
-   (define (punc-is-test-0)
-     (punc-is nd-example-2 ","))
-   (test-hook punc-is-test-0)
- 
-   (define (symbol-is n s) 
-     (and
-       (type-is n (nd:symbol))
-       (string=? (nd-lexeme-1 n) (Λ s))
-       ))
-
-
-|#
       
 ;;--------------------------------------------------------------------------------
 ;; provides

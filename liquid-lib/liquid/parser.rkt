@@ -13,7 +13,7 @@
   (require "node.rkt")
   (require "filter.rkt")
   (require "parser-nodes.rkt")
-  (require "parser-lex.rkt")
+  (require "lex.rkt")
   (require "parser-framing.rkt")
 
 ;;--------------------------------------------------------------------------------

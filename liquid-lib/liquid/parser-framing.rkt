@@ -14,7 +14,7 @@
   (require "misc-lib.rkt")
   (require "node.rkt")
   (require "parser-nodes.rkt")
-  (require "parser-lex.rkt")
+  (require "lex.rkt")
 
 ;;--------------------------------------------------------------------------------
 ;; test/debug

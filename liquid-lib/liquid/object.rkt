@@ -120,10 +120,39 @@
   (define obj:exception:no-such-object 'obj:exception:no-such-object)
   (define obj:exception:no-such-type 'obj:exception:no-such-type)
   (define obj:exception:no-such-field 'obj:exception:no-such-field)
+  (define obj:exception:broken 'obj:exception:broken)
 
-  (define (raise:no-such-object) (raise obj:exception:no-such-object))
-  (define (raise:no-such-type) (raise obj:exception:no-such-type))
-  (define (raise:no-such-field) (raise obj:exception:no-such-field))
+  (define (raise:no-such-object obj-space bad-obj . continue-ok)
+    (display "not a valid objid: ")
+    (display bad-obj)
+    (newline)
+    (raise obj:exception:no-such-object))
+
+  (define (raise:type-does-not-exist obj-space bad-type . continue-ok)
+    (display "type is not a valid objid: ")
+    (display bad-type)
+    (newline)
+    (raise obj:exception:type-does-not-exist))
+
+  (define (raise:object-no-such-type obj-space objid bad-type . continue-ok)
+    (display "for objid: ")
+    (display objid)
+    (display ", object has no such type: ")
+    (display bad-type)
+    (newline)
+    (raise obj:exception:no-such-type))
+
+  (define (raise:no-such-field obj-space objid type bad-field . continue-ok)
+    (display "object has no such field: ")
+    (display bad-field)
+    (newline)
+    (raise obj:exception:no-such-field))
+
+  (define (raise:broken) ;; for when there is just no way this should be called
+    (display "this code should not have been reached, the object system has a bug.")
+    (newline)
+    (raise obj:exception:broken))
+
 
 ;;--------------------------------------------------------------------------------
 ;; elementary objects have these fields reserved:
@@ -134,7 +163,7 @@
 ;;--------------------------------------------------------------------------------
 ;;  at the bottom of the recursion we find the following:
 ;;
-  (define obj:tman-table (make-hasheq)) ; table of all objects
+  (define obj:tman-table (make-hasheq)) ; table of type manifolds with each branch of the manifold holding an elementary obj
 
   (define (obj:make)
     (let(
@@ -145,31 +174,45 @@
       objid
       ))
 
+  (define (obj:->string objid [conv-fun display])
+    (x-hash-ref obj:tman-table objid
+      (λ(e)(->string e conv-fun))
+      (be null)
+      ))
+
+
   ;; only function that allows an illegal objid
   ;; a spurious objid could alias against a legal objid, and this test would incorrectly return #t
   ;; .. I added this to facilitate writing contracts and documentation
   ;;
-    (define (obj:is objid) (x-hash-ref obj:tman-table objid is-true is-false))
+    (define (obj:is objid) (x-hash-ref obj:tman-table objid (be true) (be false)))
 
+  ;; if the type space already exists, its contents are clobbered
+  ;;
+    (define (obj:add-type objid type)
 
-  ;; if type already exists, replaces it
-  (define (obj:add-type objid type)
-    (let(
-          [type-manifold (hash-ref obj:tman-table objid raise:no-such-object)]
-          )
-      (if (obj:is type)
-        (hash-set! type-manifold type (make-hasheqv))
-        (raise:no-such-type)
-        ))
-    objid
-    )
+      ;; type is a shared object, thus it is an object, thus obj:is must be true
+      (when (not (obj:is type)) (raise:type-does-not-exist tman-table type-objid))
+
+      (x-hash-ref obj:tman-table objid
+        (λ(tman) (hash-set! tman type (make-hasheqv)))
+        raise:no-such-object
+        )
+
+      objid
+      )
 
   (define type-type (obj:make)) ; the type of type
 
+;;--------------------------------------------------------------------------------
+;; In this implementation all objects have type, and type is an object, so then what is it's type?
+;; Any shared object can be the type of type, and that shared object will carry operator for working
+;; the objects that share it.  We provide one such object to be shared by type, called 'type-type'.
+;; type-type is its own type.
+;;
   (void (when obj:debug (obj:name-hook type-type "type-type")))
   (void (hash-set! obj:tman-table type-type (make-hasheqv)))
   (void (obj:add-type type-type type-type)) ; the type-type object needs to have at least one component
-
 
 
 ;;--------------------------------------------------------------------------------
@@ -178,27 +221,35 @@
   
   ;; true if the given type has been added
   (define (obj:has objid type)
-    (let(
-          [type-manifold (hash-ref obj:tman-table objid raise:no-such-object)]
-          )
-      (x-hash-ref type-manifold type  (λ(e) #t) (λ() #f))
+
+    (when (not (obj:is type)) (raise:no-such-type tman-table objid type))
+
+    (x-hash-ref obj:tman-table objid
+      (λ(tman)
+        (x-hash-ref tman type
+          (be true)
+          (be false)
+          ))
+      raise:no-such-object
       ))
 
   ;;(require racket/trace)
   ;;(trace get-elementary)
 
   ;; for module use
-  (define (get-elementary type objid continue-ok continue-no-type)
-    (let*(
-           [type-manifold (hash-ref obj:tman-table objid raise:no-such-object)]
-           [elementary-object (hash-ref type-manifold type continue-no-type)]
-           )
-      (continue-ok elementary-object)
+  (define (get-elementary objid type continue-ok continue-no-type)
+    (x-hash-ref obj:tman-table objid
+      (λ(tman)
+        (x-hash-ref tman type
+          continue-ok
+          continue-no-type
+          ))
+      raise:no-such-obj
       ))
 
   ; imposes type on an object then returns a field value from the selected component
   (define (obj:set! type objid Λfield-val)
-    (get-elementary type objid
+    (get-elementary objid type
       (λ(e) 
         (apply hash-set*! (cons e Λfield-val))
         objid
@@ -209,7 +260,7 @@
     )
 
   (define (obj:remove! type objid field)
-    (get-elementary type objid
+    (get-elementary objid type
       (λ(elementary) (hash-remove! elementary field))
       void
       )
@@ -221,11 +272,11 @@
     (define (obj:ref type objid field continue-ok continue-no-field continue-no-type)
 
       (define (obj:ref-1 objid)
-        (get-elementary type objid
+        (get-elementary objid type
           (λ(e-obj)
             (x-hash-ref e-obj field
               continue-ok
-              (λ()
+              (λ args
                 (x-hash-ref e-obj field:copied-from
                   (λ(original) (obj:ref-1 original))
                   continue-no-field
@@ -264,24 +315,20 @@
     (obj:set! type target-objid (Λ field:copied-from source-objid))
     )
 
-  ;; returns a set of types
-  (define (obj:element-types objid)
-    (let(
-          [type-manifold (hash-ref obj:tman-table objid raise:no-such-object)]
-          )
-      (apply mutable-seteqv (hash-keys type-manifold))
+
+  (define (list-types objid)
+    (x-hash-ref obj:tman-table objid
+      (λ(tman) (hash-keys tman))
+      raise:no-such-object
       ))
 
-  (define (list-element-types objid)
-    (let(
-          [type-manifold (hash-ref obj:tman-table objid raise:no-such-object)]
-          )
-      (hash-keys type-manifold)
-     ))
+  ;; returns a set of types
+  (define (obj:types objid) (apply mutable-seteqv (list-types objid)))
+
 
   (define (obj:copy source-objid target-objid)
     (for (
-           [type (list-element-types source-objid)]
+           [type (list-types source-objid)]
            )
       (obj:copy-element type source-objid target-objid)
       )
@@ -289,7 +336,7 @@
     )
     
   (define (obj:fields type objid)
-    (get-elementary type objid
+    (get-elementary objid type
       (λ(e)
         (let*(
                [fields-list (hash-keys e)]
@@ -297,21 +344,21 @@
               )
           (x-hash-ref e field:copied-from
             (λ(source) (set-union! fields (obj:fields type source)))
-            (λ() fields)
+            (λ args fields)
             )))
-      (λ() (mutable-seteqv)) ; returns an empty set
+      (λ args (mutable-seteqv)) ; returns an empty set
       ))
   
    (define (obj:has-field type objid field)
-     (get-elementary type objid
+     (get-elementary objid type
        (λ(e)
          (or
            (hash-has-key? e field)
            (x-hash-ref e field:copied-from
              (λ(source) (obj:has-field type source field))
-             is-false
+             (be false)
              )))
-       is-false
+       (be false)
        ))
     
 
@@ -444,6 +491,7 @@
     obj:ref*
     obj:remove!
     obj:set!
+    obj:->string
     raise:no-such-field
     raise:no-such-object
     raise:no-such-type

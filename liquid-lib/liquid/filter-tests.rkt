@@ -13,7 +13,7 @@
   (require "filter.rkt")
   (require "parser.rkt")
   (require "node.rkt")
-  (require "parser-lex.rkt") ; for definition of (lexer-ql0-name)
+  (require "lex.rkt") ; for definition of (lexer-ql0-name)
 
 ;;--------------------------------------------------------------------------------
 ;;

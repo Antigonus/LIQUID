@@ -113,3 +113,21 @@ arguments:
      /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
      /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
      /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+7. somewhere in the file node.rkt, something doesn't like  variable that was defined, and provided from
+object.rkt, complaining it is not a constant (why should it be??)  .. solution was to delete contents of
+the 'compiled' directory
+
+    racket@object.rkt> (enter! "node.rkt")
+    link: bad variable linkage;
+     reference to a variable that not constant
+      reference phase level: 0
+      variable module: "/home/deep/liquid-lib/liquid/object.rkt"
+      variable phase: 0
+      reference in module: "/home/deep/liquid-lib/liquid/node.rkt"
+      in: type-type
+      context...:
+       /home/deep/liquid-lib/liquid/node.rkt: [running body]
+       /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
+       /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+       /usr/share/racket/collects/racket/private/misc.rkt:87:7

@@ -19,7 +19,7 @@ racket test-all runs all of the tests
 (require "misc-lib.rkt")
 (require "node.rkt")
 (require "parser-framing.rkt")
-(require "parser-lex.rkt")
+(require "lex.rkt")
 (require "parser-nodes.rkt")
 (require "parser-well-formed.rkt")
 (require "parser.rkt")
