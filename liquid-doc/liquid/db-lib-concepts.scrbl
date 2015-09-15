@@ -139,16 +139,3 @@
    the users of the database on all the various connections.
 
 
-@section{To-do}
-
-    Patterns are not fully implemented.  Currently we only support the '_' that matches anything.
-
-    We really need to makes sure the to string conversion stuff makes for safe SQL.  I kinda suspect
-    that right now it doesn't.
-
-    Deallocation for keysapces is not implemented.  Also we need to add tests for the existance of
-    stale values use (using keys that were deallocated). 
-
-    Add a function for setting the dataase connection parameters so we can add some flexibility.  Right
-    now we just assume postgres and unix login credentials.  Brian's db library connect function has many
-    more options.

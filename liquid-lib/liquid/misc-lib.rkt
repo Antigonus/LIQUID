@@ -20,8 +20,11 @@
   (require "test-lib.rkt")
   (provide (all-from-out "test-lib.rkt")
 
-  (require "list-lib.rkt")
-  (provide (all-from-out "list-lib.rkt"))
+  (require "arith-lib.rkt")
+  (provide (all-from-out "arith-lib.rkt")
+
+  (require "sequence-lib.rkt")
+  (provide (all-from-out "sequence-lib.rkt"))
 
   (require "function-lib.rkt")
   (provide (all-from-out "list-lib.rkt"))

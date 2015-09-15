@@ -14,40 +14,115 @@
 ;; uses these libraries
 ;;    
   (require "test-lib.rkt")
+  (require "arith-lib.rkt")
 
 ;;--------------------------------------------------------------------------------
-;;  make a list
+;;  make a sequence
 ;;
-  (define Λ list)
-  (define-for-syntax Λ list)
-
-;;--------------------------------------------------------------------------------
-;; arith operators
+;;   sequence implementation passed in keyword arg, defaults to list 
+;;   .. we currently only support list right now ...
 ;;
-  (define (≠ . args) (not (apply = args)))
-  (define ≥ >=)
-  (define ≤ <=)
-  (define (++ n) (+ n 1))
-  (define (-- n) (- n 1))
+;;  it makes sense that when building a sequence  that the programmer might like to have
+;;  some of the items come from another sequence, after all sequences are how we move
+;;  groups of items around.  So I would like something like 'V' that tells the
+;;  packer to take items from the sequence rather than including the sequence as an item:
+;;
+;;    (define a-list '(3 4))
+;;
+;;    (Λ  1 2 (V a-list))--> '(1 2 3 4)
+;;
+;;    like Mathematica' Sequence operator ... sort of backwards from quasilist
+;;
+;;    however V evaluation would have to be delayed until run time
+;;    which makes it an inband message, thus indistinguishable from a data V.
+;;
+;;    We don't really have access to the list packer anyway.  Wish we did, so so instead I
+;;    will pull unquote out of the function channel during syntax expansion and build the
+;;    desired functionality with append.  This is what I am doing manually in the code
+;;    already.  So
+;;
+;;    at syntax expansion
+;;    (Λ  1 2 ,a-list 3 4)  -->  (append  (list 1 2) a-list (list 3 4))
+;;
+;;
 
-  ;; and can not be used with apply,  and-form can be
-  ;; and-form does not short circuit
-  ;;
-    (define (and-form . args) (and-form* args))
-    (define (and-form* arg-list) (andmap identity arg-list))
+ ;; (define Λ list)
 
-    (define (or-form . args) (or-form* args))
-    (define (or-form* arg-list) (ormap identity arg-list))
+ (define-for-syntax (is-unsequence i) (and (pair? i) (not (null? i)) (eqv? 'unquote (car i))))
+  ;;  (define (is-unsequence i) (and (pair? i) (not (null? i)) (eqv? 'unq (car i))))
 
-    (define (and-form-test-0)
-      (and
-        (and-form #t #t #t)
-        (not (and-form #t #f #t))))
-    (test-hook and-form-test-0)
+  (define-syntax (Λ stx)
+    (let(
+          [datum  (syntax->datum stx)]
+          )
+      (let(
+            [items (cdr datum)]
+            )
+        (let(
+              [program 
+                (cond
+                  [(for/or ([i items]) (is-unsequence i))
+                    (cons 'append (L-1 items))
+                    ]
+                  [else
+                    (cons 'list items)] ; only support list sequences at the moment
+                  )]
+              )
+          ;;(displayln program)
+          (datum->syntax stx program)
+          ))))
+
+  (define-for-syntax (L-1 items)
+    (cond
+      [(null? items) '()]
+      [else
+        (let(
+              [i (car items)]
+              [r (cdr items)]
+              )
+          (cond
+            [(is-unsequence i) (cons (cadr i) (L-1 r))]
+            [else
+              (let-values ([(rest-items list-stuff) (make-list-item items)])
+                (cons (append '(list) list-stuff) (L-1 rest-items))
+                )
+              ]))]
+      ))
+
+  (define-for-syntax (make-list-item items [list-stuff '()])
+    (cond
+      [(null? items) (values '() (reverse list-stuff))]
+      [else
+        (let(
+              [i (car items)]
+              [r (cdr items)]
+              )
+          (cond
+            [(is-unsequence i) (values items (reverse list-stuff))]
+            [else (make-list-item r (cons i list-stuff))]
+            ))]))
+
+  ;; does the job of list
+  (define (test-Λ-0)
+    (equal? '(1 2 3) (Λ 1 2 3))
+    )
+  (test-hook test-Λ-0)
+
+  ;; can be used instead of cons
+  (define (test-Λ-1)
+    (equal? (cons 1 '(2 3 4)) (Λ 1 ,'(2 3 4)))
+    )
+  (test-hook test-Λ-1)
+
+  ;; can be used instead of append
+  (define (test-Λ-2)
+    (equal? (append '(7 8 9) '(2 3 4)) (Λ ,'(7 8 9) ,'(2 3 4)))
+    )
+  (test-hook test-Λ-2)
 
 
 ;;--------------------------------------------------------------------------------
-;; list manipulation
+;; computational operations
 ;;
   ;; efficient length compares
   ;;
@@ -91,13 +166,13 @@
         (null? (cdr l))
         ))
 
-    ;; input: two lists, an element lt comparison, optionally an equal comparison
+    ;; input: two sequences, an element lt comparison, optionally an equal comparison
     ;; output: bool
     ;;    shorter of otherwise equal lists is considered less than
     ;;
     (define (list< a b [element-lt <] [element-eq equal?])
       (cond
-        [(and (null? a) (null? b)) #f] ; then the two lists are equal
+        [(and (null? a) (null? b)) #f] ; then the two sequences are equal
         [(null? a) #t]
         [(null? b) #f]
         [else
@@ -247,17 +322,6 @@
       l
       ))
 
-  (define-for-syntax (flatten-1 l)
-    (foldr
-      (λ(e0 r0)
-        (if (pair? e0)
-          (foldr (λ(e1 r1) (cons e1 r1)) r0 e0)
-          (cons e0 r0)
-          ))
-      '()
-      l
-      ))
-
 
   (define (test-flatten-1)
     (and
@@ -326,13 +390,11 @@
 ;; provides the following
 ;;    
 
+  (provide Λ)
+
   ;; functions
   ;;
-    (provide-with-trace "list-lib" ;; this context continues to the bottom of the page
-
-      ;; defines a list (Λ item-0 item-1 ...)
-      ;;
-        Λ
+    (provide-with-trace "sequence-lib" ;; this context continues to the bottom of the page
 
       ;; efficient length compares 
       ;;   something like (length a-list) > 3  would take the length of the entire list before comparing

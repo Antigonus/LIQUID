@@ -4,83 +4,6 @@
   created: 2014-12-04T07:55:00Z twl
   major revision: 2015-08-22T06:05:02Z twl  
 
-  Herein I implement some semblance of the type model from my Turing Complete
-  Architecture.  
-
-  A 'elementary object' is a kind of indexed container, where the index is a symbol.
-  Herein we implement elementary objects with hash tables.  Related concepts are those of
-  the associative list, and the data structure.  
-
-  Each elementary object is said to have 'type'. Type is simply an association with another
-  object.  Type objects are typically shared, and typically have functions in their entries.
-  When we use the functions of a type object to affect other objects, we say that 'type
-  is imposed' on the other object.  Type is imposed externally, i.e. the association
-  is done by the caller, i.e. the user of the object.
-  
-  As a matter of simplifying this implementation, we consider an elementary object to be
-  a case of a composite object.  So all our objects are composite objects.
-
-  All composite objects are held in a 'type manifold table'.  This table is indexed by
-  an id, which we affectionately call the 'objid'.  Our objects are never used directly,
-  but rather are accessed through the objid.
-
-  Hence, each objid is owned by a type manifold table. ID ownship by an objid table defines an
-  object space.  Here in this first implementation we just have one global table for all
-  objids.
-
-  An entry in the type manifold table is a type manifold, strangely enough. This table
-  is indexed against imposed type.  So if the composite object is really an elementary
-  object, then the type manifold table will have one entry, that of the type of the 
-  elementary object.  In general composite objects may be composed of many different
-  type of elementary objects.  With this structure we can get the same functionality as
-  gotten with sipmle or multiple inheritance.
-  
-  --
-
-  As another feature of our objects, we support lazy copying.  With lazy copying 
-  reading a value from an object continues to return the value from the copied from
-  object instead of the new object until a write occurs. We use a hack to implment this
-  feature, we reserve the field 'copied-from'  in all elemetnary objects.  The value for 
-  this field is then the objid for the object being copied from.  If the elementary object
-  has no such field entry, then the object is not being copied from another.
-  
-  --
-
-  We use continuations when control decisions must be made within a function.  We
-  use exceptions when conditions occur within a function for which the function was
-  not designed to handle.  For example, not finding an objid in the obj:tman-table.
-  
-  --
-
-  fields might be made an allocted resource with a lookup table should they need to
-  convert to tring.  That way they would all be unique and it would not be necessary to
-  have two levels of lookup to get to the data.
-
-  --
-
-  what we expect from objects:
-  
-  1. secret payloads that legacy code does not see.  This can be used to all
-     features for new code without breaking old code.
-
-  2. personality - when legacy code sends an operator message to an object
-     the new object may perform a different operation than legacy objects do.
-     I.e. the new objects takes the same message, and the same operation name,
-     and does a different operation.   (The message may vary a little, see #1)
-
-  3. intropsective typing.  The object itself picks the real operator given the name of
-     the operator. We do have to agree on a convention of which operator names are
-     available.  .. support heterogenous containers and generic algorithms.
-  
-  #3 is at odds with #1.  How do we now when to give legacy behavior so as
-     not to break old code, and when to give new behavior?  Seems there must
-     always be an externally imposed type context - even if that type means
-     to select type from a number of options.
-
-  polymoprhism - redefine the type object, replace the type object in the tman
-  table with an updated version that checks for the extention type component
-  or uses a different type field if it is available
-
 
 |#
 
@@ -108,10 +31,10 @@
 ;; exceptions
 ;;
 ;;   sometimes we are faced with doing something for condition that can't happen due to
-;;   the logic of the code, in these cases we should raise an exception just in case their
+;;   the logic of the code, in these cases we should raise an exception just in case there
 ;;   is a bug
 ;; 
-;;   We also use exceptions in when the caller breaks a contract with the library, and we
+;;   We also use exceptions when the caller breaks a contract with the library, and we
 ;;   don't know what else to do.  I.e. when the code simply isn't designed to deal with
 ;;   the case.
 ;;
@@ -122,19 +45,19 @@
   (define obj:exception:no-such-field 'obj:exception:no-such-field)
   (define obj:exception:broken 'obj:exception:broken)
 
-  (define (raise:no-such-object obj-space bad-obj . continue-ok)
+  (define (raise:no-such-object obj-space bad-obj)
     (display "not a valid objid: ")
     (display bad-obj)
     (newline)
     (raise obj:exception:no-such-object))
 
-  (define (raise:type-does-not-exist obj-space bad-type . continue-ok)
+  (define (raise:type-does-not-exist obj-space bad-type)
     (display "type is not a valid objid: ")
     (display bad-type)
     (newline)
     (raise obj:exception:type-does-not-exist))
 
-  (define (raise:object-no-such-type obj-space objid bad-type . continue-ok)
+  (define (raise:object-no-such-type obj-space objid bad-type)
     (display "for objid: ")
     (display objid)
     (display ", object has no such type: ")
@@ -142,7 +65,7 @@
     (newline)
     (raise obj:exception:no-such-type))
 
-  (define (raise:no-such-field obj-space objid type bad-field . continue-ok)
+  (define (raise:no-such-field obj-space objid type bad-field)
     (display "object has no such field: ")
     (display bad-field)
     (newline)
@@ -224,28 +147,31 @@
 
     (when (not (obj:is type)) (raise:no-such-type tman-table objid type))
 
-    (x-hash-ref obj:tman-table objid
-      (λ(tman)
-        (x-hash-ref tman type
-          (be true)
-          (be false)
-          ))
-      raise:no-such-object
-      ))
+    (x-hash-ref (Λ obj:tman-table objid)
+      (Λ 
+        (λ(tman)
+          (x-hash-ref (Λ tman type)
+            (Λ 
+              (be true)
+              (be false)
+              )))
+        raise:no-such-object
+        )))
 
   ;;(require racket/trace)
   ;;(trace get-elementary)
 
   ;; for module use
-  (define (get-elementary objid type continue-ok continue-no-type)
-    (x-hash-ref obj:tman-table objid
-      (λ(tman)
-        (x-hash-ref tman type
-          continue-ok
-          continue-no-type
-          ))
-      raise:no-such-obj
-      ))
+  (define (get-elementary args conts)
+    (match-let(
+                [(list objid type) args]
+                )
+      (x-hash-ref (Λ obj:tman-table objid)
+        (Λ 
+          (λ(tman) (x-hash-ref (Λ tman type) conts)
+          raise:no-such-obj
+          ))))
+    
 
   ; imposes type on an object then returns a field value from the selected component
   (define (obj:set! type objid Λfield-val)

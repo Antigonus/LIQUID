@@ -11,6 +11,7 @@ than alphabetic order.  This facilitates top to bottom reading.
 
 @local-table-of-contents[]
 @include-section{running-tests.scrbl}
+@include-section{sequence-concepts.scrbl}
 @include-section{multiple-continuations-concepts.scrbl}
 @include-section{object-concepts.scrbl}
 @include-section{db-lib-concepts.scrbl}

@@ -5,25 +5,23 @@
 
 @title[#:tag "db-lib-tests" #:style '(toc)]{Running Tests}
 
-  A test program is any program that returns #t when it passes, and never otherwise
-  returns true. It is ok for a test to throw an exception as a failure.  Tests are
-  included in the regression using the function @racket[(test-hook <test-name>)],
-  currently found in misc-lib.rkt
+  A test program is one that accepts no arguments and then throws exceptions or returns any single value.
+  However, it is only considered to have passed if it does not throw any exceptions and returns
+  only Boolean true, i.e. @racket[(eqv? #t return-value)].  A perfect test only returns when the thing
+  it tests really works, though, unfortunately, many tests are not perfect.
 
-  To run the tests in a module, first require the modules one wants to run
-  the tests for.  Also require msic-lib.rkt.  Then run @racket[(test-all)]
+  With our test library a programmer can 'hook' a test into a global list.  Later all tests can be
+  run with @racket[(test-all)].  @racket[(test-all)] returns true if all the constituent tests return
+  true.
 
-  Note that when a module from the library is entered!, you will see a series of messages of the form,
-  "hooking test: <testname>"  
+  Tests for library routines are scattered throughout the code.  They follow the naming convention of
+  'test-X-N'  where X is the name of the thing being tested, and N is the Nth test.  The library
+  tests are hooked into the test pool when the module containing the test is loaded.  Hence, running
+  @racket[(test-all)] after loading one or more modules will run all the tests for those modules, and
+  then return Boolean true if and only if all the tests have passed.
 
-  After the tests are hooked, the module will then test its tester.  Yes, this too must
-  be checked out, as there is nothing worse than a tester that didn't really do tests.
-  The tester runs three practice tests, example-test-0, example-test-1, and example-test-2.
-  The example-test-0 passes,  example-test-1 fails,  example-test-2 fails due to raising an
-  exception.   This is the expected output.
+  Many of the db-lib and dataplex tests will fail if they do not have access to a postgress database.
 
-  Lastly after loading a module will suggest runing (test-all).  This function when
-  invoked will run the real tests.  It may be that don't want to test the library every
-  time you load it, so (test-all) is left to be run manually.
 
-  
+
+     

@@ -6,41 +6,30 @@
                      ))               
 
 
-@title[#:tag "parser-concepts"]{parser}
+@title[#:tag "parser-concepts"]{Stream Parser}
 
-   This is a framework for writing context free (or a little bit of context) parsers,
-   where the resulting parse will contain error tokens when things don't go as planned.
-   The error tokens can then be scanned out to create informative error messages within
-   context. The example shown is specifically for parsing conjunctive queries.
+   We examine an input stream for one or more interpretations of a correlating parse tree.
 
-   The basic approach is that of reccursive descent.  There is a top level rule provided
-   by the program which attempts to parse the entire input.  This is the great grandaddy
-   of all the rules.  Each parent rule then calls child rules in attempt to parse out
-   sub-parts as specified by the grammar.  If the grammar allows for alternatives, then
-   after a child rule mismatch, the parent rule will attempt the alternative child rule.
-   Should no alternative match, then the parent will replace this part of the syntax
-   with an error token.
+   We pull input in blocks, though the pull may block if we are waiting for data to arrive.
+   Hence, pulls should be wrapped in timed calls.
 
-   The rules we refer to here are functions, and these functions are written by the author
-   of the parser.  Hence full knoweldge of the grammar and how to handle errors can be
-   custom built into each rule by the programmer.
+   The lexer pulls characters in blocks from the stream library.
 
-   As an example, an example rule I have provided is for parsing 'framed' lists of
-   syntactical elements.  Here the framing is provided by a separator punctuation and some
-   sort of last item separator.  The framing rule  does not do recursive descent, but
-   instead correlates the framing pattern against the input.  This is more stable than
-   doing recursive descent for such situations.  (The example framing rule can use
-   some improvements.)
+   The parser pulls lexer tokens in blocks.  Upon analyzing each block, there will be
+   multiple parse tree intpretations and unfinished business.  The state for completing
+   the unfinished business is carried over to the parse of the next block.
+
+   Due to errors or the fact that we haven't yet seen the last block of a parse (and may
+   never due so), or even by design,  there may be more than one active interpretation of
+   the token stream.
+
+   For example,  quote balancing is unstable. Hence, we may purposely add interpretations
+   that a closing quote is missing.  If the primary interpretation starts having many errors
+   in the parse, then we may look to the other interpreations to see if they have fewer or
+   less serious errors.
+
    
-   A parse rule reduces input text to a 'token'.  A token is a list, where the head of the
-   list is a type, and then this is followed by an attribute list, and then remaining
-   members are childr tokens, if any.  The form is almost the same as that of x-expr for
-   the html parser.  On the next version we will make them identical so the two tools can
-   exchange data.
 
-@section{to-do}
 
-The parse tree type should be unified with the x-expr type.  Probably should rename this to
-just 'parser'  as it can be used for anything, not just queries.
-
+ 
 

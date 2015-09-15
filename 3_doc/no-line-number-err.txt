@@ -131,3 +131,83 @@ the 'compiled' directory
        /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
        /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
        /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+
+8.  this one took an hour, it is in docs  here is the error mess:
+
+
+      §lambda1:/home/deep/liquid-doc/liquid> raco setup --pkgs liquid-doc
+      raco setup: version: 6.1 [3m]
+      raco setup: installation name: 6.1
+      raco setup: variants: 3m
+      raco setup: main collects: /usr/share/racket/collects
+      raco setup: collects paths: 
+      raco setup:   /home/mordecai/.racket/6.1/collects
+      raco setup:   /usr/share/racket/collects
+      raco setup: main pkgs: /usr/share/racket/pkgs
+      raco setup: pkgs paths: 
+      raco setup:   /usr/share/racket/pkgs
+      raco setup:   /home/mordecai/.racket/6.1/pkgs
+      raco setup: links files: 
+      raco setup:   /usr/share/racket/links.rktd
+      raco setup:   /home/mordecai/.racket/6.1/links.rktd
+      raco setup: main docs: /usr/share/doc/racket
+      raco setup: --- updating info-domain tables ---
+      raco setup: --- pre-installing collections ---
+      raco setup: --- installing foreign libraries ---
+      raco setup: --- installing shared files ---
+      raco setup: --- compiling collections ---
+      raco setup: --- parallel build using 2 jobs ---
+      raco setup: 1 making: <pkgs>/liquid-doc/compiled
+      raco setup: 1 making: <pkgs>/liquid-doc/liquid
+      raco setup: --- creating launchers ---
+      raco setup: --- installing man pages ---
+      raco setup: --- building documentation ---
+      raco setup: 1 running: <pkgs>/liquid-doc/liquid/liquid.scrbl
+      prog:3:0: read: expected a `)' to close `('
+        possible cause: indentation suggests a missing `)' before line 7
+        context...:
+         /usr/share/racket/pkgs/scribble-lib/scribble/private/manual-code.rkt:56:0: typeset-code15
+         /home/deep/liquid-doc/liquid/multiple-continuations-architecture.scrbl: [running body]
+         /home/deep/liquid-doc/liquid/architecture.scrbl: [traversing imports]
+         /home/deep/liquid-doc/liquid/liquid.scrbl: [traversing imports]
+         /usr/share/racket/pkgs/racket-index/setup/scribble.rkt:895:0: load-doc/ensure-prefix
+         /usr/share/racket/pkgs/racket-index/setup/scribble.rkt:1146:13
+         /usr/share/racket/collects/setup/parallel-do.rkt:420:20: loop
+
+problem is that it isn't in liquid.scrbl, it is in two include files down.  It is not
+on line 7, but was well into the file, and it wasn't part of the document structure, but
+it was in a quoted example ..  in multiple-continuations-architecture.scrbl:
+
+      #lang scribble/manual
+      @(require (for-label racket/base
+                           ))               
+
+      @title[#:style '(toc)]{Multiple Continuations Architecture}
+
+      @section{The Basic Approach}
+
+      As a matter of convention, we simplify function calls by not using variable arguments, but
+      instead where variable arguments are required we use explicit lists.  We make this more
+      convenient by introducing the Unicode capital lambda, Λ, as a synonym for @racket[list].
+      In Emacs I have added both λ and Λ to my key map as alt-l  and alt-shift-l.
+
+      Our basic approach is to pass continuation functions as arguments.  By convention the
+      first function is the 'normal flow'.  By convention we call the first function
+      continuation-ok.  For example, this is the definition for an extended hash ref that takes
+      continuation functions.  It is implemented as a wrapper.  Of course it would be better to
+      have a native version.
+
+...
+
+
+      @codeblock|{
+        ...
+        (define a 7)
+        (x-hash-ref table a
+          (λ(v) (display "found: ")(displayln v))
+          (λ()  (displayln "did not find 7 ")  <---  scrble is mad this isn't balanced
+          )
+        ...
+        }|
+

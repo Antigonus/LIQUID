@@ -6,7 +6,7 @@
                      ))               
 
 
-@title[#:tag "object-concepts"]{node}
+@title[#:tag "object-concepts"]{TCA Objects}
 
 The definitions given here come from the TCA object implementation, and vary somewhat from
 conventional use of the terms.
@@ -145,10 +145,3 @@ object field is written.  Otherwise, reads go back to the original object.
  
 If the original object is to be changed, then a copy should be made before the change.
 
-@section{future}
-
-Move the fields to a managed resource.  Change ids to be pairs, space, and id, so that it is
-quick to determine if two are in the same space.  Change the object catalog to be a weak
-hash, so when the keys are no longer byeing used, the object goes away.  (Hmmm, how does that
-work with the keys being copied when passed in as arguments etc.?) .. don't want multiple
-hash tables rather keep the space as part of the key.

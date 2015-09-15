@@ -8,8 +8,9 @@
 
 @author["Thomas Walker Lynch"]
 
-Novel contributions in this package include support for multiple exit continuations, TCA objects,
-stream parsing, and the databplex persistent storage over a database.
+Novel contributions in this package include support language extensions for sequences, multiple
+execuion path exit functions, TCA objects, stream parsing, and the databplex persistent
+storage over a database.
 
 The genesis of the code is described in the about section.
 
@@ -29,6 +30,7 @@ has not yet been written -- see the source code ;-)
 @include-section{architecture.scrbl}
 @include-section{reference.scrbl}
 @include-section{examples.scrbl}
+@include-section{todo.scrbl}
 
 @index-section[]
 
