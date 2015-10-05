@@ -41,6 +41,33 @@ hash tables rather keep the space as part of the key.
   assign the iterator rather than a value, and return the for loop value and the iterators.
   We could have multiple exit paths depending on how the loop is terminated .. hmm.
 
+@section{module init code}
+
+  Module init code is code that runs when a module is loaded.  I have found it is a bad
+  idea to have anything except defines at this level.  Initialization code should instead
+  be placed inside of a constructor function.  There are a couple of reasons for this,
+  firstly a module is not truly static, it is more rather like a class.  It can be
+  instantiated multiple times as racket bumps up and down the phases.  Secondly, when
+  racket loads a module and it finds a bug in the init code, it stops in its tracks and
+  wipes clean all the module stated loaded so far.  Hence all module definitions that might
+  be used for debugging are gone.  You can't for example, set a trace on a module function
+  and then debug the load.
+
+  So the todo item here is to collect initialization code into init (constructor) functions.
+  Then we need to add explicit calls to the constructors.
+
+  When we do this, we can talke the phase test code out of the test module, and instead
+  have @racket[test-hook] code etc, wrapped in phase checks in the relevent constructors.
+
+@section{define-syntax function guard checks with locations}
+
+   If a syntax generated function has an error, racket doesn't tell you the source location.
+   Source location for a define-syntax function can be gotten from the stx, note we did this
+   in @racket[mc:define].   We need to go back to syntax functions and add operand checks, both
+   static and dynamic, and other guard code, to spit out error messages with locations for
+   the cases that the library user, i.e. the programmer,  makes a mistake in using one of these
+   he isn't left with a mystery to solve.
+
 
 @table-of-contents[]
 

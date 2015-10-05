@@ -1,5 +1,5 @@
-4350
-((3) 0 () 6 ((q lib "liquid/arith.rkt") (q lib "liquid/dataplex-lib.rkt") (q lib "liquid/object.rkt") (q lib "liquid/db-lib.rkt") (q lib "liquid/test-lib.rkt") (q lib "liquid/extentions.rkt")) () (h ! (equal) ((c form c (c (? . 4) q provide-with-trace)) q (0 . 2)) ((c def c (c (? . 0) q ++)) q (332 . 3)) ((c form c (c (? . 0) q ≤)) q (319 . 2)) ((c def c (c (? . 0) q --)) q (381 . 3)) ((c def c (c (? . 5) q do-nothing)) q (641 . 3)) ((c def c (c (? . 1) q dataplex:create-semantic-relation)) q (2675 . 8)) ((c def c (c (? . 0) q and-form)) q (530 . 3)) ((c def c (c (? . 0) q ++!)) q (430 . 3)) ((c def c (c (? . 0) q ≠)) q (253 . 3)) ((c def c (c (? . 1) q db:create-dataplex*)) q (5109 . 4)) ((c def c (c (? . 3) q db:alloc-name)) q (1026 . 2)) ((c def c (c (? . 1) q dataplex:create-shape-relation)) q (3475 . 8)) ((c def c (c (? . 1) q dataplex-lib-init)) q (2634 . 2)) ((c def c (c (? . 2) q obj:ref)) q (7159 . 13)) ((c def c (c (? . 1) q db:dataplexes)) q (4195 . 3)) ((c def c (c (? . 2) q obj:copy-element)) q (8345 . 5)) ((c def c (c (? . 3) q db:is-table)) q (1739 . 3)) ((c def c (c (? . 3) q db:alloc-number)) q (1131 . 2)) ((c def c (c (? . 4) q test-remove)) q (118 . 3)) ((c def c (c (? . 3) q db:delete-table)) q (1497 . 3)) ((c form c (c (? . 3) q as-transaction)) q (956 . 2)) ((c def c (c (? . 2) q obj:apply)) q (7688 . 15)) ((c def c (c (? . 3) q db:delete-table*)) q (1580 . 3)) ((c def c (c (? . 2) q obj:has)) q (6786 . 4)) ((c form c (c (? . 5) q mc:define)) q (848 . 2)) ((c def c (c (? . 2) q obj:add-type)) q (6695 . 4)) ((c def c (c (? . 1) q db:is-dataplex-name)) q (4280 . 4)) ((c def c (c (? . 3) q db:delete-keyspace)) q (1420 . 3)) ((c form c (c (? . 5) q identity)) q (703 . 2)) ((c def c (c (? . 2) q obj:element-types)) q (8565 . 3)) ((c def c (c (? . 3) q keyspace:alloc-number)) q (1881 . 3)) ((c def c (c (? . 3) q db:tables)) q (1804 . 3)) ((c def c (c (? . 0) q or-form)) q (586 . 3)) ((c def c (c (? . 2) q obj:fields)) q (8636 . 4)) ((c def c (c (? . 1) q dataplex:delete-shape-relation)) q (3763 . 5)) ((c def c (c (? . 1) q db:delete-dataplex)) q (5255 . 3)) ((c def c (c (? . 3) q table:insert*)) q (2294 . 4)) ((c def c (c (? . 1) q dataplex:delete-semantic-relation)) q (3011 . 6)) ((c form c (c (? . 3) q with-db)) q (2597 . 2)) ((c form c (c (? . 5) q no-error)) q (771 . 2)) ((c def c (c (? . 4) q test-hook)) q (51 . 3)) ((c def c (c (? . 2) q obj:remove!)) q (7040 . 5)) ((c def c (c (? . 0) q --!)) q (480 . 3)) ((c def c (c (? . 1) q db:is-dataplex-name*)) q (4387 . 4)) ((c def c (c (? . 3) q db:dealloc-number)) q (1172 . 3)) ((c def c (c (? . 1) q semantic-relation:match)) q (6310 . 8)) ((c def c (c (? . 3) q table:delete)) q (2070 . 4)) ((c def c (c (? . 3) q db:is-keyspace)) q (1671 . 3)) ((c form c (c (? . 0) q ≥)) q (306 . 2)) ((c def c (c (? . 3) q table:insert)) q (2183 . 4)) ((c def c (c (? . 2) q obj:apply*)) q (8189 . 6)) ((c def c (c (? . 2) q obj:make)) q (6604 . 2)) ((c def c (c (? . 3) q db:create-table)) q (1311 . 4)) ((c def c (c (? . 5) q boolify)) q (721 . 3)) ((c def c (c (? . 2) q obj:has-field)) q (8726 . 5)) ((c def c (c (? . 3) q table:match)) q (2413 . 5)) ((c def c (c (? . 3) q db-lib-init)) q (991 . 2)) ((c def c (c (? . 2) q obj:set!)) q (6871 . 5)) ((c def c (c (? . 1) q db:delete-dataplex*)) q (5345 . 3)) ((c def c (c (? . 2) q obj:ref*)) q (7573 . 5)) ((c def c (c (? . 1) q dataplex:delete-shape-relation*)) q (3979 . 5)) ((c def c (c (? . 2) q obj:is)) q (6637 . 3)) ((c def c (c (? . 1) q shape-relation:insert)) q (5441 . 5)) ((c def c (c (? . 3) q keyspace:dealloc-number)) q (1963 . 4)) ((c def c (c (? . 1) q semantic-relation:insert)) q (6010 . 8)) ((c def c (c (? . 1) q db:is-dataplex*)) q (4862 . 3)) ((c def c (c (? . 4) q test-all)) q (187 . 3)) ((c def c (c (? . 1) q db:create-dataplex)) q (4971 . 4)) ((c def c (c (? . 1) q dataplex:delete-semantic-relation*)) q (3241 . 5)) ((c def c (c (? . 1) q db:find-dataplex)) q (4628 . 4) (4502 . 4)) ((c def c (c (? . 1) q db:is-dataplex)) q (4761 . 3)) ((c def c (c (? . 1) q shape-relation:delete)) q (5618 . 6)) ((c def c (c (? . 1) q shape-relation:match)) q (5818 . 5)) ((c def c (c (? . 3) q db:dealloc-name)) q (1065 . 3)) ((c def c (c (? . 5) q be)) q (789 . 3)) ((c def c (c (? . 2) q obj:copy)) q (8472 . 4)) ((c def c (c (? . 3) q db:create-keyspace)) q (1234 . 3))))
+4204
+((3) 0 () 6 ((q lib "liquid/db-lib.rkt") (q lib "liquid/object.rkt") (q lib "liquid/dataplex-lib.rkt") (q lib "liquid/test-lib.rkt") (q lib "liquid/arith.rkt") (q lib "liquid/extentions.rkt")) () (h ! (equal) ((c def c (c (? . 1) q obj:copy-element)) q (7245 . 5)) ((c def c (c (? . 4) q ≠)) q (253 . 3)) ((c def c (c (? . 0) q db:dealloc-number)) q (1172 . 3)) ((c form c (c (? . 5) q mc:define)) q (848 . 2)) ((c def c (c (? . 0) q db:alloc-name)) q (1026 . 2)) ((c def c (c (? . 2) q db:dataplexes)) q (4195 . 3)) ((c form c (c (? . 3) q provide-with-trace)) q (0 . 2)) ((c def c (c (? . 1) q obj:fields)) q (7536 . 4)) ((c def c (c (? . 0) q table:insert)) q (2183 . 4)) ((c def c (c (? . 2) q db:delete-dataplex*)) q (5345 . 3)) ((c def c (c (? . 3) q test-remove)) q (118 . 3)) ((c def c (c (? . 4) q and-form)) q (530 . 3)) ((c def c (c (? . 2) q db:create-dataplex)) q (4971 . 4)) ((c def c (c (? . 0) q db:tables)) q (1804 . 3)) ((c def c (c (? . 1) q obj:make)) q (6604 . 2)) ((c def c (c (? . 1) q obj:add-type)) q (6695 . 4)) ((c def c (c (? . 2) q dataplex:create-shape-relation)) q (3475 . 8)) ((c def c (c (? . 2) q dataplex:delete-shape-relation*)) q (3979 . 5)) ((c form c (c (? . 4) q ≥)) q (306 . 2)) ((c def c (c (? . 2) q shape-relation:insert)) q (5441 . 5)) ((c def c (c (? . 0) q db:delete-keyspace)) q (1420 . 3)) ((c def c (c (? . 1) q obj:apply*)) q (7105 . 5)) ((c def c (c (? . 2) q db:find-dataplex)) q (4628 . 4) (4502 . 4)) ((c def c (c (? . 2) q db:is-dataplex)) q (4761 . 3)) ((c def c (c (? . 1) q obj:has)) q (6786 . 4)) ((c def c (c (? . 2) q db:create-dataplex*)) q (5109 . 4)) ((c def c (c (? . 0) q table:insert*)) q (2294 . 4)) ((c def c (c (? . 2) q db:delete-dataplex)) q (5255 . 3)) ((c def c (c (? . 1) q obj:has-field)) q (7626 . 5)) ((c def c (c (? . 5) q boolify)) q (721 . 3)) ((c def c (c (? . 4) q --)) q (381 . 3)) ((c def c (c (? . 0) q db:create-keyspace)) q (1234 . 3)) ((c def c (c (? . 1) q obj:element-types)) q (7465 . 3)) ((c form c (c (? . 5) q identity)) q (703 . 2)) ((c def c (c (? . 0) q db-lib-init)) q (991 . 2)) ((c def c (c (? . 2) q db:is-dataplex-name)) q (4280 . 4)) ((c def c (c (? . 0) q db:dealloc-name)) q (1065 . 3)) ((c def c (c (? . 2) q db:is-dataplex-name*)) q (4387 . 4)) ((c def c (c (? . 0) q db:delete-table)) q (1497 . 3)) ((c def c (c (? . 2) q dataplex:delete-semantic-relation)) q (3011 . 6)) ((c def c (c (? . 0) q db:create-table)) q (1311 . 4)) ((c def c (c (? . 4) q or-form)) q (586 . 3)) ((c def c (c (? . 0) q db:delete-table*)) q (1580 . 3)) ((c def c (c (? . 4) q --!)) q (480 . 3)) ((c def c (c (? . 2) q dataplex:create-semantic-relation)) q (2675 . 8)) ((c def c (c (? . 0) q db:is-table)) q (1739 . 3)) ((c def c (c (? . 3) q test-all)) q (187 . 3)) ((c form c (c (? . 0) q as-transaction)) q (956 . 2)) ((c def c (c (? . 2) q shape-relation:match)) q (5818 . 5)) ((c def c (c (? . 2) q dataplex-lib-init)) q (2634 . 2)) ((c def c (c (? . 4) q ++)) q (332 . 3)) ((c def c (c (? . 0) q table:delete)) q (2070 . 4)) ((c def c (c (? . 1) q obj:is)) q (6637 . 3)) ((c form c (c (? . 4) q ≤)) q (319 . 2)) ((c def c (c (? . 2) q semantic-relation:insert)) q (6010 . 8)) ((c def c (c (? . 2) q dataplex:delete-semantic-relation*)) q (3241 . 5)) ((c def c (c (? . 0) q db:is-keyspace)) q (1671 . 3)) ((c def c (c (? . 0) q keyspace:alloc-number)) q (1881 . 3)) ((c form c (c (? . 5) q no-error)) q (771 . 2)) ((c def c (c (? . 0) q table:match)) q (2413 . 5)) ((c def c (c (? . 1) q obj:ref*)) q (6990 . 5)) ((c def c (c (? . 5) q do-nothing)) q (641 . 3)) ((c def c (c (? . 2) q shape-relation:delete)) q (5618 . 6)) ((c def c (c (? . 5) q be)) q (789 . 3)) ((c def c (c (? . 0) q db:alloc-number)) q (1131 . 2)) ((c def c (c (? . 2) q semantic-relation:match)) q (6310 . 8)) ((c form c (c (? . 0) q with-db)) q (2597 . 2)) ((c def c (c (? . 3) q test-hook)) q (51 . 3)) ((c def c (c (? . 0) q keyspace:dealloc-number)) q (1963 . 4)) ((c def c (c (? . 1) q obj:copy)) q (7372 . 4)) ((c def c (c (? . 1) q obj:remove!)) q (6871 . 5)) ((c def c (c (? . 2) q dataplex:delete-shape-relation)) q (3763 . 5)) ((c def c (c (? . 2) q db:is-dataplex*)) q (4862 . 3)) ((c def c (c (? . 4) q ++!)) q (430 . 3))))
 syntax
 (provide-with-trace prefix function ...)
 procedure
@@ -240,54 +240,20 @@ procedure
   objid : obj:is
   type : obj:is
 procedure
-(obj:set! type objid Λfield-symbol) -> obj:is
-  type : obj:is
-  objid : obj:is
-  Λfield-symbol : (listof [field symbol?] [value any/c])
-procedure
 (obj:remove! type objid field) -> obj:is
   type : obj:is
   objid : obj:is
   field : symbol?
-procedure
-(obj:ref type                  
-         objid                 
-         field                 
-         continue-ok           
-         continue-no-field     
-         continue-no-type) -> any/c
-  type : obj:is
-  objid : obj:is
-  field : symbol?
-  continue-ok : (-> any/c any/c)
-  continue-no-field : (->any/c)
-  continue-no-type : (-> any/c)
 procedure
 (obj:ref* type objid field) -> any/c
   type : obj:is
   objid : obj:is
   field : symbol?
 procedure
-(obj:apply type                  
-           objid                 
-           field                 
-           Λargs                 
-           continue-ok           
-           continue-no-field     
-           continue-no-type) -> any/c
+(obj:apply* type method method-args) -> any/c
   type : obj:is
-  objid : obj:is
-  field : symbol?
-  Λargs : (listof any/c)
-  continue-ok : (-> any/c any/c)
-  continue-no-field : (-> 2any/c)
-  continue-no-type : (-> any/c)
-procedure
-(obj:apply* type objid field Λargs) -> any/c
-  type : obj:is
-  objid : obj:is
-  field : symbol?
-  Λargs : (listof any/c)
+  method : symbol?
+  method-args : (listof any/c)
 procedure
 (obj:copy-element type source target) -> obj:is
   type : obj:is

@@ -211,3 +211,214 @@ it was in a quoted example ..  in multiple-continuations-architecture.scrbl:
         ...
         }|
 
+9.where in the file?
+
+racket@> (enter! "object.rkt")
+debug: undefined;
+ cannot reference an identifier before its definition
+  in module: 'extentions-lib
+  phase: 1
+  explanation: cannot access the run-time definition
+
+10.  took 3 / 4 days to find this, ended up having to write a lot of special code for debugging
+in racket, and develop the constructor technique ... an no the bug was not in obj:add-type as
+indicated in the message, and certainly not on line 141.
+
+  racket@> (enter! "object.rkt")
+  ...
+  (0.type-type)
+  (obj:has-type 0 0)
+  application: not a procedure;
+   expected a procedure that can be applied to arguments
+    given: 302
+    arguments...:
+     4
+    context...:
+     x-hash-ref
+     /home/deep/liquid-lib/liquid/object.rkt:141:4: obj:add-type
+     /home/deep/liquid-lib/liquid/object.rkt: [running body]
+     /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
+     /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+     /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+11.mind telling me where in the f-in program the error occured?
+
+  racket@object.rkt> (obj-test-1)
+  =: contract violation
+    expected: number?
+    given: #f
+    argument position: 1st
+    other arguments...:
+     12
+    context...:
+     /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+
+I am really regretting using racket right now ... again ... no backtrace available
+
+  "object.rkt"> ,bt
+  ; =: contract violation
+  ;   expected: number?
+  ;   given: #f
+  ;   argument position: 1st
+  ;   other arguments...:
+  ;    12
+  ;   context...:
+  ;    /usr/share/racket/pkgs/xrepl-lib/xrepl/xrepl.rkt:1380:0
+  ;    /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+
+12. this borders on being cruel .. back trace doesn't work
+
+  "object.rkt"> (obj-test-1)
+  (4.type:summable)
+  (5.test-1-obj1)
+  (6.test-1-obj2)
+  (args type:summable + (test-1-obj1 test-1-obj2))
+  (conts #<procedure> #<procedure> #<procedure>)
+  (##  at  (/home/deep/liquid-lib/liquid/object.rkt 221 4))
+  (--  expected length of 3 )
+  (--  for:  (#<procedure>))
+  ; uncaught exception: 'exception:check [,bt for context]
+  "object.rkt"> ,bt
+  ; uncaught exception: 'exception:check
+  "object.rkt"> 
+
+
+13.  because of require we don't even know what file this is in, and the message truncation was done by racket ...
+so the first thing I had to do was load each require file ...
+
+  Welcome to Racket v6.1.
+  racket@> (enter! "object.rkt")
+  displayln: contract violation
+    expected: output-port?
+    given: '(define (x-hash-ref args conts) (define mc:source-location '(x-hash-ref #<path:/home/deep/liquid-lib/liquid/extentions-lib.rkt> 293 4)) (if (check-mc:define-args-on-call "upon call of" mc:source-location args conts 2 2) (name args (table key) (name con...
+    argument position: 2nd
+    other arguments...:
+     "mc:define -> "
+    context...:
+     /usr/share/racket/collects/racket/private/misc.rkt:178:4: displayln
+     /home/deep/liquid-lib/liquid/extentions-lib.rkt:221:2
+     /usr/share/racket/collects/syntax/wrap-modbeg.rkt:46:4
+     standard-module-name-resolver
+     standard-module-name-resolver
+     standard-module-name-resolver
+     /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
+     /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+     /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+
+14. you might think that a person could just look for the first summable in the module, but no, as that one
+is well defined.   Indeed due to requires we can't even know which module this undefined summable occurs ..
+
+
+  racket@object.rkt> (enter! "object.rkt")
+    [re-loading /home/deep/liquid-lib/liquid/object.rkt]
+  (mc:define ->  (define (get-elementary args conts) (define mc:source-location (quote (get-elementary /home/deep/liquid-lib/liquid/object.rkt 189 4))) (if (check-mc:define-args-on-call upon call mc:source-location args conts 2 2) (name args (objid type) (name conts (c0 c1) (x-hash-ref (Λ obj:tman-table objid) (Λ (λ (tman) (x-hash-ref (Λ tman type) conts)) (λ ignore-args (raise:no-such-object objid)))))) (raise (quote exception:mc:define-arity)))))
+  (mc:define ->  (define (obj:set! args conts) (define mc:source-location (quote (obj:set! /home/deep/liquid-lib/liquid/object.rkt 200 4))) (if (check-mc:define-args-on-call upon call mc:source-location args conts 3 2) (name args (type objid Λfield-val) (name conts (continue-ok continue-no-type) (get-elementary (Λ objid type) (Λ (λ (e) (apply hash-set*! (cons e Λfield-val))) (λ ignore-args (continue-no-type args conts)))) (continue-ok objid))) (raise (quote exception:mc:define-arity)))))
+  (mc:define ->  (define (obj:ref args conts) (define mc:source-location (quote (obj:ref /home/deep/liquid-lib/liquid/object.rkt 223 4))) (if (check-mc:define-args-on-call upon call mc:source-location args conts 3 3) (name args (type objid field) (name conts (continue-ok continue-no-field continue-no-such-type) (define (lookup-field-elementary e-obj) (define (lookup-field-indirect . ignored-args) (x-hash-ref e-obj field:copied-from (λ (objid-of-copied-from) (lookup-field-compound objid-of-copied-from)) (λ ignore-args (continue-no-field args conts)))) (when obj:debug (trace lookup-field-indirect)) (x-hash-ref (Λ e-obj field) (Λ continue-ok lookup-field-indirect))) (when obj:debug (trace lookup-field-elementary)) (define (lookup-field-compound objid) (get-elementary (Λ objid type) (Λ lookup-field-elementary (λ ignore-args (continue-no-such-type args conts))))) (when obj:debug (trace lookup-field-compound)) (lookup-field-compound objid))) (raise (quote exception:mc:define-arity)))))
+  (mc:define ->  (define (obj:apply args conts) (define mc:source-location (quote (obj:apply /home/deep/liquid-lib/liquid/object.rkt 267 4))) (if (check-mc:define-args-on-call upon call mc:source-location args conts 3 3) (name args (type method-name method-args) (name conts (continue-ok continue-no-field continue-no-type) (when obj:debug (displayln (Λ obj:apply args: (obj:lookup type) method-name method-args)) (displayln (Λ obj:apply conts: continue-ok continue-no-field continue-no-type))) (obj:ref (Λ type-type type method-name) (Λ (λ (method-proc) (continue-ok (apply method-proc method-args))) (λ ignore-args (continue-no-field args conts)) (λ ignore-args (continue-no-type args conts)))))) (raise (quote exception:mc:define-arity)))))
+  (name ->  (match-let (((list objid type) args)) (name conts (c0 c1) (x-hash-ref (Λ obj:tman-table objid) (Λ (λ (tman) (x-hash-ref (Λ tman type) conts)) (λ ignore-args (raise:no-such-object objid)))))))
+  (name ->  (match-let (((list c0 c1) conts)) (x-hash-ref (Λ obj:tman-table objid) (Λ (λ (tman) (x-hash-ref (Λ tman type) conts)) (λ ignore-args (raise:no-such-object objid))))))
+  (name ->  (match-let (((list type objid Λfield-val) args)) (name conts (continue-ok continue-no-type) (get-elementary (Λ objid type) (Λ (λ (e) (apply hash-set*! (cons e Λfield-val))) (λ ignore-args (continue-no-type args conts)))) (continue-ok objid))))
+  (name ->  (match-let (((list continue-ok continue-no-type) conts)) (get-elementary (Λ objid type) (Λ (λ (e) (apply hash-set*! (cons e Λfield-val))) (λ ignore-args (continue-no-type args conts)))) (continue-ok objid)))
+  (name ->  (match-let (((list type objid field) args)) (name conts (continue-ok continue-no-field continue-no-such-type) (define (lookup-field-elementary e-obj) (define (lookup-field-indirect . ignored-args) (x-hash-ref e-obj field:copied-from (λ (objid-of-copied-from) (lookup-field-compound objid-of-copied-from)) (λ ignore-args (continue-no-field args conts)))) (when obj:debug (trace lookup-field-indirect)) (x-hash-ref (Λ e-obj field) (Λ continue-ok lookup-field-indirect))) (when obj:debug (trace lookup-field-elementary)) (define (lookup-field-compound objid) (get-elementary (Λ objid type) (Λ lookup-field-elementary (λ ignore-args (continue-no-such-type args conts))))) (when obj:debug (trace lookup-field-compound)) (lookup-field-compound objid))))
+  (name ->  (match-let (((list continue-ok continue-no-field continue-no-such-type) conts)) (define (lookup-field-elementary e-obj) (define (lookup-field-indirect . ignored-args) (x-hash-ref e-obj field:copied-from (λ (objid-of-copied-from) (lookup-field-compound objid-of-copied-from)) (λ ignore-args (continue-no-field args conts)))) (when obj:debug (trace lookup-field-indirect)) (x-hash-ref (Λ e-obj field) (Λ continue-ok lookup-field-indirect))) (when obj:debug (trace lookup-field-elementary)) (define (lookup-field-compound objid) (get-elementary (Λ objid type) (Λ lookup-field-elementary (λ ignore-args (continue-no-such-type args conts))))) (when obj:debug (trace lookup-field-compound)) (lookup-field-compound objid)))
+  (name ->  (match-let (((list type method-name method-args) args)) (name conts (continue-ok continue-no-field continue-no-type) (when obj:debug (displayln (Λ obj:apply args: (obj:lookup type) method-name method-args)) (displayln (Λ obj:apply conts: continue-ok continue-no-field continue-no-type))) (obj:ref (Λ type-type type method-name) (Λ (λ (method-proc) (continue-ok (apply method-proc method-args))) (λ ignore-args (continue-no-field args conts)) (λ ignore-args (continue-no-type args conts)))))))
+  (name ->  (match-let (((list continue-ok continue-no-field continue-no-type) conts)) (when obj:debug (displayln (Λ obj:apply args: (obj:lookup type) method-name method-args)) (displayln (Λ obj:apply conts: continue-ok continue-no-field continue-no-type))) (obj:ref (Λ type-type type method-name) (Λ (λ (method-proc) (continue-ok (apply method-proc method-args))) (λ ignore-args (continue-no-field args conts)) (λ ignore-args (continue-no-type args conts))))))
+  summable: unbound identifier in module
+    in: summable
+    context...:
+     /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+     /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+
+so I have to search for all 'summable'   .. why doesn't the compiler tell me which one?  what is the big secret for?
+
+
+15.  racket reports arity error, but does not say for which function ...  (turns out to be in obj:set! which I found
+by walking through a trace).   line 421, which it cites, is simply the line of the define (obj-test-2) ... and something
+is off in the weeds as the computer is crawling slow ...
+
+racket@object.rkt> (obj-test-2)
+>(obj:make "type:summable")
+(47.type:summable)
+<47
+>(obj:make "test-2-obj1")
+(48.test-2-obj1)
+<48
+>(obj:make "test-2-obj2")
+(49.test-2-obj2)
+<49
+>(obj:add-type 48 47)
+> (obj:is 47)
+< #t
+> (obj:is 48)
+< #t
+> (obj:has-type 48 47)
+> >(obj:is 47)
+< <#t
+> (x-hash-ref
+   '(#hasheq((47 . #hasheqv())
+             (46 . #hasheqv((46 . #hasheqv())))
+             (49 . #hasheqv())
+             (48 . #hasheqv()))
+     48)
+   '(#<procedure> #<procedure>))
+> >(be #t)
+< <#<procedure:beit>
+> >(be #f)
+< <#<procedure:beit>
+> (x-hash-ref '(#hasheqv() 47) '(#<procedure:beit> #<procedure:beit>))
+< #f
+> (x-hash-ref
+   '(#hasheq((47 . #hasheqv())
+             (46 . #hasheqv((46 . #hasheqv())))
+             (49 . #hasheqv())
+             (48 . #hasheqv()))
+     48)
+   '(#<procedure> #<procedure>))
+< #<void>
+<48
+>(obj:add-type 49 47)
+> (obj:is 47)
+< #t
+> (obj:is 49)
+< #t
+> (obj:has-type 49 47)
+> >(obj:is 47)
+< <#t
+> (x-hash-ref
+   '(#hasheq((47 . #hasheqv())
+             (46 . #hasheqv((46 . #hasheqv())))
+             (49 . #hasheqv())
+             (48 . #hasheqv((47 . #hasheqv()))))
+     49)
+   '(#<procedure> #<procedure>))
+> >(be #t)
+< <#<procedure:beit>
+> >(be #f)
+< <#<procedure:beit>
+> (x-hash-ref '(#hasheqv() 47) '(#<procedure:beit> #<procedure:beit>))
+< #f
+> (x-hash-ref
+   '(#hasheq((47 . #hasheqv())
+             (46 . #hasheqv((46 . #hasheqv())))
+             (49 . #hasheqv())
+             (48 . #hasheqv((47 . #hasheqv()))))
+     49)
+   '(#<procedure> #<procedure>))
+< #<void>
+<49
+#<procedure>: arity mismatch;
+ the expected number of arguments does not match the given number
+  expected: 2
+  given: 3
+  arguments...:
+   47
+   49
+   '(x 21)
+  context...:
+   /home/deep/liquid-lib/liquid/object.rkt:421:0: obj-test-2
+   /usr/share/racket/collects/racket/private/misc.rkt:87:7
+racket@object.rkt> 

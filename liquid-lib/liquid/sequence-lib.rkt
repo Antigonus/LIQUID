@@ -390,7 +390,9 @@
 ;; provides the following
 ;;    
 
-  (provide Λ)
+  (provide 
+    Λ
+    )
 
   ;; functions
   ;;
@@ -413,5 +415,9 @@
 
         bcons
         cat
+
+        flatten-1
+        filter-fold
+        replace
           
       )

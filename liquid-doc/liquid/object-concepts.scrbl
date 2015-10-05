@@ -12,30 +12,37 @@ The definitions given here come from the TCA object implementation, and vary som
 conventional use of the terms.
 
 
-@section{Objects}
+@section{TCA Objects}
 
-'Data' is a vector of bits with hardware native definition.  A value is data used by a
-program.
+'Data' is a vector of bits with hardware native definition.  A 'value' is data used by a
+program.  An 'argument' is a value passed to a funciton.  An 'operand' is a value
+passed to an operator. 
 
-An object is either 'primitive' and is the same as a value, or it is structured and can
-hold a number of named values.  For structured objects the named values are said to live
-in 'fields' within the object.  Hence, the names can also be called 'field names'.
+A name is data that is used to lookup data in a table.  A 'symbol' is text that is
+typically used as a name.  A 'variable' is a name-value pair, where the name part is a 
+symbol, known as the 'variable name'.
 
-This is an abstract definition for which a number of implementations are possible.  In the
-C language, objects are called 'data structures' and are implemented using segments of
-memory.  In our implementation here, we use hash tables.
+A 'primitive object' is the same as a value.  A 'structured' object is a container that
+has multiple 'fields' where each field may hold a value.  Each field has a name.  If no
+further structure than this is found in an object, then the object is said to be
+'elementary'.
 
-Hash tables do not have native support on processors, so we may say our objects
-"higher level" than those found C.  In the C implementation all possible fields for an
-object are always present.  If constraints allow it, in our higher level implementation
-it is possible that a field is not present, and new fields can be created on the fly at
-run time.
+A 'compound' object is one that has the additional structure of a 'type manifold'.  A type
+manifold has a number of branches.  At the end of each branch one finds an
+elementary object. An example implementation of a type manifold is a hash table, where the
+keys are type names and the values are elementary objects.  We call it a 'manifold' rather
+than a tree, because each branch holds a space with a number of variables in it.  The
+variable names are the field names, and the variable values are the field values.
+
+Compound objects can act according to design patterns known in other object models, such
+as the patterns of inheritance, multiple inheritance, and polymorphism.
+
 
 @section{Format}
 
-The list of all possible fields for an object is known as the object's 'format'.  With C
-objects format is rigid and defined at compile time.  In our higher order implementation
-format may be dynamic, limited only be external constraints.
+The list of all possible fields for an elementary object is known as the object's
+'format'.  With C objects format is rigid and defined at compile time.  In this TCA
+implementation format may be dynamic in that we may add or remove fields at run time.
 
 
 @section{Type}
@@ -44,30 +51,16 @@ format may be dynamic, limited only be external constraints.
 
 A 'type binding' is a contract with a programmer, compiler, or interpreter, that says that
 programs that operate on a certain set of objects always come from a specified shared
-object, aka, the 'type'.  Before object oriented programming, it was conventional that all
-objects would specify an association with exactly one type.
+object, AKA, the 'type'.  
 
-When multiple objects may share a type, these objects are said to be 'of the type'.  It
-is possible for an object to be of more than one type.
-
-
-@section{Type and Format}
-
-There is a type step process for using type.  Say two data objects share a type object,
-and the type object holds a binary operator.  To employ this operator, we first have to
-look it up within the type object.  This lookup will be by field name.  Hence the fields
-in a type object often have names that look like the names of functions.  After looking up
-the field we will have the operator, so, then as a second step, we then apply the operator
-to the two data objects.
-
-Hence type functions are written with a-priori knowledge of the format of the objects they
-will operate on, i.e. shared over.  The sharing of type objects among data objects is not
-haphazard.
+When multiple objects may share a type, these objects are said to be 'of the type'.
+Compound objects may easily be of more than one type.  The elementary object corresponding
+to each type is simply added to the type manifold under the corresponding type name.
 
 
-@section{Composite Objects}
+@section{Compound Objects}
 
-In order to have modern properties of type such as inheritance or polymorphism, we hae to
+In order to have modern properties of type such as inheritance or polymorphism, we
 allow that an object or group of objects may share more than one type.
 
 When an object is of more than one type, then the functions contained in those multiple
@@ -77,15 +70,34 @@ the same name.
 
 Perhaps the best solution to this problem is to make 'field name' a managed resource.
 Accordingly there would be a function called 'make-field'  that would return a field.
-Human readible field names would be lookedup in a dictionary against the field.  Hence
-two different fields could indeed have the same name, yet for the code they would remain
+Human readible field names would be lookedup in a dictionary against the field, and
+two different fields could indeed have the same name, yet they would remain
 unique.
 
-We did not do this.  Instead we gave objects internal field spaces based on type ids.  The
-field space is looked up based on the type operating on the object, and then the function
-within that object picks among the fields available for that type.  Thus field names
-remain as symbols in the program.  We call such typed spaced objects 'composite objecs'.
-All objects in the current implementation are composite.
+We did not do this in this version.  Instead we gave objects internal field spaces based
+on type names (and type names in this context are objids).  The space of available fields
+is then looked up against the name of the type that wants to operate on it.  Thus field
+names remain as symbols in the program.  We call such typed spaced objects 'compound
+objecs'.  All objects in the current implementation are compound.
+
+
+@section{Type Application}
+
+There is a process for applying type to an object.  In this implementation of the TCA
+objects it goes like this, say two data objects share a type object, and the type object
+holds a binary operator.  To apply this operator, we first have to look it up within the
+type object.  We know which type object to use because of the binding. After looking up
+the operator we will have a lambda function. Then we apply this lamba to the operand
+objects.
+
+As a consequence of this process the programmer may notice that the functions in a type
+object must be written with a-priori knowledge of the format of the objects they will
+operate on.  This is why there is a correspondence between the names of the branches in
+the type manifold and the name of the type object.  We can interpret the name of a
+manifold branch of type X, having name X, as "The object on this branch was written to be
+manipulated by the programs found in the X type object."
+
+
 
 @section{Object Spaces}
 
@@ -127,7 +139,7 @@ objects, that have fields in the new type space, differently.  Legacy code does 
 to be changed.
 
 The second method for achieving personality is to define the new type that recognizes
-composite objects with the new type space, and treats them accordingly.  In places where
+compound objects with the new type space, and treats them accordingly.  In places where
 polymorophism is desired the new type is used, in places it is not, the old type can be
 used.  Typically, as the type carries the code, there is no need to update the legacy code
 in the new type, because it isn't there anyway.

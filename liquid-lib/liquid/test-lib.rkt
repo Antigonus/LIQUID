@@ -13,6 +13,16 @@
 ;;--------------------------------------------------------------------------------
 ;; uses these libraries
 ;;    
+  (require unstable/syntax) ; for (phase-of-enclosing-module)
+
+;;--------------------------------------------------------------------------------
+;; parameters
+;;
+
+  ;; used by programs to decide if they should hook and run test code
+  (define current-hook-tests (make-parameter #t))
+
+
 
 ;;--------------------------------------------------------------------------------
 ;; test/debug
@@ -28,12 +38,14 @@
   (define (test-name a-test) (symbol->string (object-name a-test)))
 
   (define (test-hook a-test)
-    (display "hooking test: ") (displayln (test-name a-test))
-    (set! test-routines (cons a-test (remove a-test test-routines (λ(e f) (string=? (test-name e) (test-name f)))))))
+    (when (= (phase-of-enclosing-module) 0) (display "hooking test: ") (displayln (test-name a-test)))
+    (set! test-routines (cons a-test (remove a-test test-routines (λ(e f) (string=? (test-name e) (test-name f))))))
+    )
 
   (define (test-remove a-test) 
     (display "removing test ") (displayln (test-name a-test))
     (set! test-routines (remove a-test test-routines)))
+
   (define (test a-test)
     (let(
           [fun-name (test-name a-test)]
@@ -83,18 +95,17 @@
   (define (example-fail-test) (= (+ 1 1) 3))
   (define (example-exception-test) (car 17)) ; fails due to exception being raised
 
-  (test-hook example-pass-test) ; adds the example test to the test suit
-  (test-hook example-fail-test) ; adds the example test to the test suit
-  (test-hook example-exception-test) ; adds the example test to the test suit
-
-
-  (displayln "running example tests.. first passes, second fails, third has an exception ..")
-  (test-all)
-  (test-remove example-pass-test)
-  (test-remove example-fail-test)
-  (test-remove example-exception-test)
-
-  (displayln "(test-all) to run the tests")
+  (when (= (phase-of-enclosing-module) 0)
+    (test-hook example-pass-test) ; adds the example test to the test suit
+    (test-hook example-fail-test) ; adds the example test to the test suit
+    (test-hook example-exception-test) ; adds the example test to the test suit
+    (displayln "running example tests.. first passes, second fails, third has an exception ..")
+    (test-all)
+    (test-remove example-pass-test)
+    (test-remove example-fail-test)
+    (test-remove example-exception-test)
+    (displayln "(test-all) to run the tests")
+    )
 
 
 ;;--------------------------------------------------------------------------------
@@ -179,9 +190,8 @@
   ;; functions
   ;;
     (provide-with-trace "test-lib" ;; this context continues to the bottom of the page
-
+        current-hook-tests
         test-hook
         test-remove
         test-all
-
       )
