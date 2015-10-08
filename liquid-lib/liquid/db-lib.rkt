@@ -105,7 +105,7 @@
     ))
 
   (define (db-lib-init)
-    (cond [(current-db-log) (log "db-init")])
+    (when (current-db-log) (log "db-init"))
     (with-handlers
       (
         [(λ(v) #t) ; this handler catches anything
@@ -115,15 +115,12 @@
             )
           ]
         )
-      (with-db (current-test-db)
-        (db-lib-init-1)
-        )
-      (with-db (current-working-db)
-        (db-lib-init-1)
-        )
+      (db-lib-init-1)
+      )
       #f  ;; false - no errors exist
-      ))
+      )
 
+  (with-db (current-test-db) (db-lib-init))
   (define (db-lib-init-test-0) (not (db-lib-init)))
   (test-hook db-lib-init-test-0)
   

@@ -14,6 +14,7 @@
 ;; uses these libraries
 ;;    
   (require unstable/syntax) ; for (phase-of-enclosing-module)
+  (require racket/date)
 
 ;;--------------------------------------------------------------------------------
 ;; parameters
@@ -21,7 +22,8 @@
 
   ;; used by programs to decide if they should hook and run test code
   (define current-hook-tests (make-parameter #t))
-
+  (date-display-format `iso-8601)
+  (define current-log-port (make-parameter (open-output-file "log-http-server.txt" #:exists `can-update)))
 
 
 ;;--------------------------------------------------------------------------------
@@ -178,6 +180,26 @@
               ))))))
 
 ;;--------------------------------------------------------------------------------
+;; log utils
+;;
+  (define (time-stamp) ; puts the time in the log
+    (define stamp (date->string (current-date) #t))
+    (display stamp (current-log-port))
+  )
+
+  (define (display-log mess) (display mess (current-log-port)))
+  (define (display-log-append mess) (display " " (current-log-port)) (display mess (current-log-port)))
+  (define (log mess)
+    (time-stamp) 
+    (if (list? mess)
+       (for-each display-log-append mess)
+       (display-log-append mess)
+       )
+    (newline (current-log-port))
+    (flush-output (current-log-port))
+    )
+
+;;--------------------------------------------------------------------------------
 ;; provides the following
 ;;    
 
@@ -190,8 +212,12 @@
   ;; functions
   ;;
     (provide-with-trace "test-lib" ;; this context continues to the bottom of the page
-        current-hook-tests
-        test-hook
-        test-remove
-        test-all
+      current-hook-tests
+      test-hook
+      test-remove
+      test-all
+      time-stamp
+      display-log
+      display-log-append
+      log
       )

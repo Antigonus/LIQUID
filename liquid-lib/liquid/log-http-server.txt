@@ -1,10 +1,19 @@
-2015-02-06 05:07:18 http-server start
-2015-02-06 05:07:28 start tcp session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38508)
-2015-02-06 05:07:28 GET /test/conjunction HTTP/1.1
-2015-02-06 05:07:28 end session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38508) #t #<void>
-2015-02-06 05:07:45 start tcp session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38509)
-2015-02-06 05:07:45 GET /test/conjunction?query=dblp%28%22Cali%22%2C_%2C_%2C2015%29 HTTP/1.1
-2015-02-06 05:07:51 end session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38509) #t #<void>
+2015-10-08T10:20:59 exception in db-lib-init: #(struct:exn:fail:contract:variable db:is-table: undefined;
+ cannot reference an identifier before its definition
+  in module: "/home/deep/liquid-lib/liquid/db-lib.rkt" #<continuation-mark-set> db:is-table)
+2015-10-08T10:21:18 exception in db-lib-init: #(struct:exn:fail:contract:blame query-list: contract violation
+  expected: connection?
+  given: #f
+  in: the 1st argument of
+      (->*
+       (connection? statement?)
+       #:rest
+       list?
+       list?)
+  contract from: <pkgs>/db-lib/db/base.rkt
+  blaming: /home/deep/liquid-lib/liquid/db-lib.rkt
+  at: <pkgs>/db-lib/db/base.rkt:159.2 #<continuation-mark-set> #<blame>)
+t #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38509) #t #<void>
 06 04:20:29 http-server stop
 2015-02-06 04:20:37 http-server start
 2015-02-06 04:20:43 start tcp session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38474)

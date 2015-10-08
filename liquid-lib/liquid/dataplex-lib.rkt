@@ -29,28 +29,28 @@
   (define (db:dataplex-directory-name) "dataplexes")
 
   (define (dataplex-lib-init)
-    (with-db (current-test-db)
-      (db-lib-init)
-      (as-transaction
-        (let (
-               [already-init (db:is-table (db:dataplex-directory-name))]
-               )
-          (cond
-            [already-init 'already-initialized]
-            [else 
-              (db:create-table (db:dataplex-directory-name) 1)
-              'initialized
-              ]
-            )))))
+    (db-lib-init)
+    (as-transaction
+      (let (
+             [already-init (db:is-table (db:dataplex-directory-name))]
+             )
+        (cond
+          [already-init 'already-initialized]
+          [else 
+            (db:create-table (db:dataplex-directory-name) 1)
+            'initialized
+            ]
+          ))))
 
-    (define (dataplex-lib-init-test-0)
+  (define (dataplex-lib-init-test-0)
+    (with-db (current-test-db)
       (let(
             [result (dataplex-lib-init)]
             )
         (or
           (eqv? result 'initialized)
           (eqv? result 'already-initialized)
-          )))
+          ))))
     
     (test-hook dataplex-lib-init-test-0)
 
@@ -882,46 +882,44 @@
   ;; output: filtered rows from the semantic relation
   ;;
       (define (semantic-relation:match dataplex semantic-relation [pattern '(_)] [filter identity])
-        (with-db (current-test-db)
-          (with-semantic-relation semantic-relation
-            (define (fetch id)
-              (let*(
-                     [column-shape-names (table:match semantic-relation:shape-relations '(_) car)]
-                     [shapes (map (λ(e)(shape-relation:object-scope dataplex e)) column-shape-names)]
-                     )
-                (map (λ(e)(shape-relation:match-by-semantic-id e id)) shapes)
-                ))
-
+        (with-semantic-relation semantic-relation
+          (define (fetch id)
             (let*(
-                   [ids (semantic-relation:lookup-ids dataplex semantic-relation pattern)]
-                   [rows (map fetch ids)]
+                   [column-shape-names (table:match semantic-relation:shape-relations '(_) car)]
+                   [shapes (map (λ(e)(shape-relation:object-scope dataplex e)) column-shape-names)]
                    )
-              (map filter rows)
-              ))))
+              (map (λ(e)(shape-relation:match-by-semantic-id e id)) shapes)
+              ))
+
+          (let*(
+                 [ids (semantic-relation:lookup-ids dataplex semantic-relation pattern)]
+                 [rows (map fetch ids)]
+                 )
+            (map filter rows)
+            )))
 
       (define (shape-relation:match-by-semantic-id shape-relation id)
-        (with-db (current-test-db)
-          (with-shape-relation shape-relation
+        (with-shape-relation shape-relation
+          (let(
+                [shape-row-ids
+                  (table:match 
+                    shape-relation:citings
+                    `(,id _ _) 
+                    caddr
+                    )
+                  ]
+                )
             (let(
-                  [shape-row-ids
-                    (table:match 
-                      shape-relation:citings
-                      `(,id _ _) 
-                      caddr
+                  [matched-rows
+                    (append-map 
+                      (λ(e)(table:match shape-relation:values `(,e) cdr)) 
+                      shape-row-ids
                       )
                     ]
                   )
-              (let(
-                    [matched-rows
-                      (append-map 
-                        (λ(e)(table:match shape-relation:values `(,e) cdr)) 
-                        shape-row-ids
-                        )
-                      ]
-                    )
-                ;;(pretty-print (list 'matched-rows matched-rows))
-                (if (singleton matched-rows) (car matched-rows) matched-rows)
-              )))))
+              ;;(pretty-print (list 'matched-rows matched-rows))
+              (if (singleton matched-rows) (car matched-rows) matched-rows)
+              ))))
           
     (define (semantic-relation:match-test-1)
       (with-db (current-test-db)

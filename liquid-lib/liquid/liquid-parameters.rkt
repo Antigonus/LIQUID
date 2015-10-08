@@ -23,8 +23,6 @@
 ;;--------------------------------------------------------------------------------
 ;; global parameters
 ;;    
-  (date-display-format `iso-8601)
-  (define current-log-port (make-parameter (open-output-file "log-http-server.txt" #:exists `can-update)))
   (define current-read-request-timeout (make-parameter 5)); 5 cadrs to finish request header read
   (define current-file-name (make-parameter "test-session")); filename for query parsing
   (define current-get-webpage-timeout (make-parameter 60)) ; used in "web.rkt"
