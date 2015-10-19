@@ -340,85 +340,120 @@ so I have to search for all 'summable'   .. why doesn't the compiler tell me whi
 by walking through a trace).   line 421, which it cites, is simply the line of the define (obj-test-2) ... and something
 is off in the weeds as the computer is crawling slow ...
 
-racket@object.rkt> (obj-test-2)
->(obj:make "type:summable")
-(47.type:summable)
-<47
->(obj:make "test-2-obj1")
-(48.test-2-obj1)
-<48
->(obj:make "test-2-obj2")
-(49.test-2-obj2)
-<49
->(obj:add-type 48 47)
-> (obj:is 47)
-< #t
-> (obj:is 48)
-< #t
-> (obj:has-type 48 47)
-> >(obj:is 47)
-< <#t
-> (x-hash-ref
-   '(#hasheq((47 . #hasheqv())
-             (46 . #hasheqv((46 . #hasheqv())))
-             (49 . #hasheqv())
-             (48 . #hasheqv()))
-     48)
-   '(#<procedure> #<procedure>))
-> >(be #t)
-< <#<procedure:beit>
-> >(be #f)
-< <#<procedure:beit>
-> (x-hash-ref '(#hasheqv() 47) '(#<procedure:beit> #<procedure:beit>))
-< #f
-> (x-hash-ref
-   '(#hasheq((47 . #hasheqv())
-             (46 . #hasheqv((46 . #hasheqv())))
-             (49 . #hasheqv())
-             (48 . #hasheqv()))
-     48)
-   '(#<procedure> #<procedure>))
-< #<void>
-<48
->(obj:add-type 49 47)
-> (obj:is 47)
-< #t
-> (obj:is 49)
-< #t
-> (obj:has-type 49 47)
-> >(obj:is 47)
-< <#t
-> (x-hash-ref
-   '(#hasheq((47 . #hasheqv())
-             (46 . #hasheqv((46 . #hasheqv())))
-             (49 . #hasheqv())
-             (48 . #hasheqv((47 . #hasheqv()))))
-     49)
-   '(#<procedure> #<procedure>))
-> >(be #t)
-< <#<procedure:beit>
-> >(be #f)
-< <#<procedure:beit>
-> (x-hash-ref '(#hasheqv() 47) '(#<procedure:beit> #<procedure:beit>))
-< #f
-> (x-hash-ref
-   '(#hasheq((47 . #hasheqv())
-             (46 . #hasheqv((46 . #hasheqv())))
-             (49 . #hasheqv())
-             (48 . #hasheqv((47 . #hasheqv()))))
-     49)
-   '(#<procedure> #<procedure>))
-< #<void>
-<49
-#<procedure>: arity mismatch;
- the expected number of arguments does not match the given number
-  expected: 2
-  given: 3
-  arguments...:
-   47
-   49
-   '(x 21)
-  context...:
-   /home/deep/liquid-lib/liquid/object.rkt:421:0: obj-test-2
-   /usr/share/racket/collects/racket/private/misc.rkt:87:7
-racket@object.rkt> 
+  racket@object.rkt> (obj-test-2)
+  >(obj:make "type:summable")
+  (47.type:summable)
+  <47
+  >(obj:make "test-2-obj1")
+  (48.test-2-obj1)
+  <48
+  >(obj:make "test-2-obj2")
+  (49.test-2-obj2)
+  <49
+  >(obj:add-type 48 47)
+  > (obj:is 47)
+  < #t
+  > (obj:is 48)
+  < #t
+  > (obj:has-type 48 47)
+  > >(obj:is 47)
+  < <#t
+  > (x-hash-ref
+     '(#hasheq((47 . #hasheqv())
+               (46 . #hasheqv((46 . #hasheqv())))
+               (49 . #hasheqv())
+               (48 . #hasheqv()))
+       48)
+     '(#<procedure> #<procedure>))
+  > >(be #t)
+  < <#<procedure:beit>
+  > >(be #f)
+  < <#<procedure:beit>
+  > (x-hash-ref '(#hasheqv() 47) '(#<procedure:beit> #<procedure:beit>))
+  < #f
+  > (x-hash-ref
+     '(#hasheq((47 . #hasheqv())
+               (46 . #hasheqv((46 . #hasheqv())))
+               (49 . #hasheqv())
+               (48 . #hasheqv()))
+       48)
+     '(#<procedure> #<procedure>))
+  < #<void>
+  <48
+  >(obj:add-type 49 47)
+  > (obj:is 47)
+  < #t
+  > (obj:is 49)
+  < #t
+  > (obj:has-type 49 47)
+  > >(obj:is 47)
+  < <#t
+  > (x-hash-ref
+     '(#hasheq((47 . #hasheqv())
+               (46 . #hasheqv((46 . #hasheqv())))
+               (49 . #hasheqv())
+               (48 . #hasheqv((47 . #hasheqv()))))
+       49)
+     '(#<procedure> #<procedure>))
+  > >(be #t)
+  < <#<procedure:beit>
+  > >(be #f)
+  < <#<procedure:beit>
+  > (x-hash-ref '(#hasheqv() 47) '(#<procedure:beit> #<procedure:beit>))
+  < #f
+  > (x-hash-ref
+     '(#hasheq((47 . #hasheqv())
+               (46 . #hasheqv((46 . #hasheqv())))
+               (49 . #hasheqv())
+               (48 . #hasheqv((47 . #hasheqv()))))
+       49)
+     '(#<procedure> #<procedure>))
+  < #<void>
+  <49
+  #<procedure>: arity mismatch;
+   the expected number of arguments does not match the given number
+    expected: 2
+    given: 3
+    arguments...:
+     47
+     49
+     '(x 21)
+    context...:
+     /home/deep/liquid-lib/liquid/object.rkt:421:0: obj-test-2
+     /usr/share/racket/collects/racket/private/misc.rkt:87:7
+  racket@object.rkt> 
+
+16.
+
+  racket@kw.rkt> (with-db (current-example-db) (db:alloc-name))
+  lifted.0.3: undefined;
+   cannot reference an identifier before its definition
+    in module: "/home/deep/liquid-lib/liquid/kw.rkt"
+    context...:
+     /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+
+  §lambda1:/home/deep/liquid-lib/liquid> grep lifted *.rkt
+
+  §lambda1:/home/deep/liquid-lib/liquid>
+
+
+17.
+
+  racket@kw.rkt> (enter! "kw.rkt")
+    [re-loading /home/deep/liquid-lib/liquid/kw.rkt]
+  _: wildcard not allowed as an expression
+    in: _
+  racket@kw.rkt> 
+
+
+18.
+
+    reloading a module does nothing, which is nice in that why load a
+    module that has already been loaded ... however, this means that
+    module state does not get reset on a second or later load by redoing
+    the load!
+
+    also had problems where load of a module that uses another module
+    where that second module has been changed, does not reload the second
+    module (because it is called from a first module that has not changed) 

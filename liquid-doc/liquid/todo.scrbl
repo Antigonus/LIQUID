@@ -68,6 +68,15 @@ hash tables rather keep the space as part of the key.
    the cases that the library user, i.e. the programmer,  makes a mistake in using one of these
    he isn't left with a mystery to solve.
 
+@section{test-lib provide trace intenral}
+
+   Note dataplex.rkt.  The approach to providing a routine at the bottom that calls out
+   functions to trace has not worked out, because some routines call helper routines
+   inside of routines, and these are out of scope.  (This is often done in recursive
+   routines to separate what state and what is invarient.)
+
+   Not sure, but suspect we need a special type of 'define' that hooks routines into
+   one or more lists.  Then we have (trace-on list).  To trace a group of functions.
 
 @table-of-contents[]
 

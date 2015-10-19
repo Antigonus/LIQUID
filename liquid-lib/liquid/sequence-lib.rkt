@@ -160,7 +160,7 @@
 
     (define (length≠ l n) (not (length= l n)))
 
-    (define (singleton l) 
+    (define (is-singleton l) 
       (and
         (pair? l)
         (null? (cdr l))
@@ -407,7 +407,7 @@
         length=
         length<
         length≠
-        singleton
+        is-singleton
 
         list<
 

@@ -1,7 +1,7 @@
-2015-10-08T10:20:59 exception in db-lib-init: #(struct:exn:fail:contract:variable db:is-table: undefined;
+2015-10-16T08:11:58 exception in db-lib-init: #(struct:exn:fail:contract:variable db:is-table: undefined;
  cannot reference an identifier before its definition
   in module: "/home/deep/liquid-lib/liquid/db-lib.rkt" #<continuation-mark-set> db:is-table)
-2015-10-08T10:21:18 exception in db-lib-init: #(struct:exn:fail:contract:blame query-list: contract violation
+2015-10-14T10:35:00 exception in db-lib-init: #(struct:exn:fail:contract:blame query-list: contract violation
   expected: connection?
   given: #f
   in: the 1st argument of
@@ -13,12 +13,19 @@
   contract from: <pkgs>/db-lib/db/base.rkt
   blaming: /home/deep/liquid-lib/liquid/db-lib.rkt
   at: <pkgs>/db-lib/db/base.rkt:159.2 #<continuation-mark-set> #<blame>)
-t #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38509) #t #<void>
-06 04:20:29 http-server stop
-2015-02-06 04:20:37 http-server start
-2015-02-06 04:20:43 start tcp session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38474)
-2015-02-06 04:20:43 GET /test/webi-pred HTTP/1.1
-2015-02-06 04:20:43 end session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38474) #f #<void>
+2015-10-13T12:12:29 exception in db-lib-init: #(struct:exn:fail:contract:blame query-list: contract violation
+  expected: connection?
+  given: #f
+  in: the 1st argument of
+      (->*
+       (connection? statement?)
+       #:rest
+       list?
+       list?)
+  contract from: <pkgs>/db-lib/db/base.rkt
+  blaming: /home/deep/liquid-lib/liquid/db-lib.rkt
+  at: <pkgs>/db-lib/db/base.rkt:159.2 #<continuation-mark-set> #<blame>)
+port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38474) #f #<void>
 2015-02-06 04:30:33 http-server stop
 2015-02-06 04:31:37 http-server start
 2015-02-06 04:31:42 start tcp session #(struct:tcp-context #<input-port:tcp-accepted> #<output-port:tcp-accepted> 127.0.0.1 8080 127.0.0.1 38475)

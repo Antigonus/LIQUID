@@ -26,19 +26,19 @@
 ;;     intializes the db-lib
 ;;     if there is already not one, creates a table to hold dataplex names
 ;;
-  (define (db:dataplex-directory-name) "dataplexes")
+  (define (db:dataplex-directory-name) "dataplexes") ; this is the name of a table in the db
 
-  (define (dataplex-lib-init)
+  (define (dataplex-lib-init) ; creates the "dataplexes" table if it does not already exist
     (db-lib-init)
     (as-transaction
       (let (
              [already-init (db:is-table (db:dataplex-directory-name))]
              )
         (cond
-          [already-init 'already-initialized]
+          [already-init 'dataplex-already-initialized]
           [else 
             (db:create-table (db:dataplex-directory-name) 1)
-            'initialized
+            'dataplex-initialized
             ]
           ))))
 
@@ -48,19 +48,24 @@
             [result (dataplex-lib-init)]
             )
         (or
-          (eqv? result 'initialized)
-          (eqv? result 'already-initialized)
+          (eqv? result 'dataplex-initialized)
+          (eqv? result 'dataplex-already-initialized)
           ))))
     
     (test-hook dataplex-lib-init-test-0)
 
 ;;--------------------------------------------------------------------------------
 ;; dataplex context
-;;
+;;     these are the parts/fields/methods to the dataplex object
+;;     
 
+  ;; This is the name of the allocator for ids. See the keyspace allocator stuff in db-lib
   (define (dataplex:keyspace dataplex-name) (string-append dataplex-name "_keyspace"))
 
-  (define (dataplex:object-scope dataplex-name)
+  ;; synthesizes the table names, etc.,  from the dataplex name, and puts them in a list
+  ;; this does not create the dataplex, as the tables must be initialized etc.
+  ;; we use this list to represent the dataplex object
+  (define (dataplex:object-representation dataplex-name)
     (list
       'dataplex
       dataplex-name
@@ -69,6 +74,8 @@
       (string-append dataplex-name "_semantic_relations")
       ))
 
+  ;; provides an environment where the parts/fields/members of a dataplex object may be referenced by name
+  ;; careful, as this will define field names even when the dataplex does not exist
   (define-syntax (with-dataplex stx)
     (let*(
            [datum (syntax->datum stx)]
@@ -78,10 +85,10 @@
       (datum->syntax stx
         (append
           `(let(
-                 [dataplex:name (list-ref ,dataplex-object 1)]
-                 [dataplex:keyspace (list-ref ,dataplex-object 2)]
-                 [dataplex:shape-relations (list-ref ,dataplex-object 3)]
-                 [dataplex:semantic-relations (list-ref ,dataplex-object 4)]
+                 [dataplex:name (list-ref ,dataplex-object 1)] ; name of the dataplex
+                 [dataplex:keyspace (list-ref ,dataplex-object 2)] ; name of the id allocator all of the dataplex
+                 [dataplex:shape-relations (list-ref ,dataplex-object 3)] ; shape relations in the dataplex
+                 [dataplex:semantic-relations (list-ref ,dataplex-object 4)]  ; semmantic relations in the dataplex
                  ))
           body
           ))))
@@ -91,7 +98,7 @@
       (let*(
              [a-dataplex-name (db:alloc-name)]
              [shouldbe-the-keyspace (string-append a-dataplex-name "_keyspace")]
-             [dataplex-object (dataplex:object-scope a-dataplex-name)] ; lexical scope of symbols, object not in db
+             [dataplex-object (dataplex:object-representation a-dataplex-name)] ; lexical scope of symbols, object not in db
              )
         ;;(pretty-print shouldbe-the-keyspace)
         (with-dataplex dataplex-object
@@ -101,7 +108,10 @@
         )))
   (test-hook syntax-with-dataplex-test-0)
 
-  (define (shape-relation:object-scope dataplex relation-name)
+  ;; given a shape-relation name, synthesizes the shape relation related table names, etc., and puts them in a list
+  ;; this does not create the shape relation as the tables, etc., need to be filled out
+  ;; we use this list to represent a shape-relation object
+  (define (shape-relation:object-representation dataplex relation-name)
     (with-dataplex dataplex
       (let(
             [scoped-name (string-append dataplex:name "_" relation-name)]
@@ -116,6 +126,7 @@
           (string-append scoped-name "_citings_index_by_value_id")
           ))))
 
+  ;; gives names to the fields in the shape relation object
   (define-syntax (with-shape-relation stx)
     (let*(
            [datum (syntax->datum stx)]
@@ -125,24 +136,24 @@
       (datum->syntax stx
         (append
           `(let*(
-                  [shape-relation:owner   (list-ref ,relation-object 1)]
-                  [shape-relation:name    (list-ref ,relation-object 2)]
-                  [shape-relation:values  (list-ref ,relation-object 3)]
-                  [shape-relation:citings (list-ref ,relation-object 4)]
+                  [shape-relation:owner   (list-ref ,relation-object 1)] ; the dataplex the shape relation occurs in
+                  [shape-relation:name    (list-ref ,relation-object 2)] ; name of the shape relation
+                  [shape-relation:values  (list-ref ,relation-object 3)] ; table of values, first field is sp-id
+                  [shape-relation:citings (list-ref ,relation-object 4)] ; the companion bridge table: sm-id | sp-id
 
-                  ;; primary key on shape-relation-values does lookup by record id
-                  ;; lookup here is by the user view of the value (value without the prepended id field)
-                  ;; this index is typically used to determine existence or to find the id
+                  ;; index(value)-> sp-id  (primary key is sp-id, so no index needed to go the other way
+                  ;; for looking up sp-id given a value
                   [shape-relation:values:index-by-value (list-ref ,relation-object 5)]
 
-                  ;; the primary key on meme-citings does lookup by s_statement id
-                  ;; lookup here goes the other way - lookup by the meme id
+                  ;; index(sp-id) -->  sm-id   (primary key is sm-id, so no index needed to go the other way
+                  ;; for looking up users of the shape
                   [shape-relation:citings:index-by-shape-value-id  (list-ref ,relation-object 6)]
                  ))
           body
           ))))
 
-  (define (semantic-relation:object-scope dataplex relation-name)
+  ;; creates a semantic object
+  (define (semantic-relation:object-representation dataplex relation-name)
     (with-dataplex dataplex
       (let(
             [scoped-name (string-append dataplex:name "_" relation-name)]
@@ -155,6 +166,7 @@
           (string-append scoped-name "_values")
           ))))
 
+  ;; gives names to fields in a semantic object
   (define-syntax (with-semantic-relation stx)
     (let*(
            [datum (syntax->datum stx)]
@@ -167,7 +179,7 @@
                   [semantic-relation:owner           (list-ref ,relation-object 1)]
                   [semantic-relation:name            (list-ref ,relation-object 2)]
                   [semantic-relation:shape-relations (list-ref ,relation-object 3)]
-                  [semantic-relation:value-ids       (list-ref ,relation-object 4)]
+                  [semantic-relation:sm-ids       (list-ref ,relation-object 4)]
                  ))
           body
           ))))
@@ -186,7 +198,7 @@
         (let(
             [selected-names (if rx (filter (λ(e)(regexp-match? rx e)) dataplex-names) dataplex-names)]
             )
-        (map dataplex:object-scope selected-names)
+        (map dataplex:object-representation selected-names)
         )))
 
   ;; input: a text string name for a dataplex
@@ -194,7 +206,7 @@
   ;;
     (define (db:is-dataplex-name . names)
       (cond
-        [(singleton names) (db:is-dataplex-name-1 (car names))]
+        [(is-singleton names) (db:is-dataplex-name-1 (car names))]
         [else (db:is-dataplex-name* names)]
         ))
     (define (db:is-dataplex-name* names) (map db:is-dataplex-name-1 names))
@@ -203,9 +215,15 @@
       (pair? (table:match (db:dataplex-directory-name) (list name)))
       )
 
+  ;; input: a single dataplex
+  ;; output: #f or #t
+  ;;
+  ;; input: multiple dataplexes
+  ;; output: a list  #f or #t
+  ;;
     (define (db:is-dataplex . objs)
       (cond
-        [(singleton objs) (db:is-dataplex-1 (car objs))]
+        [(is-singleton objs) (db:is-dataplex-1 (car objs))]
         [else (db:is-dataplex* objs)]
         ))
     (define (db:is-dataplex* objs) (map db:is-dataplex-1 objs))
@@ -222,7 +240,7 @@
     (define (db:create-dataplex* names)
       (cond
         [(null? names) (db:create-dataplex-1 (db:alloc-name))]
-        [(singleton names) (db:create-dataplex-1 (car names))]
+        [(is-singleton names) (db:create-dataplex-1 (car names))]
         [else  (map db:create-dataplex-1 names)]
         ))
 
@@ -231,23 +249,24 @@
         [(db:is-dataplex-name name) 'exists]
         [else
           (let(
-                [dataplex-scope (dataplex:object-scope name)]
+                [dataplex-representation (dataplex:object-representation name)]
                 )
-            (with-dataplex dataplex-scope
+            (with-dataplex dataplex-representation
               (as-transaction
                 (table:insert (db:dataplex-directory-name) dataplex:name)
                 (db:create-keyspace dataplex:keyspace) ;a source of unique numbers for the dataplex
                 (db:create-table dataplex:shape-relations 2) ;relation name, arity
                 (db:create-table dataplex:semantic-relations 1) ;relation name
                 )
-              dataplex-scope
+              dataplex-representation
               ))
           ]
         ))
 
+  ;; finds dataplexes in the db by name, returns the corresponding db object(s)
   (define (db:find-dataplex . names) 
       (cond
-        [(singleton names) (db:find-dataplex-1 (car names))]
+        [(is-singleton names) (db:find-dataplex-1 (car names))]
         [else (db:find-dataplex* names)]
         ))
   (define (db:find-dataplex* names) (map db:find-dataplex-1 names))
@@ -255,7 +274,7 @@
     (cond
       [(not (db:is-dataplex-name name)) #f]
       [else
-        (dataplex:object-scope name)
+        (dataplex:object-representation name)
         ]
       ))
 
@@ -269,13 +288,13 @@
     (define (db:delete-dataplex . dataplexes)(db:delete-dataplex* dataplexes))
     (define (db:delete-dataplex* dataplexes) (map db:delete-dataplex-1 dataplexes))
     (define (db:delete-dataplex-1 dataplex)
-      (with-dataplex dataplex ; this will define the scoped symbols even if the dataplex is not registered
+      (with-dataplex dataplex 
         (define (delete-shape-relation)
           (let(
-                [shape-relation-names (table:match dataplex:shape-relations '( _ _ ) car)]
+                [shape-relation-names (table:match dataplex:shape-relations '( _ _ ) car)] ; the shape relations in the dataplex
                 )
             (let(
-                  [shape-relations (map (λ(e)(shape-relation:object-scope dataplex e)) shape-relation-names)]
+                  [shape-relations (map (λ(e)(shape-relation:object-representation dataplex e)) shape-relation-names)]
                   )
               (dataplex:delete-shape-relation* dataplex shape-relations)
               (db:delete-table dataplex:shape-relations)
@@ -285,7 +304,7 @@
                 [semantic-relation-names (table:match dataplex:semantic-relations '(_) car)]
                 )
             (let(
-                  [semantic-relations (map (λ(e)(semantic-relation:object-scope dataplex e)) semantic-relation-names)]
+                  [semantic-relations (map (λ(e)(semantic-relation:object-representation dataplex e)) semantic-relation-names)]
                   )
               (dataplex:delete-semantic-relation* dataplex semantic-relations)
               (db:delete-table dataplex:semantic-relations)
@@ -352,7 +371,7 @@
   ;;
     (define (dataplex:create-shape-relation a-dataplex shape-relation-name column-count)
       (let(
-            [shape-relation (shape-relation:object-scope a-dataplex shape-relation-name)]
+            [shape-relation (shape-relation:object-representation a-dataplex shape-relation-name)]
             )
         (with-shape-relation shape-relation
           (let(
@@ -560,7 +579,7 @@
   (define (shape-relation-test-0)
     (with-db  (current-test-db)
       (let(
-            [d0  (dataplex:object-scope "shape-relation-test-0-dp")]
+            [d0  (dataplex:object-representation "shape-relation-test-0-dp")]
             )
         (db:delete-dataplex d0)
         (let*(
@@ -615,7 +634,7 @@
         [else
           (let(
                 [column-shape-names (map (λ(e)(with-shape-relation e shape-relation:name)) column-shape-relations)]
-                [semantic-relation (semantic-relation:object-scope dataplex semantic-relation-name)]
+                [semantic-relation (semantic-relation:object-representation dataplex semantic-relation-name)]
                 )
           (with-dataplex dataplex
             (table:insert dataplex:semantic-relations semantic-relation-name)
@@ -627,7 +646,7 @@
                 (λ(e) (table:insert semantic-relation:shape-relations e) )
                 column-shape-names
                 )
-              (db:create-table semantic-relation:value-ids 1)
+              (db:create-table semantic-relation:sm-ids 1)
               semantic-relation
               )
             ))
@@ -655,7 +674,7 @@
             )
           )
         (when (db:is-table semantic-relation:shape-relations) (db:delete-table semantic-relation:shape-relations))
-        (when (db:is-table semantic-relation:value-ids) (db:delete-table semantic-relation:value-ids))
+        (when (db:is-table semantic-relation:sm-ids) (db:delete-table semantic-relation:sm-ids))
         ))
 
   ;; input: a semantic relation and a value to put in it
@@ -664,7 +683,7 @@
   ;;    should store the column count in the object, silly to go back out to the db
   ;;    to get it (table:match ..) ?  or do we need the list anyway?
   ;;
-  ;; Dataplex is needed to access the keyspace, and to create object-scope for
+  ;; Dataplex is needed to access the keyspace, and to create object-representation for
   ;; shape relations.  Both could be designed around .. we could also get the dataplex
   ;; from the semantic-relation owner field, and that would even be more stable.
   ;;
@@ -704,58 +723,37 @@
                   (let(
                         [the-shape-relations
                           (map 
-                            (λ(e) (shape-relation:object-scope dataplex e)) 
+                            (λ(e) (shape-relation:object-representation dataplex e)) 
                             column-shape-names
                             )
                           ]
                         )
                     (semantic-relation:insert-1 a-value the-shape-relations 0)
-                    (table:insert semantic-relation:value-ids semantic-value-id)
+                    (table:insert semantic-relation:sm-ids semantic-value-id)
                     )))
               ]
             ))))
 
-    ;; input: a semantic relation, a list of semantic ids
-    ;; output: 'rows' from the semantic relation
-    ;;
-;;      (define (semantic-relation:lookup-ids semantic-relation pattern) (void))
-
-
     ;; input: a semantic relation, a pattern for data matching 
     ;; output: a possibly null list of semantic value ids
     ;;
-    ;;  a semantic-relation has a number of typed (shaped) columns
+    ;;  a semantic-relation is a table of rows and columns.  A given row and column define a field.
     ;;
-    ;;  the data for a semantic relation column is retrieved by using the value id to
-    ;;  cross the bridge table into the corresponding column shape relation.  A semantic
-    ;;  row's field, i.e. an column entry in a row, may hold many values.  In
-    ;;  this implementation such values will have the same type (shape).
+    ;;  each field holds a number known as the sm-id. 
     ;;
-    ;;  We are to match each column data value against a pattern element.  There is
-    ;;  one pattern element per column.
+    ;;  each column has a type, and that type is a shape-relation
     ;;
-    ;;  A pattern element may be '_' which means all entries in the column are considered
-    ;;  matches, or it may be a literal value.  A ltieral value may only be used when the
-    ;;  corresponding column table (shape relation) is one column wide.  Otherwise the
-    ;;  pattern element will be a list, where this list becomes a pattern for matching the
-    ;;  on the corresponding shape relation table.
+    ;;  through the shape relation, an sm-id corresponds to a shape value.
     ;;
-    ;;  Rather than keeping the match values on the correspding shape relation table,
-    ;;  we instead keep a list of semmantic value ids that had a match.  Hence each
-    ;;  column matching subproblem will return a list of semantic value ids.
+    ;;  we are given a pattern list and are to find the matching rows, and then to return
+    ;;  these rows.  Note however, the pattern is in terms of the values, not the sm-ids
+    ;;  themselves.
     ;;
-    ;;  After finding the semantic value ids for each column, we will end up with a list
-    ;;  of the column matching ids.  Our job is then to find all the ids that are represented
-    ;;  in all the column matches.  I.e. we take a big conjunction.  The resulting semantic
-    ;;  value ids are the semantic row matches.  We can then use them to fetch the matching
-    ;;  rows if we want the data. (perhaps we just wanted to know which rows matched).
+    ;;  It would be too slow to go through the whole table row by row while doing value
+    ;;  lookups.  Instead we go column by column, first looking up the shape values then
+    ;;  going back through the bridge table to get a list of sm-ids.  We then check the
+    ;;  semantic table to see if the sm-ids are in the table.
     ;;
-    ;;  Note, if all the patttern elements are '_ then all the rows in our semantic value
-    ;;  table are matches, and we don't need to examine the column contents. We just return
-    ;;  with the semantic value ids list
-    ;;
-    ;;  Note also, that if a pattern element is a list, and all the elements in the list
-    ;;  are '_ this is the same thing as the pattern element just being set to '_
     ;;
     ;;   note... racket version 6 will allow set-intersect to be applied to lists
     ;;   so we don't need the conversions
@@ -764,12 +762,12 @@
         (with-semantic-relation semantic-relation
           (cond
             [(open-pattern pattern) ; then all ids are matches
-              (table:match semantic-relation:value-ids '(_) (λ(e)(string->number (car e))))
+              (table:match semantic-relation:sm-ids '(_) (λ(e)(string->number (car e)))) ; unspecified suffix of pattern considered to be _ in table:match
               ] 
             [else
               (let*(
-                     [column-shape-names (table:match semantic-relation:shape-relations '(_) car)]
-                     [ids-per-column (match-column-ids dataplex column-shape-names pattern)]
+                     [column-shape-names (table:match semantic-relation:shape-relations '(_) car)] ; looks up the column types
+                     [ids-per-column (match-column-ids dataplex column-shape-names pattern)] ; list of sm-ids per column
                      [common-ids (set->list (apply set-intersect (map list->set ids-per-column)))]
                      )
                 common-ids
@@ -777,7 +775,19 @@
               ]
             )))
 
-      (define (open-pattern pattern) (andmap (λ(e)(eqv? '_ e)) pattern))
+      (define (open-pattern pattern) 
+        (or
+          (eqv? '_ pattern)
+          (andmap (λ(e)(eqv? '_ e)) pattern)
+          ))
+
+      (define (open-pattern-test-0)
+        (and
+          (open-pattern '_)
+          (open-pattern '(_ _ _))
+          (not (open-pattern '(_ 1 _)))
+          ))
+      (test-hook open-pattern-test-0)
 
     ;; input: ordered list of the shape-relation names for the semantic table, a match pattern
     ;; output: list per column of semantic ids that are matches for the column
@@ -813,7 +823,7 @@
     ;;
       (define (match-shape-relation-ids dataplex shape-relation-name pattern-element)
         (let(
-              [shape-relation (shape-relation:object-scope dataplex shape-relation-name)]
+              [shape-relation (shape-relation:object-representation dataplex shape-relation-name)]
               )
           (shape-relation:match-semantic-citings shape-relation pattern-element)
           ))
@@ -821,7 +831,7 @@
 
     (define (semantic-relation:lookup-ids-test-0)
       (with-db (current-test-db)
-        (db:delete-dataplex (dataplex:object-scope "semantic-relation:lookup-ids-test-0"))
+        (db:delete-dataplex (dataplex:object-representation "semantic-relation:lookup-ids-test-0"))
         (let*(
                [dp (db:create-dataplex "semantic-relation:lookup-ids-test-0")]
                [sp-name   (dataplex:create-shape-relation dp "name" 3)]
@@ -834,14 +844,14 @@
               (semantic-relation:lookup-ids dp sm-account '(_ _))
               '(1)
               )
-            (db:delete-dataplex (dataplex:object-scope "semantic-relation:lookup-ids-test-0"))
+            (db:delete-dataplex (dataplex:object-representation "semantic-relation:lookup-ids-test-0"))
             )
           )))
     (test-hook semantic-relation:lookup-ids-test-0) 
 
     (define (semantic-relation:lookup-ids-test-1)
       (with-db (current-test-db)
-        (db:delete-dataplex (dataplex:object-scope "semantic-relation:lookup-ids-test-1"))
+        (db:delete-dataplex (dataplex:object-representation "semantic-relation:lookup-ids-test-1"))
         (let*(
                [dp (db:create-dataplex "semantic-relation:lookup-ids-test-1")]
                [sp-name (dataplex:create-shape-relation dp "name" 3)]
@@ -881,12 +891,12 @@
   ;; input: a dataplex, a semantic-relation, a pattern
   ;; output: filtered rows from the semantic relation
   ;;
-      (define (semantic-relation:match dataplex semantic-relation [pattern '(_)] [filter identity])
+      (define (semantic-relation:match dataplex semantic-relation [pattern '(_)] [row-filter identity])
         (with-semantic-relation semantic-relation
           (define (fetch id)
             (let*(
                    [column-shape-names (table:match semantic-relation:shape-relations '(_) car)]
-                   [shapes (map (λ(e)(shape-relation:object-scope dataplex e)) column-shape-names)]
+                   [shapes (map (λ(e)(shape-relation:object-representation dataplex e)) column-shape-names)]
                    )
               (map (λ(e)(shape-relation:match-by-semantic-id e id)) shapes)
               ))
@@ -895,7 +905,7 @@
                  [ids (semantic-relation:lookup-ids dataplex semantic-relation pattern)]
                  [rows (map fetch ids)]
                  )
-            (map filter rows)
+            (map row-filter rows)
             )))
 
       (define (shape-relation:match-by-semantic-id shape-relation id)
@@ -918,12 +928,12 @@
                     ]
                   )
               ;;(pretty-print (list 'matched-rows matched-rows))
-              (if (singleton matched-rows) (car matched-rows) matched-rows)
+              (if (is-singleton matched-rows) (car matched-rows) matched-rows)
               ))))
           
     (define (semantic-relation:match-test-1)
       (with-db (current-test-db)
-        (db:delete-dataplex (dataplex:object-scope "semantic-relation:match-test-1"))
+        (db:delete-dataplex (dataplex:object-representation "semantic-relation:match-test-1"))
         (let*(
                [dp (db:create-dataplex "semantic-relation:match-test-1")]
                [sp-name (dataplex:create-shape-relation dp "name" 3)]
@@ -1153,7 +1163,9 @@
 
     )
 
+
     (define (dataplex-lib-trace-internal)
+      (trace open-pattern)
       (trace shape-relation:list-semantic-citings)
       (trace semantic-relation:lookup-ids)
       (trace match-column-ids)
@@ -1161,4 +1173,4 @@
       (trace shape-relation:match-semantic-citings)
       (trace shape-relation:match-by-semantic-id)
       )
-
+   (provide dataplex-lib-trace-internal)
