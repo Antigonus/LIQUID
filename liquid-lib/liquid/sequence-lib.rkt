@@ -21,6 +21,7 @@
 ;;
 ;;   sequence implementation passed in keyword arg, defaults to list 
 ;;   .. we currently only support list right now ...
+;;   should modify to use flatten-1 to get the sequence behavior instead of reimplementing it here
 ;;
 ;;  it makes sense that when building a sequence  that the programmer might like to have
 ;;  some of the items come from another sequence, after all sequences are how we move
@@ -312,16 +313,21 @@
 ;;
 ;;
   (define (flatten-1 l)
-    (foldr
-      (λ(e0 r0)
-        (if (pair? e0)
-          (foldr (λ(e1 r1) (cons e1 r1)) r0 e0)
-          (cons e0 r0)
-          ))
-      '()
-      l
-      ))
-
+    (define result '())
+    (for(
+          [e0 l]
+          #:unless (null? e0)
+          )
+      (if (pair? e0)
+        (for(
+              [e1 e0]
+              )
+          (set! result (cons e1 result))
+          )
+        (set! result (cons e0 result))
+        ))
+    (reverse result)
+    )
 
   (define (test-flatten-1)
     (and
@@ -331,6 +337,7 @@
       (equal? (flatten-1 '((1))) '(1))
       (equal? (flatten-1 '(1 (2 3) 4)) '(1 2 3 4))
       (equal? (flatten-1 '((1 2) (3 (4 (5 6)) 7) 8))  '(1 2 3 (4 (5 6)) 7 8) )
+      (equal? (flatten-1 '((1 2) () (3 (4 (5 6)) 7) 8))  '(1 2 3 (4 (5 6)) 7 8) )
       ))
   (test-hook test-flatten-1)    
 

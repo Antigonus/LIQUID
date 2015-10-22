@@ -78,6 +78,17 @@ hash tables rather keep the space as part of the key.
    Not sure, but suspect we need a special type of 'define' that hooks routines into
    one or more lists.  Then we have (trace-on list).  To trace a group of functions.
 
+@section{dataplex}
+
+   The bridge tables really need to say which semantic relation an sm-id belongs to.
+   Otherwise we need to go check all semantic relations for a match.  Similarly when
+   we are given an sp-id, though it is possible to know where it came from, it would
+   be better if it just embdded in it knoweldge of which shape table it belongs to.
+
+   Wonder if all the ids can't just be put in a big table.  Also the column shapes for
+   the seantic table ... are these necessary, rather just lookup the sm-id and see what
+   is found.
+
 @table-of-contents[]
 
 

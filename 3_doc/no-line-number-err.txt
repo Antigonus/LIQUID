@@ -457,3 +457,74 @@ is off in the weeds as the computer is crawling slow ...
     also had problems where load of a module that uses another module
     where that second module has been changed, does not reload the second
     module (because it is called from a first module that has not changed) 
+
+19.  doesn't even tell which function the error came from, let alone a source line number
+
+      line 851 is the entry point (semantic-relation:lookup-ids-test-1) , which doesn't
+      take arguments, sort is called in multiple places ... which one?
+
+    racket@dataplex-lib.rkt> (semantic-relation:lookup-ids-test-1)
+    <: contract violation
+      expected: real?
+      given: '(1 4 7 10)
+      argument position: 1st
+      other arguments...:
+       '(1 7 10)
+      context...:
+       /usr/share/racket/collects/racket/private/sort.rkt:213:0: sort
+       /home/deep/liquid-lib/liquid/dataplex-lib.rkt:851:4: semantic-relation:lookup-ids-test-1
+       /usr/share/racket/collects/racket/private/misc.rkt:87:7
+    racket@dataplex-lib.rkt> 
+
+20. typical case, error is where?
+
+    racket@kw.rkt>   (define (display-sm an-sm)
+        (with-db (current-example-db)
+          (let*(
+                 [t0 (semantic-relation:match dp-ex1 R1 '_)] ; returns a list of rows, each row item is a singleton sp value
+                 [t1  (map (λ(row)(map (λ(item)(car item)) row))  t0)] ; strips parens off of the singleton row items
+                 )
+            (map (λ(row)displayln(row)) t1) ;; <----- error on this line
+            )))
+
+    racket@kw.rkt> (display-sm R1)
+    application: not a procedure;
+     expected a procedure that can be applied to arguments
+      given: '("k1" "c1")
+      arguments...: [none]
+      context...:
+       stdin::739: display-sm
+       /usr/share/racket/collects/racket/private/misc.rkt:87:7
+    racket@kw.rkt> display-sm
+    #<procedure:display-sm>
+
+
+    and tried at the prompt, the error goes away:
+
+    racket@kw.rkt>   (define (display-sm an-sm)
+        (with-db (current-example-db)
+          (let*(
+                 [t0 (semantic-relation:match dp-ex1 R1 '_)] ; returns a list of rows, each row item is a singleton sp value
+      ;;           [t1  (map (λ(row)(map (λ(item)(car item)) row))  t0)] ; strips parens off of the singleton row items
+                 [t1 '()]
+                 )
+            (map (λ(row)displayln(row)) t1) 
+            )))
+    racket@kw.rkt> (display-sm R1)
+    '()
+    racket@kw.rkt> t0
+    '((("k1") ("c1")) (("c2") ("c3")))
+    racket@kw.rkt> (map (λ(row)(map (λ(item)(car item)) row))  t0)
+    '(("k1" "c1") ("c2" "c3"))
+    racket@kw.rkt> (define t1  (map (λ(row)(map (λ(item)(car item)) row))  t0))
+
+
+21.  never mind the fact that this identifier dosn't appear in this file ...  if it is created by a
+     macro, then which macro?  which invocation of the macro?
+
+    Process Racket REPL finished
+    Welcome to Racket v6.1.
+    racket@> (enter! "kw.rkt")
+    shape-relation:values:index-by-sp-id: unbound identifier in module
+      in: shape-relation:values:index-by-sp-id
+    racket@> 

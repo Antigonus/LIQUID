@@ -7,7 +7,6 @@
    1. tables that relate values by shape, shape-relations
    2. tables that relate values semmantic relationship, semmantic-relations
 
-
 |#
 #lang racket
 
@@ -147,7 +146,7 @@
 
                   ;; index(sp-id) -->  sm-id   (primary key is sm-id, so no index needed to go the other way
                   ;; for looking up users of the shape
-                  [shape-relation:citings:index-by-shape-value-id  (list-ref ,relation-object 6)]
+                  [shape-relation:citings:index-by-sp-id  (list-ref ,relation-object 6)]
                  ))
           body
           ))))
@@ -176,10 +175,10 @@
       (datum->syntax stx
         (append
           `(let*(
-                  [semantic-relation:owner           (list-ref ,relation-object 1)]
-                  [semantic-relation:name            (list-ref ,relation-object 2)]
-                  [semantic-relation:shape-relations (list-ref ,relation-object 3)]
-                  [semantic-relation:sm-ids       (list-ref ,relation-object 4)]
+                  [semantic-relation:owner           (list-ref ,relation-object 1)] ; naem of the dataplex
+                  [semantic-relation:name            (list-ref ,relation-object 2)] ; name of the semantic relation
+                  [semantic-relation:shape-relations (list-ref ,relation-object 3)] ; table name of column type list
+                  [semantic-relation:sm-ids          (list-ref ,relation-object 4)] ; table name of sm_id list
                  ))
           body
           ))))
@@ -386,11 +385,11 @@
                     (column-list column-count 1) ; creates a column list starting at 1 going to column-count
                     )
                   ]
-                [create-index-by-shape-value-id-query
+                [create-index-by-sp-id-query
                   (string-append
                     "create index"
                     " "
-                    (with-quotes shape-relation:citings:index-by-shape-value-id)
+                    (with-quotes shape-relation:citings:index-by-sp-id)
                     " on "
                     (with-quotes shape-relation:citings)
                     " "
@@ -404,7 +403,7 @@
               (sql:exec create-index-by-value-query)
 
               (db:create-table shape-relation:citings 3); semantic value id, order, shape value id
-              (sql:exec create-index-by-shape-value-id-query)
+              (sql:exec create-index-by-sp-id-query)
 
               ;; put the new shape relation name into the dataplex shape-relations list
               (with-dataplex a-dataplex
@@ -437,8 +436,8 @@
         (when (db:is-table shape-relation:values) (db:delete-table shape-relation:values))
         ))
 
-   ;; input: a shape value
-   ;; output: the value id, or 0
+   ;; input: a shape-relation, a value
+   ;; output: the sp-id, or 0
    ;;
      (define (shape-relation:lookup-id shape-relation a-value)
        (with-shape-relation shape-relation
@@ -457,6 +456,44 @@
                [(null? id-list) 0]
                [else (car id-list)]
                )))))
+
+   ;; input: a shape-relation, an sp-id
+   ;; output: the value 
+   ;;
+     (define (shape-relation:lookup-value shape-relation sp-id)
+       (with-shape-relation shape-relation
+         (as-transaction
+           (let(
+                 [value-list
+                   (table:match
+                     shape-relation:values 
+                     (Λ (number->string sp-id)) ;; suffix of pattern defaults to '_
+                     identity
+                     shape-relation:citings:index-by-sp-id
+                     )]
+                 )
+             (cond
+               [(null? value-list) (raise 'shape-relation:lookup-value:no-such-id)]
+               [else (car value-list)]
+               )))))
+
+   ;; input: a shape-relation, an sp-id
+   ;; output: bool
+   ;;
+     (define (shape-relation:has-id shape-relation sp-id)
+       (with-shape-relation shape-relation
+         (as-transaction
+           (let(
+                 [value-list
+                   (table:match
+                     shape-relation:values 
+                     (Λ (number->string sp-id)) ;; suffix of pattern defaults to '_
+                     identity
+                     shape-relation:citings:index-by-sp-id
+                     )]
+                 )
+             (pair? value-list)
+             ))))
 
    ;; input: shape-relation, and a new value for the shape relation
    ;; output: a shape value id
@@ -491,28 +528,37 @@
 
 
    ;; input: shape-relation, shape-relation value
-   ;; output: list of semantic value ids
+   ;; output: list of semantic value ids (sm-ids)
    ;;
    ;;      begs the question of which semantic relation owns the value id
    ;;      might want to create and id owner table, would help with integrity
    ;;      checks also. right the user can't do anything with the output.
    ;;      Should implement a higher performance 'has-semantic-citings.
    ;;
-     (define (shape-relation:list-semantic-citings shape-relation a-value)
+     (define (shape-relation:semantic-citings shape-relation a-value)
        (let(
              [id (shape-relation:lookup-id shape-relation a-value)]
              )
          (cond
            [(= id 0) 'no-such-value]
            [else
-             (with-shape-relation shape-relation
-               (table:match 
-                 shape-relation:citings
-                 '(_ _ ,id) 
-                 (λ(e)(string->number (car e)))
-                 shape-relation:citings:index-by-shape-value-id
-                 ))
-             ]
+             (shape-relation:sm-id-from-sp-id shape-relation id)
+             ])))
+
+     (define (shape-relation:sm-id-from-sp-id shape-relation sp-id)
+       (with-shape-relation shape-relation
+         (table:match 
+           shape-relation:citings
+           `(_ _ ,sp-id) 
+           (λ(e)(string->number (car e)))
+           )))
+
+     (define (shape-relation:sp-id-from-sm-id shape-relation sm-id)
+       (with-shape-relation shape-relation
+         (table:match 
+           shape-relation:citings
+           `(,sm-id _ _) 
+           (λ(e)(string->number (caddr e)))
            )))
 
 
@@ -521,7 +567,7 @@
    ;;
      (define (shape-relation:delete shape-relation pattern)
        (let(
-            [citings (shape-relation:list-semantic-citings shape-relation pattern)]
+            [citings (shape-relation:semantic-citings shape-relation pattern)]
              )
          (cond 
            [(pair? citings) citings]
@@ -550,7 +596,7 @@
      (define (shape-relation:match-semantic-citings shape-relation pattern)
        (with-shape-relation shape-relation
          (let(
-               [shape-value-ids
+               [sp-ids
                  (table:match 
                    shape-relation:values 
                    (cons '_ pattern)
@@ -563,7 +609,7 @@
              (list 
                'pattern pattern
                'shape-relation:values shape-relation:values 
-               'shape-value-ids shape-value-ids
+               'sp-ids sp-ids
                ))
            |#
            (define (find-citing id)
@@ -571,9 +617,9 @@
                shape-relation:citings
                `(_ _ ,id) 
                (λ(e)(string->number (car e)))
-               shape-relation:citings:index-by-shape-value-id
+               shape-relation:citings:index-by-sp-id
                ))
-           (append-map find-citing shape-value-ids)
+           (append-map find-citing sp-ids)
            )))
 
   (define (shape-relation-test-0)
@@ -630,7 +676,7 @@
   ;;       
     (define (dataplex:create-semantic-relation dataplex semantic-relation-name column-shape-relations)
       (cond
-        [(not (andmap dataplex:is-shape-relation column-shape-relations)) #f] ; column-shape-relations must be shape-relations
+        [(not (andmap dataplex:is-shape-relation column-shape-relations)) #f] ; column types must be shape-relations
         [else
           (let(
                 [column-shape-names (map (λ(e)(with-shape-relation e shape-relation:name)) column-shape-relations)]
@@ -755,25 +801,25 @@
     ;;  semantic table to see if the sm-ids are in the table.
     ;;
     ;;
-    ;;   note... racket version 6 will allow set-intersect to be applied to lists
-    ;;   so we don't need the conversions
-    ;;
       (define (semantic-relation:lookup-ids dataplex semantic-relation pattern)
         (with-semantic-relation semantic-relation
+          (let(
+                [sm-ids (table:match semantic-relation:sm-ids '(_) (λ(e)(string->number (car e))))] ; unspecified suffix of pattern considered to be _ in table:match
+                )
           (cond
-            [(open-pattern pattern) ; then all ids are matches
-              (table:match semantic-relation:sm-ids '(_) (λ(e)(string->number (car e)))) ; unspecified suffix of pattern considered to be _ in table:match
-              ] 
+            [(open-pattern pattern) sm-ids] ; then all ids are matches
             [else
               (let*(
                      [column-shape-names (table:match semantic-relation:shape-relations '(_) car)] ; looks up the column types
-                     [ids-per-column (match-column-ids dataplex column-shape-names pattern)] ; list of sm-ids per column
-                     [common-ids (set->list (apply set-intersect (map list->set ids-per-column)))]
+                     [sm-ids-from-shapes (match-column-ids dataplex column-shape-names pattern)] ; each item in list is a list of sm-ids, one per column
+                     [all-sm-ids (cons sm-ids sm-ids-from-shapes)] ; this is a list, where each item is a list of sm-ids 
+                     [common-ids (apply set-intersect all-sm-ids)]
                      )
+                ;;(display (Λ "all-sm-ids" all-sm-ids "common-ids" common-ids))
                 common-ids
                 )
               ]
-            )))
+            ))))
 
       (define (open-pattern pattern) 
         (or
@@ -790,7 +836,7 @@
       (test-hook open-pattern-test-0)
 
     ;; input: ordered list of the shape-relation names for the semantic table, a match pattern
-    ;; output: list per column of semantic ids that are matches for the column
+    ;; output: list per column of semantic ids
     ;;
       (define (match-column-ids dataplex column-shape-names pattern)
         (cond
@@ -891,7 +937,7 @@
   ;; input: a dataplex, a semantic-relation, a pattern
   ;; output: filtered rows from the semantic relation
   ;;
-      (define (semantic-relation:match dataplex semantic-relation [pattern '(_)] [row-filter identity])
+      (define (semantic-relation:match dataplex semantic-relation [pattern '_] [row-filter identity])
         (with-semantic-relation semantic-relation
           (define (fetch id)
             (let*(
@@ -1154,6 +1200,12 @@
       shape-relation:delete
       shape-relation:match
 
+      shape-relation:lookup-id 
+      shape-relation:lookup-value
+      shape-relation:has-id
+      shape-relation:sm-id-from-sp-id
+      shape-relation:sp-id-from-sm-id
+
     ;; affect a semantic relation
     ;;
       semantic-relation:insert
@@ -1163,10 +1215,9 @@
 
     )
 
-
     (define (dataplex-lib-trace-internal)
       (trace open-pattern)
-      (trace shape-relation:list-semantic-citings)
+      (trace shape-relation:semantic-citings)
       (trace semantic-relation:lookup-ids)
       (trace match-column-ids)
       (trace match-shape-relation-ids)
@@ -1174,3 +1225,7 @@
       (trace shape-relation:match-by-semantic-id)
       )
    (provide dataplex-lib-trace-internal)
+
+(provide
+  with-shape-relation
+  )
