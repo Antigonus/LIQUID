@@ -322,9 +322,10 @@
               (let(
                     [abstract-answers (breadth-search (Λ(Λ i0)) i1)]
                     )
-                abstract-answers
-                ))]))
-            
+                (for/list([an-answer abstract-answers])
+                  (map embody an-answer)
+                  )))]))
+                
            
     ;; the current dataplex drops the table ownership info from the sp-id (woops)
     ;; This needs to be fixed, but until then this routine suffices for this exmple to recover that info
@@ -343,6 +344,13 @@
       (define (abstract e)
         (with-db (current-example-db) 
           (shape-relation:lookup-id (car (identify-shape-relations e)) (Λ e))
+        ))
+
+    ;; given an sp_id returns a value 
+    ;;
+      (define (embody sp_id)
+        (with-db (current-example-db)
+          (string->symbol (second (shape-relation:lookup-value (owner sp_id) sp_id)))
         ))
 
     ;; given an sp-id finds sp-ids that are connected through relations
