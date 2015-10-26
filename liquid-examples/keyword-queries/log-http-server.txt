@@ -1,0 +1,15 @@
+2015-10-26T07:11:08 exception in db-lib-init: #(struct:exn:fail:contract:variable db:is-table: undefined;
+ cannot reference an identifier before its definition
+  in module: "/home/deep/liquid-lib/liquid/db-lib.rkt" #<continuation-mark-set> db:is-table)
+2015-10-26T07:11:30 exception in db-lib-init: #(struct:exn:fail:contract:blame query-list: contract violation
+  expected: connection?
+  given: #f
+  in: the 1st argument of
+      (->*
+       (connection? statement?)
+       #:rest
+       list?
+       list?)
+  contract from: <pkgs>/db-lib/db/base.rkt
+  blaming: <pkgs>/liquid-lib/liquid/db-lib.rkt
+  at: <pkgs>/db-lib/db/base.rkt:159.2 #<continuation-mark-set> #<blame>)

@@ -22,6 +22,8 @@
   (require "object.rkt")
 
 
+;; object:set syntax needs to be updated
+
 ;;--------------------------------------------------------------------------------
 ;; node
 ;;
@@ -39,7 +41,7 @@
         objid
         ))
 
-    (define (nd:is n) (obj:has n nd:type))
+    (define (nd:is n) (obj:has-type n nd:type))
 
     (define (nd:make Λfield-vals) 
       (let(
@@ -70,7 +72,7 @@
        objid
        ))
 
-    (define (atset:is as) (obj:has as atset:type))
+    (define (atset:is as) (obj:has-type as atset:type))
     (define (atset:make) (obj:add-type (obj:make) atset:type))
 
 
@@ -87,8 +89,8 @@
 
   (define (ndwat:is n)
     (and
-      (obj:has n nd:type)
-      (obj:has n atset:type)
+      (obj:has-type n nd:type)
+      (obj:has-type n atset:type)
       ))
 
   ;; Λattributes alternating field val list, Λchildren list of children
@@ -190,8 +192,8 @@
             (and
               (obj:apply type-type atset:type '= (Λ a b)
                 identity
-                raise:no-such-field
-                (λ() (not (obj:has b atset:type)))  ; no-such-field is ok if b doesn't have attributes either
+                raise:no-such-field-in-elementary
+                (λ() (not (obj:has-type b atset:type)))  ; no-such-field is ok if b doesn't have attributes either
                 )
               (ndwat-nd-equal a b) ; nodes may have ndwat children, so ndwat has its our own nd equal
               )))))

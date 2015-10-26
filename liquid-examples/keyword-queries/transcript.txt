@@ -1,0 +1,159 @@
+Welcome to Racket v6.1.
+racket@> (enter! "kw.rkt")
+hooking test: example-pass-test
+hooking test: example-fail-test
+hooking test: example-exception-test
+running example tests.. first passes, second fails, third has an exception ..
+running: example-pass-test
+  +
+running: example-fail-test
+  failed
+running: example-exception-test
+  failed - test raised an exception
+failed: 2 of 3
+removing test example-pass-test
+removing test example-fail-test
+removing test example-exception-test
+(test-all) to run the tests
+hooking test: and-form-test-0
+hooking test: test-Λ-0
+hooking test: test-Λ-1
+hooking test: test-Λ-2
+hooking test: list<-test-0
+hooking test: test-unordered-equal?-0
+hooking test: test-unordered-equal?-1
+hooking test: cat-test-0
+hooking test: test-flatten-1
+hooking test: test-replace-0
+hooking test: drop-end-chars-test-0
+hooking test: test-x-hash-ref-0
+hooking test: test-name-0
+hooking test: cond*-test-0
+hooking test: cond*-test-1
+hooking test: begin-always-test-0
+hooking test: begin-always-test-1
+#f
+hooking test: db-lib-init-test-0
+hooking test: sql-test-0
+hooking test: as-transaction-test-0
+hooking test: as-transaction-test-1
+hooking test: as-transaction-test-2
+hooking test: keyspace-alloc-test-0
+hooking test: db:alloc-name-test-0
+hooking test: db:is-table-test-0
+hooking test: column-name-test-0
+hooking test: columns-decl-test-0
+hooking test: db:create-delete-table-test-0
+hooking test: column-list-test-0
+hooking test: db:table-test-0
+hooking test: table:insert-delete-test-0
+hooking test: dataplex-lib-init-test-0
+hooking test: syntax-with-dataplex-test-0
+hooking test: db:dataplex-test-0
+hooking test: shape-relation-test-0
+hooking test: open-pattern-test-0
+hooking test: semantic-relation:lookup-ids-test-0
+hooking test: semantic-relation:lookup-ids-test-1
+hooking test: semantic-relation:match-test-1
+hooking test: dataplex-test-1
+'dataplex-already-initialized
+'(#<void>)
+hooking test: breadth-search-1-test-1
+racket@kw.rkt> (test-all)
+running: and-form-test-0
+  +
+running: test-Λ-0
+  +
+running: test-Λ-1
+  +
+running: test-Λ-2
+  +
+running: list<-test-0
+  +
+running: test-unordered-equal?-0
+  +
+running: test-unordered-equal?-1
+  +
+running: cat-test-0
+  +
+running: test-flatten-1
+  +
+running: test-replace-0
+  +
+running: drop-end-chars-test-0
+  +
+running: test-x-hash-ref-0
+  +
+running: test-name-0
+  +
+running: cond*-test-0
+  +
+running: cond*-test-1
+  +
+running: begin-always-test-0
+  +
+running: begin-always-test-1
+  +
+running: db-lib-init-test-0
+  +
+running: sql-test-0
+  +
+running: as-transaction-test-0
+  +
+running: as-transaction-test-1
+  +
+running: as-transaction-test-2
+  +
+running: keyspace-alloc-test-0
+  +
+running: db:alloc-name-test-0
+  +
+running: db:is-table-test-0
+  +
+running: column-name-test-0
+  +
+running: columns-decl-test-0
+  +
+running: db:create-delete-table-test-0
+  +
+running: column-list-test-0
+  +
+running: db:table-test-0
+  +
+running: table:insert-delete-test-0
+  +
+running: dataplex-lib-init-test-0
+  +
+running: syntax-with-dataplex-test-0
+  +
+running: db:dataplex-test-0
+  +
+running: shape-relation-test-0
+  +
+running: open-pattern-test-0
+  +
+running: semantic-relation:lookup-ids-test-0
+  +
+running: semantic-relation:lookup-ids-test-1
+  +
+running: semantic-relation:match-test-1
+  +
+running: dataplex-test-1
+  +
+running: breadth-search-1-test-1
+  +
+all 41 passed
+#t
+racket@kw.rkt> (find-answers 'k1 'k2)
+'((k2 c1 k1))
+racket@kw.rkt> (cache:display)
+R1:
+(k1 c1)
+(c2 c3)
+R2:
+(c1 c2)
+(c1 c6)
+R3:
+(c2 c1 k2)
+(c6 c7 k2)
+racket@kw.rkt> 

@@ -528,3 +528,4 @@ is off in the weeds as the computer is crawling slow ...
     shape-relation:values:index-by-sp-id: unbound identifier in module
       in: shape-relation:values:index-by-sp-id
     racket@> 
+

@@ -11,11 +11,9 @@
 |#
 #lang racket
 
-(require "misc-lib.rkt")
-(require "db-lib.rkt")
-(require "dataplex-lib.rkt")
-
-(provide (all-defined-out))
+(require liquid/misc-lib)
+(require liquid/db-lib)
+(require liquid/dataplex-lib)
 
 ;;--------------------------------------------------------------------------------
 ;;  setup database to be a cache for web fetches
