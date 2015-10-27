@@ -32,10 +32,11 @@
 ;;--------------------------------------------------------------------------------
 ;; turns on printing of syntax programs ,etc.
 ;;    
-  ;;(define debug #t)
-  ;; (define-for-syntax debug #f)
-  (define debug #f)
-  (define-for-syntax debug #f)
+  ;;(define extensions-debug #t)
+  ;; (define-for-syntax extensions-debug #f)
+  (define extensions-debug #f)
+  (provide extensions-debug)  ;; 
+  (define-for-syntax extensions-debug #f)
 
 ;;--------------------------------------------------------------------------------
 ;; some utility functions
@@ -73,7 +74,7 @@
                   )
                 ]
               )
-          (when debug (displayln (Λ "name -> " program)))
+          (when extensions-debug (displayln (Λ "name -> " program)))
           (datum->syntax stx program)
           ))))
 
@@ -86,39 +87,56 @@
 
 
 ;;--------------------------------------------------------------------------------
-;;  parallel cond, executes all that are true
-;;
-;;  else true clauses are concatenated and run, so they run in order of appearence in
-;;  the cond.  would like to have cond** that uses threads instead
+;;  parallel cond, executes all that are true, if none are true, executes else clauses
+;;  returns a list
 ;;
 
-  (define-syntax (cond* stx)
+  (define-syntax (cond/list stx)
     (let*(
            [datum (syntax->datum stx)]
            [clauses (cdr datum)]
-           [condition-clauses (filter (λ(e)(not (eqv? 'else e))) clauses)]
-           [else-clauses      (filter (λ(e)(eqv? 'else e)) clauses)]
+           [cond-clauses (filter (λ(e)(not (eqv? 'else (car e)))) clauses)]
+           [cond-clause-program 
+             (for/list([clause cond-clauses])
+               (Λ 'when (car clause) ,(cdr clause))
+               )]
+           [cond-clause-with-else-flag-program 
+             (for/list([clause cond-clauses])
+               (Λ 'when (car clause) (Λ 'set! 'else-flag '#f) ,(cdr clause))
+               )]
+           [else-clauses (filter (λ(e)(eqv? 'else (car e))) clauses)]
+           [else-clause-program
+             (for/list([clause else-clauses])
+               (cdr clause)
+               )]
            [program
-             `(let*(
-                    [condition (λ(e)(eval (car e)))]
-                    [transform (λ(e)(eval (cons 'begin (cdr e))))]
-                    [results   (filter-fold condition transform ',condition-clauses)]
-                    )
-                (if (null? results)
-                  (filter-fold (λ(e)#t) transform ',else-clauses)
-                  results
-                  ))]
-           )
-      (when debug (displayln (Λ  "cond* -> " program)))
+             (if (null? else-clause-program)
+
+               (cons 'list cond-clause-program)
+
+               (Λ 'let
+                 (Λ 
+                   (Λ 'else-flag '#t)
+                   )
+                 ,(cons 'list cond-clause-with-else-flag-program)
+                 (Λ 'when 'else-flag
+                   ,else-clause-program
+                  ))
+               )]
+          )
+(displayln (Λ  "condprog -> " cond-clause-program))
+(displayln (Λ  "elseprog -> " else-clause-program))
+(displayln (Λ  "cond/list -> " program))
+      (when extensions-debug (displayln (Λ  "cond/list -> " program)))
       (datum->syntax stx program)
       ))
 
 
 ;; notice no test of else, and it don't work
 
-    (define (cond*-test-0)
+    (define (cond/list-test-0)
       (equal?
-        (cond*
+        (cond/list
           [#t 1]
           [#f (+ 1 1)]
           [#t (+ 2 1)]
@@ -126,9 +144,9 @@
         '(1 3)
         ))
 
-    (define (cond*-test-1)
+    (define (cond/list-test-1)
       (equal?
-        (cond*
+        (cond/list
           [(odd? 3) 5]
           [(begin (+ 7 9) #f) (+ 11 13)]
           [#t (+ 15 17)]
@@ -237,7 +255,7 @@
                 (broken-syntax source-location (car datum))
                 )]
             )
-        (when debug (displayln (Λ "mc:define -> " program)))
+        (when extensions-debug (displayln (Λ "mc:define -> " program)))
         (datum->syntax stx program)
         )))
 
@@ -326,8 +344,8 @@
 ;;    
   (define (ext:construct)
     (test-hook test-name-0)
-    (test-hook cond*-test-0)
-    (test-hook cond*-test-1)
+    (test-hook cond/list-test-0)
+    (test-hook cond/list-test-1)
     (test-hook begin-always-test-0)
     (test-hook begin-always-test-1)
     )
@@ -340,7 +358,7 @@
   (provide
     mc:define
     name
-    cond*
+    cond/list
     with-semaphore
     begin-always
     )

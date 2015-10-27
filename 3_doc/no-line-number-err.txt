@@ -529,3 +529,42 @@ is off in the weeds as the computer is crawling slow ...
       in: shape-relation:values:index-by-sp-id
     racket@> 
 
+22.
+
+    racket@> (enter! "extentions-lib.rkt")
+    when: bad syntax
+      in: (when else-flag)
+      context...:
+       standard-module-name-resolver
+       /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
+       /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+       /usr/share/racket/collects/racket/private/misc.rkt:87:7
+    racket@> 
+
+
+23. ok ... so there is an error somewhere in the module having to do with redefining test-Λ-0
+
+
+   racket@sequence-lib.rkt> (enter! "sequence-lib.rkt")
+     [re-loading /home/deep/liquid-lib/liquid/sequence-lib.rkt]
+   (wrap test:  #f)
+   (wrap test:  #f)
+   (wrap test:  #f)
+   hooking test: test-unwrap
+   define-values: assignment disallowed;
+    cannot re-define a constant
+     constant: test-Λ-0
+     in module: "/home/deep/liquid-lib/liquid/sequence-lib.rkt"
+     context...:
+      /home/deep/liquid-lib/liquid/sequence-lib.rkt: [running body]
+      /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+      /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+
+problem is, this is the only occurance of that identifier in the module:
+
+  ;; does the job of list
+  (define (test-Λ-0)
+    (equal? '(1 2 3) (Λ 1 2 3))
+    )
+  (test-hook test-Λ-0)

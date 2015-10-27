@@ -17,14 +17,124 @@
   (require "arith-lib.rkt")
 
 ;;--------------------------------------------------------------------------------
-;;  make a sequence
+;; debug switch
+;;    
+  (define sequence-lib-debug #f)
+  (provide sequence-lib-debug) ;; so others can flip it on
+
+
+;;--------------------------------------------------------------------------------
+;;  unwrap
+;;     given a list returns a new list
+;;     removes one level of parens from items that happen to be lists
+;;       non-list items are copied over directly
+;;       top level null list items are not included in the new list
+;;       (void) values do not occur as top level items in the new list
 ;;
-;;   sequence implementation passed in keyword arg, defaults to list 
-;;   .. we currently only support list right now ...
-;;   should modify to use flatten-1 to get the sequence behavior instead of reimplementing it here
+  (define (unwrap l) (filter (λ(e)(not (void? e))) (unwrap-1 l)))
+
+  (define (unwrap-1 l)
+    (cond
+      [(null? l) '()]
+      [else
+        (let(
+              [e (car l)]
+              [r (cdr l)]
+              )
+          (cond
+            [(null? e) (unwrap r)]
+            [(not (pair? e)) (cons e (unwrap r))]
+            [else (append e (unwrap r))]
+            ))]
+     ))
+
+  (define (test-unwrap)
+    (and
+      (equal? (unwrap '()) '())
+      (equal? (unwrap '(1)) '(1))
+      (equal? (unwrap '(1 2 3)) '(1 2 3))
+      (equal? (unwrap '((1))) '(1))
+      (equal? (unwrap '(1 (2 3) 4)) '(1 2 3 4))
+      (equal? (unwrap '((1 2) (3 (4 (5 6)) 7) 8))  '(1 2 3 (4 (5 6)) 7 8) )
+      (equal? (unwrap '((1 2) () (3 (4 (5 6)) 7) 8))  '(1 2 3 (4 (5 6)) 7 8) )
+      ))
+  (test-hook test-unwrap)    
+
+
+;;--------------------------------------------------------------------------------
+;;  wrap
+;;    -given a list returns a new list
+;;    -puts each item found in a given list into a list (adds one level of parens)
+;;
+;;    should void wrap to a null list, or should it just disappear?  Void is supposed
+;;    to mean nothing, so we interpret that there is nothing to wrap
+;;
+    (define (wrap items)
+      (cond
+        [(null? items) '()]
+        [else
+          (let(
+                [i (car items)]
+                [r (cdr items)]
+                )
+            (cond
+              [(void? i)         (wrap r)]
+              [else              (cons (list i) (wrap r))]
+              ))]))
+
+;;--------------------------------------------------------------------------------
+;;  wrap for syntax
+;;    -given a list returns a new list
+;;    -puts each item found in a given list into a list (adds one level of parens)
+;;    -when 'unquote is found in the function channel, with a list as a single parameter, the items in the 
+;;     parameter list are included as though they were items in the given list
+;;
+
+  (begin-for-syntax
+
+    (define (is-unsequence i) (and (pair? i) (not (null? i)) (eqv? 'unquote (car i))))
+
+    (define (wrap items) (cons 'list (wrap-1 items)))
+
+    (define (wrap-1 items)
+      (cond
+        [(null? items) '()]
+        [else
+          (let(
+                [i (car items)]
+                [r (cdr items)]
+                )
+            (cond
+              [(void? i) (wrap-1 r)] ;; void is as though not there, so there is nothing to wrap-1
+              [(is-unsequence i)
+                (let(
+                      [unlist (cadr i)]
+                      )
+                  (cond
+                    [(null? unlist) (wrap-1 r)] ; unlisting a null list produces void, so there is nothing to wrap-1
+                    [(pair? unlist) (wrap-1 (append unlist r))] ; we assume a pair is a list, we unlist the list
+                    [else (cons unlist (wrap-1 r))] ; include variable holding unquoted list without wrap-1ping it
+                    ))]
+              [else (cons (list 'list i) (wrap-1 r))]
+              ))]))
+
+    (define (test-wrap)
+      (and
+        (equal? (wrap '(1 2 3)) '(list (list 1) (list 2) (list 3)))
+        (equal? (wrap (list (void) 2 '(unquote (a b)))) '(list (list 2) (list a) (list b)))
+        (equal? (wrap (list '(unquote ()) 2 '(unquote x))) '(list (list 2) x))
+        ))
+
+    (displayln (list "wrap test: " (test-wrap)))
+    )
+
+;;--------------------------------------------------------------------------------
+;;  Λ - make a sequence
+;;
+;;  similar to the function 'list
 ;;
 ;;  it makes sense that when building a sequence  that the programmer might like to have
-;;  some of the items come from another sequence, after all sequences are how we move
+;;  some of the items come from another sequence, after all, sequences are how we move
 ;;  groups of items around.  So I would like something like 'V' that tells the
 ;;  packer to take items from the sequence rather than including the sequence as an item:
 ;;
@@ -37,71 +147,30 @@
 ;;    however V evaluation would have to be delayed until run time
 ;;    which makes it an inband message, thus indistinguishable from a data V.
 ;;
-;;    We don't really have access to the list packer anyway.  Wish we did, so so instead I
+;;    We don't really have access to the list packer anyway.  Wish we did, so instead I
 ;;    will pull unquote out of the function channel during syntax expansion and build the
-;;    desired functionality with append.  This is what I am doing manually in the code
-;;    already.  So
+;;    desired functionality with unwrap.  This is what I have been doing manually in
+;;    the code already.  So
 ;;
 ;;    at syntax expansion
-;;    (Λ  1 2 ,a-list 3 4)  -->  (append  (list 1 2) a-list (list 3 4))
+;;    (Λ  1 2 ,a-list 3 4)  -->  (unwrap  (list 1 2) a-list (list 3 4))
 ;;
 ;;
-
- ;; (define Λ list)
-
- (define-for-syntax (is-unsequence i) (and (pair? i) (not (null? i)) (eqv? 'unquote (car i))))
-  ;;  (define (is-unsequence i) (and (pair? i) (not (null? i)) (eqv? 'unq (car i))))
-
   (define-syntax (Λ stx)
     (let(
           [datum  (syntax->datum stx)]
           )
-      (let(
-            [items (cdr datum)]
+      (let*(
+             [items (cdr datum)]
+             [wrapped-items (wrap items)]
             )
         (let(
-              [program 
-                (cond
-                  [(for/or ([i items]) (is-unsequence i))
-                    (cons 'append (L-1 items))
-                    ]
-                  [else
-                    (cons 'list items)] ; only support list sequences at the moment
-                  )]
+              [program (list 'unwrap wrapped-items)]
               )
           ;;(displayln program)
           (datum->syntax stx program)
           ))))
 
-  (define-for-syntax (L-1 items)
-    (cond
-      [(null? items) '()]
-      [else
-        (let(
-              [i (car items)]
-              [r (cdr items)]
-              )
-          (cond
-            [(is-unsequence i) (cons (cadr i) (L-1 r))]
-            [else
-              (let-values ([(rest-items list-stuff) (make-list-item items)])
-                (cons (append '(list) list-stuff) (L-1 rest-items))
-                )
-              ]))]
-      ))
-
-  (define-for-syntax (make-list-item items [list-stuff '()])
-    (cond
-      [(null? items) (values '() (reverse list-stuff))]
-      [else
-        (let(
-              [i (car items)]
-              [r (cdr items)]
-              )
-          (cond
-            [(is-unsequence i) (values items (reverse list-stuff))]
-            [else (make-list-item r (cons i list-stuff))]
-            ))]))
 
   ;; does the job of list
   (define (test-Λ-0)
@@ -109,18 +178,17 @@
     )
   (test-hook test-Λ-0)
 
-  ;; can be used instead of cons
+  ;; cons functionality
   (define (test-Λ-1)
-    (equal? (cons 1 '(2 3 4)) (Λ 1 ,'(2 3 4)))
+    (equal? (cons 1 '(2 3 4)) (Λ 1 ,(2 3 4)))
     )
   (test-hook test-Λ-1)
 
-  ;; can be used instead of append
+  ;; append functionality
   (define (test-Λ-2)
-    (equal? (append '(7 8 9) '(2 3 4)) (Λ ,'(7 8 9) ,'(2 3 4)))
+    (equal? (append '(7 8 9) '(2 3 4)) (Λ ,(7 8 9) ,(2 3 4)))
     )
   (test-hook test-Λ-2)
-
 
 ;;--------------------------------------------------------------------------------
 ;; computational operations
@@ -308,38 +376,6 @@
       ))
   (test-hook cat-test-0)
 
-;;--------------------------------------------------------------------------------
-;;  flatten n levels
-;;
-;;
-  (define (flatten-1 l)
-    (define result '())
-    (for(
-          [e0 l]
-          #:unless (null? e0)
-          )
-      (if (pair? e0)
-        (for(
-              [e1 e0]
-              )
-          (set! result (cons e1 result))
-          )
-        (set! result (cons e0 result))
-        ))
-    (reverse result)
-    )
-
-  (define (test-flatten-1)
-    (and
-      (equal? (flatten-1 '()) '())
-      (equal? (flatten-1 '(1)) '(1))
-      (equal? (flatten-1 '(1 2 3)) '(1 2 3))
-      (equal? (flatten-1 '((1))) '(1))
-      (equal? (flatten-1 '(1 (2 3) 4)) '(1 2 3 4))
-      (equal? (flatten-1 '((1 2) (3 (4 (5 6)) 7) 8))  '(1 2 3 (4 (5 6)) 7 8) )
-      (equal? (flatten-1 '((1 2) () (3 (4 (5 6)) 7) 8))  '(1 2 3 (4 (5 6)) 7 8) )
-      ))
-  (test-hook test-flatten-1)    
 
 
 ;;--------------------------------------------------------------------------------
@@ -423,8 +459,10 @@
         bcons
         cat
 
-        flatten-1
+        wrap
+        unwrap
         filter-fold
         replace
           
       )
+
