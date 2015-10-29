@@ -29,8 +29,8 @@
   (require "check.rkt")
   (provide (all-from-out "check.rkt"))
 
-  (require "extentions-lib.rkt")
-  (provide (all-from-out "extentions-lib.rkt"))
+  (require "extensions-lib.rkt")
+  (provide (all-from-out "extensions-lib.rkt"))
 
   (require "strings-etc.rkt")
   (provide (all-from-out "strings-etc.rkt"))

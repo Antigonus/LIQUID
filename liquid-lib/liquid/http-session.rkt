@@ -11,12 +11,6 @@
 #lang racket
 
 ;;--------------------------------------------------------------------------------
-;; routines provided
-;;
-  (provide http-session)
-  (provide page-hook)
-
-;;--------------------------------------------------------------------------------
 ;; library includes
 ;;
   (require "misc-lib.rkt")
@@ -24,6 +18,11 @@
   (require racket/match); for treating return lists like multiple values (values is not a car class citizen)
   (require net/url)
   ; (require net/head) ; extract-field
+
+;;--------------------------------------------------------------------------------
+;; debug switch
+;;
+  (define http-session-debug (make-parameter #t))
 
 ;;--------------------------------------------------------------------------------
 ;; loc-read-line
@@ -151,7 +150,8 @@
                  "\""
                  )))
             
-      (list well-formed message cmd url protocol)))
+      (list well-formed message cmd url protocol)
+      ))
             
   ;;; 
   (define (parse-request-test-0)
@@ -162,7 +162,7 @@
     (equal? parse-result (list #t "" `GET (string->url "/tutorials/other/top-20-mysql-best-practices/") "HTTP/1.1"))
     )
 
-   ;;;
+  ;;;
   (define (parse-request-test-1)
     (equal?
      (parse-request "X X X")
@@ -245,12 +245,22 @@
       (string=? (url-path->string (url-path url)) "/tutorials/other/top-20-mysql-best-practices")
       )
 
+  ;; returns response from the page function
   (define (page-get the-session-context url)
-    (define page-name-string (url-path->string (url-path url)))
-    (apply 
-     (page-lookup page-name-string) ; returns a page function
-     (list the-session-context url)     ; arguments for a page function
-     ))
+    (let*(
+           [url-string (url-path->string (url-path url))]
+           [page-name-string
+             (cond
+               [(string=? "" url-string) "/"]
+               [else url-string]
+               )
+             ]
+           )
+      (when (http-session-debug) (displayln (Λ "page-get: " page-name-string)))
+      (apply 
+        (page-lookup page-name-string) ; page-lookup returns a page function
+        (list the-session-context url)  ; arguments for a page function
+        )))
 
 
 ;;--------------------------------------------------------------------------------
@@ -259,6 +269,7 @@
 ;;  in:  request string, attributes string, output port for response
 ;; out:  response placed on output port, function returns void
 ;;
+;; need to insert advanced logging, and virtual server support here ...
 ;;  
   (define (http-request-handler request-line attributes the-session-context)
     (log request-line)
@@ -350,6 +361,11 @@
       (displayln attributes-string)
       )
 
-#|
-eof
-|#
+;;--------------------------------------------------------------------------------
+;; routines provided
+;;
+  (provide-with-trace "http-session"
+    http-session
+    page-hook
+    )
+

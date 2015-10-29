@@ -34,9 +34,9 @@
 ;;    
   ;;(define extensions-debug #t)
   ;; (define-for-syntax extensions-debug #f)
-  (define extensions-debug #f)
+  (define extensions-debug (make-parameter #f))
   (provide extensions-debug)  ;; 
-  (define-for-syntax extensions-debug #f)
+  (define-for-syntax extensions-debug (make-parameter #f))
 
 ;;--------------------------------------------------------------------------------
 ;; some utility functions
@@ -74,7 +74,7 @@
                   )
                 ]
               )
-          (when extensions-debug (displayln (Λ "name -> " program)))
+          (when (extensions-debug) (displayln (Λ "name -> " program)))
           (datum->syntax stx program)
           ))))
 
@@ -90,49 +90,47 @@
 ;;  parallel cond, executes all that are true, if none are true, executes else clauses
 ;;  returns a list
 ;;
-
   (define-syntax (cond/list stx)
+    (define seq-op 'Λ)
     (let*(
            [datum (syntax->datum stx)]
            [clauses (cdr datum)]
            [cond-clauses (filter (λ(e)(not (eqv? 'else (car e)))) clauses)]
-           [cond-clause-program 
+           [cond-clause-program
              (for/list([clause cond-clauses])
                (Λ 'when (car clause) ,(cdr clause))
                )]
-           [cond-clause-with-else-flag-program 
+           [cond-clause-with-else-flag-program
              (for/list([clause cond-clauses])
                (Λ 'when (car clause) (Λ 'set! 'else-flag '#f) ,(cdr clause))
                )]
+
+
            [else-clauses (filter (λ(e)(eqv? 'else (car e))) clauses)]
            [else-clause-program
-             (for/list([clause else-clauses])
-               (cdr clause)
-               )]
+             (unwrap
+               (for/list([clause else-clauses])
+                 (cdr clause)
+                 ))]
            [program
              (if (null? else-clause-program)
 
-               (cons 'list cond-clause-program)
+               (cons seq-op cond-clause-program)
 
                (Λ 'let
                  (Λ 
                    (Λ 'else-flag '#t)
                    )
-                 ,(cons 'list cond-clause-with-else-flag-program)
+                 (cons seq-op cond-clause-with-else-flag-program)
                  (Λ 'when 'else-flag
-                   ,else-clause-program
+                   (cons seq-op else-clause-program)
                   ))
                )]
-          )
-(displayln (Λ  "condprog -> " cond-clause-program))
-(displayln (Λ  "elseprog -> " else-clause-program))
-(displayln (Λ  "cond/list -> " program))
-      (when extensions-debug (displayln (Λ  "cond/list -> " program)))
+           )
+
+      (when (extensions-debug) (displayln (Λ  "cond/list -> " program)))
       (datum->syntax stx program)
       ))
-
-
-;; notice no test of else, and it don't work
 
     (define (cond/list-test-0)
       (equal?
@@ -145,6 +143,18 @@
         ))
 
     (define (cond/list-test-1)
+      (equal?
+        (cond/list
+          [#f 1]
+          [else 5]
+          [#f (+ 1 1)]
+          [else 7]
+          [(= 1 3) (+ 2 1)]
+          )
+        '(5 7)
+        ))
+
+    (define (cond/list-test-2)
       (equal?
         (cond/list
           [(odd? 3) 5]
@@ -255,7 +265,7 @@
                 (broken-syntax source-location (car datum))
                 )]
             )
-        (when extensions-debug (displayln (Λ "mc:define -> " program)))
+        (when (extensions-debug) (displayln (Λ "mc:define -> " program)))
         (datum->syntax stx program)
         )))
 
@@ -346,6 +356,7 @@
     (test-hook test-name-0)
     (test-hook cond/list-test-0)
     (test-hook cond/list-test-1)
+    (test-hook cond/list-test-2)
     (test-hook begin-always-test-0)
     (test-hook begin-always-test-1)
     )
@@ -365,7 +376,7 @@
 
   ;; functions
   ;;
-    (provide-with-trace "extentions-lib" ;; this context continues to the bottom of the page
+    (provide-with-trace "extensions-lib" ;; this context continues to the bottom of the page
 
       ;; fundamental functions
       ;;

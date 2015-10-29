@@ -13,16 +13,10 @@
 ;;--------------------------------------------------------------------------------
 ;; library includes
 ;;
-  (require racket/match); for treating return lists like multiple values (values is not a car class citizen)
   (require "misc-lib.rkt")
   (require "realtime.rkt") ; sets real time boundary on function call
+  (require racket/match); for treating return lists like multiple values (values is not a car class citizen)
   (require openssl)
-
-
-;;--------------------------------------------------------------------------------
-;; provides
-;;
-  (provide ssl-server)
 
 ;;--------------------------------------------------------------------------------
 ;;
@@ -99,7 +93,8 @@
     )
     (λ() (custodian-shutdown-all main-cust))) ;; this is the return value
 
+;;--------------------------------------------------------------------------------
+;; provides
+;;
+  (provide-with-trace "ssl-server" ssl-server)
 
-#|
-eof
-|#

@@ -19,9 +19,9 @@
 ;;--------------------------------------------------------------------------------
 ;; debug switch
 ;;    
-  (define sequence-lib-debug #f)
+  (define sequence-lib-debug (make-parameter #f))
   (provide sequence-lib-debug) ;; so others can flip it on
-
+  (define-for-syntax sequence-lib-debug (make-parameter #f))
 
 ;;--------------------------------------------------------------------------------
 ;;  unwrap
@@ -84,12 +84,11 @@
 
 ;;--------------------------------------------------------------------------------
 ;;  wrap for syntax
-;;    -given a list returns a new list
-;;    -puts each item found in a given list into a list (adds one level of parens)
-;;    -when 'unquote is found in the function channel, with a list as a single parameter, the items in the 
-;;     parameter list are included as though they were items in the given list
+;;    -given a list returns a result list
+;;    -wraps each item found in a given list with parens (puts it in its own list)
+;;    -when 'unquote is found in the function channel, the parameter of the unquote is
+;;     placed in the result list without being wrapped
 ;;
-
   (begin-for-syntax
 
     (define (is-unsequence i) (and (pair? i) (not (null? i)) (eqv? 'unquote (car i))))
@@ -108,12 +107,11 @@
               [(void? i) (wrap-1 r)] ;; void is as though not there, so there is nothing to wrap-1
               [(is-unsequence i)
                 (let(
-                      [unlist (cadr i)]
+                      [insert-items (cadr i)]
                       )
                   (cond
-                    [(null? unlist) (wrap-1 r)] ; unlisting a null list produces void, so there is nothing to wrap-1
-                    [(pair? unlist) (wrap-1 (append unlist r))] ; we assume a pair is a list, we unlist the list
-                    [else (cons unlist (wrap-1 r))] ; include variable holding unquoted list without wrap-1ping it
+                    [(null? insert-items) (wrap-1 r)] ; direct-inserting a null list produces void, so there is nothing to wrap
+                    [else (cons insert-items (wrap-1 r))] ; include variable holding unquoted list without wrap-1ping it
                     ))]
               [else (cons (list 'list i) (wrap-1 r))]
               ))]))
@@ -125,7 +123,7 @@
         (equal? (wrap (list '(unquote ()) 2 '(unquote x))) '(list (list 2) x))
         ))
 
-    (displayln (list "wrap test: " (test-wrap)))
+    (when (sequence-lib-debug) (displayln (list "wrap test: " (test-wrap))))
     )
 
 ;;--------------------------------------------------------------------------------
@@ -153,7 +151,7 @@
 ;;    the code already.  So
 ;;
 ;;    at syntax expansion
-;;    (Λ  1 2 ,a-list 3 4)  -->  (unwrap  (list 1 2) a-list (list 3 4))
+;;    (Λ  1 2 ,a-list 5 6)  -->  (unwrap  (list 1 2) a-list (list 3 4)) --> (1 2 3 4 5 6)
 ;;
 ;;
   (define-syntax (Λ stx)
@@ -180,15 +178,22 @@
 
   ;; cons functionality
   (define (test-Λ-1)
-    (equal? (cons 1 '(2 3 4)) (Λ 1 ,(2 3 4)))
+    (equal? (cons 1 '(2 3 4)) (Λ 1 ,'(2 3 4)))
     )
   (test-hook test-Λ-1)
 
   ;; append functionality
   (define (test-Λ-2)
-    (equal? (append '(7 8 9) '(2 3 4)) (Λ ,(7 8 9) ,(2 3 4)))
+    (equal? (append '(7 8 9) '(2 3 4)) (Λ ,'(7 8 9) ,'(2 3 4)))
     )
   (test-hook test-Λ-2)
+
+  ;; insert items from a list produced by a function
+  (define (test-Λ-3)
+    (equal? (Λ 1 ,(range 2 7) 7) (range 1 8))
+    )
+  (test-hook test-Λ-3)
+  
 
 ;;--------------------------------------------------------------------------------
 ;; computational operations

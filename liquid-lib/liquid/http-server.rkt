@@ -12,27 +12,27 @@
 #lang racket
 
 ;;--------------------------------------------------------------------------------
-;; routines provided
+;; uses these
 ;;
-  (provide http-server)
-
-
-;;--------------------------------------------------------------------------------
-;; library includes
-;;
-   (require "misc-lib.rkt")
-   (require "ssl-server.rkt")
-   (require "http-session.rkt")
-   (require "http-server-pages.rkt") ; for pages-init
+  (require "misc-lib.rkt")
+  (require "ssl-server.rkt")
+  (require "http-session.rkt")
+  (require "http-server-pages.rkt") ; for pages-init
 
 ;;--------------------------------------------------------------------------------
 ;; main
 ;;
-   (define (http-server [portno 8080] [session-timeout 300] ) 
-     (log "http-server start")
-     (server-pages-init)
-     (define stop (ssl-server http-session portno session-timeout))
-     (λ()
-       (log "http-server stop")
-       (stop)
-       ))
+  (define (http-server [portno 8080] [session-timeout 300] ) 
+    (log "http-server start")
+    (server-pages-init)
+    (define stop (ssl-server http-session portno session-timeout))
+    (λ()
+      (log "http-server stop")
+      (stop)
+      ))
+
+;;--------------------------------------------------------------------------------
+;; provides these
+;;
+  (provide-with-trace "http-server" http-server)
+

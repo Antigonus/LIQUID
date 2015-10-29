@@ -568,3 +568,25 @@ problem is, this is the only occurance of that identifier in the module:
     (equal? '(1 2 3) (Λ 1 2 3))
     )
   (test-hook test-Λ-0)
+
+24 ...  the provide syntax suffers from the same drawback as header files - we end up with two edits to make
+for modifying a function prototype
+
+
+25.  errors is actually somewhere in extensions-lib.rkt, presumably in one of the many wrap calls, will
+trace wrap .. oh, can't do that as this fails on load ..  line 157 in sequence-lib is first line of wrap,
+so there is no hint as to where in wrap this problem occurs (or where wrap was called from).
+
+
+    racket@extentions-lib.rkt> (enter! "extentions-lib.rkt")
+      [re-loading /home/deep/liquid-lib/liquid/extentions-lib.rkt]
+    cdr: contract violation
+      expected: pair?
+      given: 'Λ
+      context...:
+       /home/deep/liquid-lib/liquid/sequence-lib.rkt:157:2
+       /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+       /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+... problem turned out to be in the cond/list program in extentions-lib.rkt, (define seq-op Λ) was supposed
+to be (define seq-op 'Λ).   found by stubbing out the program and bring pieces to life one by one.
