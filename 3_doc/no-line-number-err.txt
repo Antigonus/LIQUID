@@ -590,3 +590,27 @@ so there is no hint as to where in wrap this problem occurs (or where wrap was c
 
 ... problem turned out to be in the cond/list program in extentions-lib.rkt, (define seq-op Λ) was supposed
 to be (define seq-op 'Λ).   found by stubbing out the program and bring pieces to life one by one.
+
+26. Not sure how we are supposed to know that this error occurs in http-server.rkt, as the
+    top of the trace is the name of a macro in test lib.  Perhaps because it was the
+    module loaded?  When finding the top of the trace, we discover in http-server.rkt,
+    that the macro is only called once, so that narrows it down.  In other examples, a
+    simple macro can be used many times.  Solving these is a real mystery thriller because
+    it bombs on load, so you can't set traces.
+
+    racket@> (enter! "http-server.rkt")
+    string-append: contract violation
+      expected: string?
+      given: 'server-pages-init
+      argument position: 1st
+      other arguments...:
+       "-trace"
+      context...:
+       /home/deep/liquid-extensions/liquid/test-lib.rkt:121:2
+       /usr/share/racket/collects/syntax/wrap-modbeg.rkt:46:4
+       standard-module-name-resolver
+       standard-module-name-resolver
+       /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
+       /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+       /usr/share/racket/collects/racket/private/misc.rkt:87:7
+    racket@> 

@@ -13,20 +13,10 @@
 #lang racket
 
 ;;--------------------------------------------------------------------------------
-;; uses these libraries
-;;    
-  (require racket/date)
-  (require "test-lib.rkt")
-  (require "arith-lib.rkt")
-  (require "sequence-lib.rkt")
-
-;;--------------------------------------------------------------------------------
 ;; global parameters
 ;;    
   (define current-read-request-timeout (make-parameter 5)); 5 cadrs to finish request header read
-  (define current-file-name (make-parameter "test-session")); filename for query parsing
   (define current-get-webpage-timeout (make-parameter 60)) ; used in "web.rkt"
-  (define current-db-log (make-parameter #f))
 
 ;;--------------------------------------------------------------------------------
 ;; global types
@@ -52,7 +42,6 @@
   ;; global parameters  
   ;;
     (provide current-read-request-timeout) ; how long we wait for the http client to provide the complete request
-    (provide current-file-name) ; the source file we are reading from for the query parser
     (provide current-get-webpage-timeout)
 
   ;; global type definitions

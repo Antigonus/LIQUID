@@ -15,7 +15,7 @@
 ;;
   (require racket/match)
   (require racket/runtime-path)
-  (require "misc-lib.rkt") ; currently just for the test-hook
+  (require liquid/extensions) ; currently just for the test-hook
   
 
 ;;--------------------------------------------------------------------------------

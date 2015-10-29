@@ -11,21 +11,13 @@
 #lang racket
 
 ;;--------------------------------------------------------------------------------
-;; provides to the world
+;; uses
 ;;
-  (provide server-pages-init)
-  (provide http-response)
-  (provide html-str)
-  (provide html-header)
-  (provide html-header*)
-
-;;--------------------------------------------------------------------------------
-;; library includes
-;;
-  (require "misc-lib.rkt")
-  (require "http-session.rkt")
   (require net/url)
+  (require liquid/extensions)
    
+  (require "http-session.rkt")
+  (require "http-parameters.rkt")
 
 ;;--------------------------------------------------------------------------------
 ;; initialize pages
@@ -92,5 +84,14 @@
         (display (html-str (html-header) doc-body))
       )))
 
+;;--------------------------------------------------------------------------------
+;; provides to the world
+;;
+  (provide-with-trace "http-server-pages"
+    server-pages-init
+    http-response
+    html-str
+    html-header
+    html-header*
+    )
 
-    

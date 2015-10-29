@@ -23,8 +23,8 @@
   (require "arith-lib.rkt")
   (provide (all-from-out "arith-lib.rkt"))
 
-  (require "sequence-lib.rkt")
-  (provide (all-from-out "sequence-lib.rkt"))
+  (require "sequence.rkt")
+  (provide (all-from-out "sequence.rkt"))
 
 
   

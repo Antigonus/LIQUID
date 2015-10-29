@@ -18,8 +18,8 @@
   (require "arith-lib.rkt")
   (require (for-syntax "arith-lib.rkt"))
 
-  (require "sequence-lib.rkt")
-  (require (for-syntax "sequence-lib.rkt"))
+  (require "sequence.rkt")
+  (require (for-syntax "sequence.rkt"))
 
   (require (for-syntax racket/match))
 
@@ -32,10 +32,8 @@
 ;;--------------------------------------------------------------------------------
 ;; turns on printing of syntax programs ,etc.
 ;;    
-  ;;(define extensions-debug #t)
-  ;; (define-for-syntax extensions-debug #f)
   (define extensions-debug (make-parameter #f))
-  (provide extensions-debug)  ;; 
+  (provide extensions-debug) 
   (define-for-syntax extensions-debug (make-parameter #f))
 
 ;;--------------------------------------------------------------------------------
@@ -90,51 +88,56 @@
 ;;  parallel cond, executes all that are true, if none are true, executes else clauses
 ;;  returns a list
 ;;
-  (define-syntax (cond/list stx)
-    (define seq-op 'Λ)
-    (let*(
-           [datum (syntax->datum stx)]
-           [clauses (cdr datum)]
-           [cond-clauses (filter (λ(e)(not (eqv? 'else (car e)))) clauses)]
-           [cond-clause-program
-             (for/list([clause cond-clauses])
-               (Λ 'when (car clause) ,(cdr clause))
-               )]
-           [cond-clause-with-else-flag-program
-             (for/list([clause cond-clauses])
-               (Λ 'when (car clause) (Λ 'set! 'else-flag '#f) ,(cdr clause))
-               )]
+;;
+  (define-syntax (cond* stx)
+    (let(
+          [datum (syntax->datum stx)]
+          )
+      (let(
+            [seq-op (cadr datum)]
+            [clauses (cddr datum)]
+            )
+        (let*(
+               [cond-clauses (filter (λ(e)(not (eqv? 'else (car e)))) clauses)]
+               [cond-clause-program
+                 (for/list([clause cond-clauses])
+                   (Λ 'when (car clause) ,(cdr clause))
+                   )]
+               [cond-clause-with-else-flag-program
+                 (for/list([clause cond-clauses])
+                   (Λ 'when (car clause) (Λ 'set! 'else-flag '#f) ,(cdr clause))
+                   )]
+               [else-clauses (filter (λ(e)(eqv? 'else (car e))) clauses)]
+               [else-clause-program
+                 (unwrap
+                   (for/list([clause else-clauses])
+                     (cdr clause)
+                     ))]
+               [program
 
+                 (if (null? else-clause-program)
 
-           [else-clauses (filter (λ(e)(eqv? 'else (car e))) clauses)]
-           [else-clause-program
-             (unwrap
-               (for/list([clause else-clauses])
-                 (cdr clause)
-                 ))]
-           [program
-             (if (null? else-clause-program)
+                   (Λ 'apply seq-op (Λ 'remove-void (cons 'Λ cond-clause-program)))
 
-               (cons seq-op cond-clause-program)
-
-               (Λ 'let
-                 (Λ 
-                   (Λ 'else-flag '#t)
+                   (Λ 'let
+                     (Λ 
+                       (Λ 'else-flag '#t)
+                       )
+                     (Λ 'apply seq-op (Λ 'remove-void (cons 'Λ cond-clause-with-else-flag-program)))
+                     (Λ 'when 'else-flag
+                       (Λ 'apply seq-op (Λ 'remove-void (cons 'Λ else-clause-program)))
+                       ))
                    )
-                 (cons seq-op cond-clause-with-else-flag-program)
-                 (Λ 'when 'else-flag
-                   (cons seq-op else-clause-program)
-                  ))
-               )]
-           )
 
-      (when (extensions-debug) (displayln (Λ  "cond/list -> " program)))
-      (datum->syntax stx program)
-      ))
+                 ]
+               )        
+          (when (extensions-debug) (displayln (Λ  "cond* -> " program)))
+          (datum->syntax stx program)
+          ))))
 
-    (define (cond/list-test-0)
+    (define (cond*-test-0)
       (equal?
-        (cond/list
+        (cond* list
           [#t 1]
           [#f (+ 1 1)]
           [#t (+ 2 1)]
@@ -142,9 +145,9 @@
         '(1 3)
         ))
 
-    (define (cond/list-test-1)
+    (define (cond*-test-1)
       (equal?
-        (cond/list
+        (cond* list
           [#f 1]
           [else 5]
           [#f (+ 1 1)]
@@ -154,9 +157,9 @@
         '(5 7)
         ))
 
-    (define (cond/list-test-2)
+    (define (cond*-test-2)
       (equal?
-        (cond/list
+        (cond* list
           [(odd? 3) 5]
           [(begin (+ 7 9) #f) (+ 11 13)]
           [#t (+ 15 17)]
@@ -354,9 +357,9 @@
 ;;    
   (define (ext:construct)
     (test-hook test-name-0)
-    (test-hook cond/list-test-0)
-    (test-hook cond/list-test-1)
-    (test-hook cond/list-test-2)
+    (test-hook cond*-test-0)
+    (test-hook cond*-test-1)
+    (test-hook cond*-test-2)
     (test-hook begin-always-test-0)
     (test-hook begin-always-test-1)
     )
@@ -369,7 +372,7 @@
   (provide
     mc:define
     name
-    cond/list
+    cond*
     with-semaphore
     begin-always
     )

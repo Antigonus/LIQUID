@@ -18,7 +18,7 @@
 ;;--------------------------------------------------------------------------------
 ;; uses these libraries
 ;;    
-  (require "sequence-lib.rkt")
+  (require "sequence.rkt")
   (require "strings-etc.rkt")
 
 

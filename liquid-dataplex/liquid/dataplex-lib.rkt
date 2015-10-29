@@ -17,7 +17,7 @@
   (require racket/list)
   (require db)
   (require "misc-lib.rkt")
-  (require "db-lib.rkt")
+  (require "db-abstraction.rkt")
 
 ;;--------------------------------------------------------------------------------
 ;;  initialize the dataplex

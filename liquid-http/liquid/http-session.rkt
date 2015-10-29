@@ -13,11 +13,13 @@
 ;;--------------------------------------------------------------------------------
 ;; library includes
 ;;
-  (require "misc-lib.rkt")
-  (require "realtime.rkt") ; sets real time boundary on function call
+  (require liquid/extensions)
   (require racket/match); for treating return lists like multiple values (values is not a car class citizen)
   (require net/url)
   ; (require net/head) ; extract-field
+
+  (require "realtime.rkt") ; sets real time boundary on function call
+  (require "http-parameters.rkt")
 
 ;;--------------------------------------------------------------------------------
 ;; debug switch

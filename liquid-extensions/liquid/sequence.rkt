@@ -1,10 +1,25 @@
 #|
-  Copyright (C) 2014 Reasoning Technology  All Rights Reserved.
-  COMPANY CONFIDENTIAL Reaosning Technology
-  author: thomas w. lynch
+  extensions dealing with sequences
+
+
+  for wrap and unwrap ..
+
+  (void) is an interesting case.  If a (void) stands in as a sort of a mistake,
+  saying 'oops nothing should be here',  then it should be skipped rather than
+  wrapped.  However, if we unwrap a null list, then we get nothing, so the inverse
+  function, wrapping nothing should produce a null list.  The difference is whether
+  wrap was called or not.  The (void) place holder causes wrap to be called, trully
+  nothing present does not.  What the placement of (void) in a list does is to
+  preserve arity and the ability to index:  "Nothing is here, but here is a place."
+
+  our unwrap leaves non-lists unperturbed.  It is a sort of saturanting condition.
+  (void) is a non-list, so we do the same with that. 
   
-  2014-10-01 This file is being released under the GNU Lesser General Public License. 
-  Please see the file ../doc/lpgl-3.0.txt for a copy of the license.
+  In the case that the library user does not want (void) to be a palce holder, he
+  or she can call (remove-void l).  Call (remove-void) before wrapping to prevent
+  null list place holders from being created.  Call (remove-void) after unwrap
+  to prevent (voids) being created as place hodlers.
+
 
 |#
 
@@ -19,9 +34,17 @@
 ;;--------------------------------------------------------------------------------
 ;; debug switch
 ;;    
-  (define sequence-lib-debug (make-parameter #f))
-  (provide sequence-lib-debug) ;; so others can flip it on
-  (define-for-syntax sequence-lib-debug (make-parameter #f))
+  (define sequence-debug (make-parameter #f))
+  (provide sequence-debug) ;; so others can flip it on
+  (define-for-syntax sequence-debug (make-parameter #f))
+
+
+;;--------------------------------------------------------------------------------
+;;  remove-void
+;;     given a list returns a new list
+;;     removes itesm that are (void)
+;;      
+  (define (remove-void l) (filter (λ(e)(not (void? e))) l))
 
 ;;--------------------------------------------------------------------------------
 ;;  unwrap
@@ -31,9 +54,7 @@
 ;;       top level null list items are not included in the new list
 ;;       (void) values do not occur as top level items in the new list
 ;;
-  (define (unwrap l) (filter (λ(e)(not (void? e))) (unwrap-1 l)))
-
-  (define (unwrap-1 l)
+  (define (unwrap l)
     (cond
       [(null? l) '()]
       [else
@@ -66,8 +87,6 @@
 ;;    -given a list returns a new list
 ;;    -puts each item found in a given list into a list (adds one level of parens)
 ;;
-;;    should void wrap to a null list, or should it just disappear?  Void is supposed
-;;    to mean nothing, so we interpret that there is nothing to wrap
 ;;
     (define (wrap items)
       (cond
@@ -78,7 +97,7 @@
                 [r (cdr items)]
                 )
             (cond
-              [(void? i)         (wrap r)]
+              [(void? i)         (cons '() (wrap r))]
               [else              (cons (list i) (wrap r))]
               ))]))
 
@@ -104,7 +123,7 @@
                 [r (cdr items)]
                 )
             (cond
-              [(void? i) (wrap-1 r)] ;; void is as though not there, so there is nothing to wrap-1
+              [(void? i) (cons '() (wrap-1 r))] 
               [(is-unsequence i)
                 (let(
                       [insert-items (cadr i)]
@@ -123,7 +142,7 @@
         (equal? (wrap (list '(unquote ()) 2 '(unquote x))) '(list (list 2) x))
         ))
 
-    (when (sequence-lib-debug) (displayln (list "wrap test: " (test-wrap))))
+    (when (sequence-debug) (displayln (list "wrap test: " (test-wrap))))
     )
 
 ;;--------------------------------------------------------------------------------
@@ -366,24 +385,10 @@
   (test-hook test-unordered-equal?-1)
 
 
-  (define (bcons a-list item) (cons item a-list)) ; we like to specifiy the object being worked on first
-
-  (define (cat a-list . items) (append a-list items))
-  (define (cat-test-0)
-    (and
-      (equal?
-        (cat '(a b) 'c)
-        '(a b c))
-      (equal?
-        (cat '(1 3) 5 7)
-        '(1 3 5 7)
-        )
-      ))
-  (test-hook cat-test-0)
-
-
 
 ;;--------------------------------------------------------------------------------
+;;   given a list and an optional initial result value,  returns a list
+;;   for each given list item, if pred(item)  then places in the result list (tran item)
 ;;
   (define (filter-fold pred tran l [init-r '()])
     (foldr
@@ -444,7 +449,7 @@
 
   ;; functions
   ;;
-    (provide-with-trace "sequence-lib" ;; this context continues to the bottom of the page
+    (provide-with-trace "sequence" ;; this context continues to the bottom of the page
 
       ;; efficient length compares 
       ;;   something like (length a-list) > 3  would take the length of the entire list before comparing
@@ -461,9 +466,7 @@
 
         unordered-equal?
 
-        bcons
-        cat
-
+        remove-void
         wrap
         unwrap
         filter-fold

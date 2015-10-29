@@ -14,7 +14,7 @@
 ;;--------------------------------------------------------------------------------
 ;; uses these
 ;;
-  (require "misc-lib.rkt")
+  (require liquid/extensions)
   (require "ssl-server.rkt")
   (require "http-session.rkt")
   (require "http-server-pages.rkt") ; for pages-init
