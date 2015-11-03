@@ -7,11 +7,14 @@
 
 (require racket/date)
 
+(require liquid/extensions)
+(provide test-all)
+
 (require "db-abstraction.rkt")
 (provide (all-from-out "db-abstraction.rkt"))
 
 (require "dataplex-lib.rkt")
-(provide (all-from-out "dataplex-lib.rkt")
+(provide (all-from-out "dataplex-lib.rkt"))
 
 (require "dataplex-parameters.rkt")
-(provide (all-from-out "dataplex-parameters.rkt")
+(provide (all-from-out "dataplex-parameters.rkt"))

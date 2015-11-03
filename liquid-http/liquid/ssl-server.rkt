@@ -70,30 +70,34 @@
 ;;--------------------------------------------------------------------------------
 ;; this starts a ssl server and runs launches the ssl-session-launcher
 ;;        
-;;        input: a-session-transactor, a port number (typically 80 for http servers),  a timeout for our session to complete
+;;        input: a-session, a port number (typically 80 for http servers),  a timeout for our session to complete
 ;;       return: a no argument function for killing the server
 ;;  
-;; typical invocation: (define stop (server http-session-transactor 8080 10))
-;;
-;; note that the time out is for *our* server side session to run, if keep alive is true on the connection
-;; we could be killing a valid session
+;; typical invocation: (define stop (server http-session))
 ;;
 ;; see ssl-listen doc for important parameters that are punted here, for example max-allow-wait
 ;;
-;; This routine runs the session launcher in its own thread, and then returns immediately.  The
-;; session launcher listens to the port for new sessions to launch forever.
+;; really, all this routine does is to run the session transactor when a client shows up on one of our ports.
+;;  
 ;;
-;;
-  (define (ssl-server a-session-transactor port-number ssl-session-timeout)
-    (define main-cust (make-custodian))
-    (parameterize ([current-custodian main-cust]) 
-      (define a-ssl-listener (ssl-listen port-number))
-      (ssl-load-certificate-chain! a-ssl-listener "/usr/share/racket/collects/openssl/test.pem")
-      (ssl-load-private-key! a-ssl-listener "/usr/share/racket/collects/openssl/test.pem")
-
-      (thread (λ() (ssl-session-launcher a-session-transactor a-ssl-listener ssl-session-timeout)) )
-    )
-    (λ() (custodian-shutdown-all main-cust))) ;; this is the return value
+  (define (ssl-server a-session [port-number 443])
+    (define ssl-server-custodian (make-custodian))
+    (parameterize (
+                    [current-custodian ssl-server-custodian]
+                    [current-log-port (open-output-file "ssl-server-log.txt" #:exists `can-update)]
+                    )
+      (log "ssl-server start")
+      (define an-ssl-listener (ssl-listen port-number))
+      (ssl-load-certificate-chain! an-ssl-listener "/usr/share/racket/collects/openssl/test.pem")
+      (ssl-load-private-key! an-ssl-listener "/usr/share/racket/collects/openssl/test.pem")
+      (thread 
+        (λ() (ssl-session-launcher a-session an-ssl-listener ssl-session-timeout))
+        )
+      (λ()
+        (custodian-shutdown-all ssl-server-custodian)
+        (log "ssl-server stop")
+        )
+      ))
 
 ;;--------------------------------------------------------------------------------
 ;; provides

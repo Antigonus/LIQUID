@@ -16,7 +16,7 @@
   (require racket/trace)
   (require racket/list)
   (require db)
-  (require "misc-lib.rkt")
+  (require liquid/extensions)
   (require "db-abstraction.rkt")
 
 ;;--------------------------------------------------------------------------------

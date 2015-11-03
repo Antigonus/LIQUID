@@ -17,6 +17,7 @@
 ;;    
   (define current-read-request-timeout (make-parameter 5)); 5 cadrs to finish request header read
   (define current-get-webpage-timeout (make-parameter 60)) ; used in "web.rkt"
+  (define current-ssl-session-timeout (make-parameter 300)) ; extend within this duration or the thread is terminated
 
 ;;--------------------------------------------------------------------------------
 ;; global types

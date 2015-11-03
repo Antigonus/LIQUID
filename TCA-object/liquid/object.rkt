@@ -14,8 +14,8 @@
 ;; uses these libraries
 ;;
   (require racket/set)
-  (require "misc-lib.rkt")
   (require unstable/syntax) ; for (phase-of-enclosing-module)
+  (require liquid/extensions)
   
 ;;--------------------------------------------------------------------------------
 ;;

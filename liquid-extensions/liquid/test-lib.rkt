@@ -23,7 +23,7 @@
   ;; used by programs to decide if they should hook and run test code
   (define current-hook-tests (make-parameter #t))
   (date-display-format `iso-8601)
-  (define current-log-port (make-parameter (open-output-file "log-http-server.txt" #:exists `can-update)))
+  (define current-log-port (make-parameter (open-output-file "log-default.txt" #:exists `can-update)))
 
 
 ;;--------------------------------------------------------------------------------

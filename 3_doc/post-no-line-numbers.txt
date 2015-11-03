@@ -1,0 +1,454 @@
+
+
+1. this was hard to locate
+
+racket@misc-lib.rkt> (enter! "db-lib.rkt")
+db-lib-init: unbound identifier in module
+  in: db-lib-init
+  context...:
+   standard-module-name-resolver
+   /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
+   /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+   /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+2. went awary after running raco setup, but curious as to which variable was the problem
+
+racket@ap.rkt> (enter! "ap.rkt")
+  [re-loading /home/deep/liquid-examples/test-ap/ap.rkt]
+link: bad variable linkage;
+ reference to a variable that is not a procedure or structure-type constant across all instantiations
+  reference phase level: 0
+  variable module: "/home/deep/liquid-lib/liquid/misc-lib.rkt"
+  variable phase: 0
+  reference in module: "/home/deep/liquid-lib/liquid/http-session.rkt"
+  in: session-context-out
+  context...:
+   /home/deep/liquid-lib/liquid/http-session.rkt: [running body]
+   /home/deep/liquid-examples/test-ap/ap.rkt: [traversing imports]
+   /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+   /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+3. obj:set! is a commonly used method in this code, would be nice to know which invocation.
+
+  racket@object.rkt> (enter! "node.rkt")
+  obj:set!: arity mismatch;
+   the expected number of arguments does not match the given number
+    expected: 3
+    given: 4
+    arguments...:
+     0
+     9
+     'field:debug
+     "nd:type"
+    context...:
+     /home/deep/liquid-lib/liquid/node.rkt: [running body]
+     /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
+     /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+     /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+4.  liquid.scrbl is the top file that includes all the sections..
+
+
+      §lambda1:/home/deep/liquid-doc/liquid> raco setup --pkgs liquid-doc
+      raco setup: version: 6.1 [3m]
+      raco setup: installation name: 6.1
+      raco setup: variants: 3m
+      raco setup: main collects: /usr/share/racket/collects
+      raco setup: collects paths: 
+      raco setup:   /home/mordecai/.racket/6.1/collects
+      raco setup:   /usr/share/racket/collects
+      raco setup: main pkgs: /usr/share/racket/pkgs
+      raco setup: pkgs paths: 
+      raco setup:   /usr/share/racket/pkgs
+      raco setup:   /home/mordecai/.racket/6.1/pkgs
+      raco setup: links files: 
+      raco setup:   /usr/share/racket/links.rktd
+      raco setup:   /home/mordecai/.racket/6.1/links.rktd
+      raco setup: main docs: /usr/share/doc/racket
+      raco setup: --- updating info-domain tables ---
+      raco setup: --- pre-installing collections ---
+      raco setup: --- installing foreign libraries ---
+      raco setup: --- installing shared files ---
+      raco setup: --- compiling collections ---
+      raco setup: --- parallel build using 2 jobs ---
+      raco setup: 1 making: <pkgs>/liquid-doc/compiled
+      raco setup: 1 making: <pkgs>/liquid-doc/liquid
+      raco setup: --- creating launchers ---
+      raco setup: --- installing man pages ---
+      raco setup: --- building documentation ---
+      raco setup: 1 running: <pkgs>/liquid-doc/liquid/liquid.scrbl
+      prog:3:0: read: expected a `)' to close `('
+        possible cause: indentation suggests a missing `)' before line 7
+        context...:
+         /usr/share/racket/pkgs/scribble-lib/scribble/private/manual-code.rkt:56:0: typeset-code15
+         /home/deep/liquid-doc/liquid/multiple-continuations-architecture.scrbl: [running body]
+         /home/deep/liquid-doc/liquid/architecture.scrbl: [traversing imports]
+         /home/deep/liquid-doc/liquid/liquid.scrbl: [traversing imports]
+         /usr/share/racket/pkgs/racket-index/setup/scribble.rkt:895:0: load-doc/ensure-prefix
+         /usr/share/racket/pkgs/racket-index/setup/scribble.rkt:1146:13
+         /usr/share/racket/collects/setup/parallel-do.rkt:420:20: loop
+
+  Turns out that it isn't in liquid.scrbl, it is in two include files down.  It is not
+  on line 7, but was well into the file, and it wasn't part of the document structure, but
+  it was in a quoted example ..  in multiple-continuations-architecture.scrbl:
+
+      #lang scribble/manual
+      @(require (for-label racket/base
+                           ))               
+
+      @title[#:style '(toc)]{Multiple Continuations Architecture}
+
+      @section{The Basic Approach}
+
+      As a matter of convention, we simplify function calls by not using variable arguments, but
+      instead where variable arguments are required we use explicit lists.  We make this more
+      convenient by introducing the Unicode capital lambda, Λ, as a synonym for @racket[list].
+      In Emacs I have added both λ and Λ to my key map as alt-l  and alt-shift-l.
+
+      Our basic approach is to pass continuation functions as arguments.  By convention the
+      first function is the 'normal flow'.  By convention we call the first function
+      continuation-ok.  For example, this is the definition for an extended hash ref that takes
+      continuation functions.  It is implemented as a wrapper.  Of course it would be better to
+      have a native version.
+
+...
+
+
+      @codeblock|{
+        ...
+        (define a 7)
+        (x-hash-ref table a
+          (λ(v) (display "found: ")(displayln v))
+          (λ()  (displayln "did not find 7 ")  <---  scrble is mad this isn't balanced
+          )
+        ...
+        }|
+
+5.  ended up having to write a lot of special code for debugging this, the bug was not in
+obj:add-type as indicated in the message, and certainly not on line 141.
+
+  racket@> (enter! "object.rkt")
+  ...
+  (0.type-type)
+  (obj:has-type 0 0)
+  application: not a procedure;
+   expected a procedure that can be applied to arguments
+    given: 302
+    arguments...:
+     4
+    context...:
+     x-hash-ref
+     /home/deep/liquid-lib/liquid/object.rkt:141:4: obj:add-type
+     /home/deep/liquid-lib/liquid/object.rkt: [running body]
+     /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
+     /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+     /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+6. but where?
+
+  racket@object.rkt> (obj-test-1)
+  =: contract violation
+    expected: number?
+    given: #f
+    argument position: 1st
+    other arguments...:
+     12
+    context...:
+     /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+
+7. oh the cruelty of it! ;-)
+
+  "object.rkt"> (obj-test-1)
+  (4.type:summable)
+  (5.test-1-obj1)
+  (6.test-1-obj2)
+  (args type:summable + (test-1-obj1 test-1-obj2))
+  (conts #<procedure> #<procedure> #<procedure>)
+  (##  at  (/home/deep/liquid-lib/liquid/object.rkt 221 4))
+  (--  expected length of 3 )
+  (--  for:  (#<procedure>))
+  ; uncaught exception: 'exception:check [,bt for context]
+  "object.rkt"> ,bt
+  ; uncaught exception: 'exception:check
+  "object.rkt"> 
+
+
+8. you might think that a person could just look for the first summable in the module,
+but no, as that one is well defined.  so I have to search for all 'summable' .. why
+doesn't the compiler tell me which one? 
+
+
+  racket@object.rkt> (enter! "object.rkt")
+    [re-loading /home/deep/liquid-lib/liquid/object.rkt]
+  summable: unbound identifier in module
+    in: summable
+    context...:
+     /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+     /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+
+9.  racket reports arity error, but does not say for which function ...  (turns out to be in obj:set! which I found
+by walking through a trace).   line 421, which it cites, is simply the line of the define (obj-test-2) ...
+
+  racket@object.rkt> (obj-test-2)
+  >(obj:make "type:summable")
+  (47.type:summable)
+  <47
+  >(obj:make "test-2-obj1")
+  (48.test-2-obj1)
+  <48
+  >(obj:make "test-2-obj2")
+  (49.test-2-obj2)
+  <49
+  >(obj:add-type 48 47)
+  > (obj:is 47)
+  < #t
+  > (obj:is 48)
+  < #t
+  > (obj:has-type 48 47)
+  > >(obj:is 47)
+  < <#t
+  > (x-hash-ref
+     '(#hasheq((47 . #hasheqv())
+               (46 . #hasheqv((46 . #hasheqv())))
+               (49 . #hasheqv())
+               (48 . #hasheqv()))
+       48)
+     '(#<procedure> #<procedure>))
+  > >(be #t)
+  < <#<procedure:beit>
+  > >(be #f)
+  < <#<procedure:beit>
+  > (x-hash-ref '(#hasheqv() 47) '(#<procedure:beit> #<procedure:beit>))
+  < #f
+  > (x-hash-ref
+     '(#hasheq((47 . #hasheqv())
+               (46 . #hasheqv((46 . #hasheqv())))
+               (49 . #hasheqv())
+               (48 . #hasheqv()))
+       48)
+     '(#<procedure> #<procedure>))
+  < #<void>
+  <48
+  >(obj:add-type 49 47)
+  > (obj:is 47)
+  < #t
+  > (obj:is 49)
+  < #t
+  > (obj:has-type 49 47)
+  > >(obj:is 47)
+  < <#t
+  > (x-hash-ref
+     '(#hasheq((47 . #hasheqv())
+               (46 . #hasheqv((46 . #hasheqv())))
+               (49 . #hasheqv())
+               (48 . #hasheqv((47 . #hasheqv()))))
+       49)
+     '(#<procedure> #<procedure>))
+  > >(be #t)
+  < <#<procedure:beit>
+  > >(be #f)
+  < <#<procedure:beit>
+  > (x-hash-ref '(#hasheqv() 47) '(#<procedure:beit> #<procedure:beit>))
+  < #f
+  > (x-hash-ref
+     '(#hasheq((47 . #hasheqv())
+               (46 . #hasheqv((46 . #hasheqv())))
+               (49 . #hasheqv())
+               (48 . #hasheqv((47 . #hasheqv()))))
+       49)
+     '(#<procedure> #<procedure>))
+  < #<void>
+  <49
+  #<procedure>: arity mismatch;
+   the expected number of arguments does not match the given number
+    expected: 2
+    given: 3
+    arguments...:
+     47
+     49
+     '(x 21)
+    context...:
+     /home/deep/liquid-lib/liquid/object.rkt:421:0: obj-test-2
+     /usr/share/racket/collects/racket/private/misc.rkt:87:7
+  racket@object.rkt> 
+
+10.
+
+  racket@kw.rkt> (with-db (current-example-db) (db:alloc-name))
+  lifted.0.3: undefined;
+   cannot reference an identifier before its definition
+    in module: "/home/deep/liquid-lib/liquid/kw.rkt"
+    context...:
+     /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+
+  §lambda1:/home/deep/liquid-lib/liquid> grep lifted *.rkt
+
+  §lambda1:/home/deep/liquid-lib/liquid>
+
+
+11.
+
+  racket@kw.rkt> (enter! "kw.rkt")
+    [re-loading /home/deep/liquid-lib/liquid/kw.rkt]
+  _: wildcard not allowed as an expression
+    in: _
+  racket@kw.rkt> 
+
+
+12.  doesn't tell which function the error came from, nor give a source line number
+
+      line 851 is the entry point (semantic-relation:lookup-ids-test-1) , which doesn't
+      take arguments, sort is called in multiple places ... which one?
+
+    racket@dataplex-lib.rkt> (semantic-relation:lookup-ids-test-1)
+    <: contract violation
+      expected: real?
+      given: '(1 4 7 10)
+      argument position: 1st
+      other arguments...:
+       '(1 7 10)
+      context...:
+       /usr/share/racket/collects/racket/private/sort.rkt:213:0: sort
+       /home/deep/liquid-lib/liquid/dataplex-lib.rkt:851:4: semantic-relation:lookup-ids-test-1
+       /usr/share/racket/collects/racket/private/misc.rkt:87:7
+    racket@dataplex-lib.rkt> 
+
+13. error is where in the function?
+
+    racket@kw.rkt>   (define (display-sm an-sm)
+        (with-db (current-example-db)
+          (let*(
+                 [t0 (semantic-relation:match dp-ex1 R1 '_)] ; returns a list of rows, each row item is a singleton sp value
+                 [t1  (map (λ(row)(map (λ(item)(car item)) row))  t0)] ; strips parens off of the singleton row items
+                 )
+            (map (λ(row)displayln(row)) t1) ;; <----- error on this line
+            )))
+
+    racket@kw.rkt> (display-sm R1)
+    application: not a procedure;
+     expected a procedure that can be applied to arguments
+      given: '("k1" "c1")
+      arguments...: [none]
+      context...:
+       stdin::739: display-sm
+       /usr/share/racket/collects/racket/private/misc.rkt:87:7
+    racket@kw.rkt> display-sm
+    #<procedure:display-sm>
+
+
+    and tried at the prompt, the error goes away:
+
+    racket@kw.rkt>   (define (display-sm an-sm)
+        (with-db (current-example-db)
+          (let*(
+                 [t0 (semantic-relation:match dp-ex1 R1 '_)] ; returns a list of rows, each row item is a singleton sp value
+      ;;           [t1  (map (λ(row)(map (λ(item)(car item)) row))  t0)] ; strips parens off of the singleton row items
+                 [t1 '()]
+                 )
+            (map (λ(row)displayln(row)) t1) 
+            )))
+    racket@kw.rkt> (display-sm R1)
+    '()
+    racket@kw.rkt> t0
+    '((("k1") ("c1")) (("c2") ("c3")))
+    racket@kw.rkt> (map (λ(row)(map (λ(item)(car item)) row))  t0)
+    '(("k1" "c1") ("c2" "c3"))
+    racket@kw.rkt> (define t1  (map (λ(row)(map (λ(item)(car item)) row))  t0))
+
+
+14.  this identifier dosn't appear in this file ...  if it is created by a
+     macro, then which macro?  which invocation of the macro?
+
+    Process Racket REPL finished
+    Welcome to Racket v6.1.
+    racket@> (enter! "kw.rkt")
+    shape-relation:values:index-by-sp-id: unbound identifier in module
+      in: shape-relation:values:index-by-sp-id
+    racket@> 
+
+15. turned out to be code generated by a syntax transformer, sure would have been helpful to have been
+    told where it was called from, which macro, and where in the macro ...
+
+    racket@> (enter! "extentions-lib.rkt")
+    when: bad syntax
+      in: (when else-flag)
+      context...:
+       standard-module-name-resolver
+       /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
+       /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+       /usr/share/racket/collects/racket/private/misc.rkt:87:7
+    racket@> 
+
+
+16. ok ... so there is an error somewhere in the module having to do with redefining test-Λ-0
+
+
+   racket@sequence-lib.rkt> (enter! "sequence-lib.rkt")
+     [re-loading /home/deep/liquid-lib/liquid/sequence-lib.rkt]
+   (wrap test:  #f)
+   (wrap test:  #f)
+   (wrap test:  #f)
+   hooking test: test-unwrap
+   define-values: assignment disallowed;
+    cannot re-define a constant
+     constant: test-Λ-0
+     in module: "/home/deep/liquid-lib/liquid/sequence-lib.rkt"
+     context...:
+      /home/deep/liquid-lib/liquid/sequence-lib.rkt: [running body]
+      /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+      /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+
+problem is, this is the only occurance of that identifier in the module:
+
+  ;; does the job of list
+  (define (test-Λ-0)
+    (equal? '(1 2 3) (Λ 1 2 3))
+    )
+  (test-hook test-Λ-0)
+
+17.  error is somewhere in extensions-lib.rkt, presumably in one of the many wrap calls,
+will trace wrap .. oh, can't do that as this fails on load ..  line 157 in sequence-lib
+and is first line of wrap, so there is no hint as to where in wrap this problem occurs (or
+where wrap was called from).
+
+
+    racket@extentions-lib.rkt> (enter! "extentions-lib.rkt")
+      [re-loading /home/deep/liquid-lib/liquid/extentions-lib.rkt]
+    cdr: contract violation
+      expected: pair?
+      given: 'Λ
+      context...:
+       /home/deep/liquid-lib/liquid/sequence-lib.rkt:157:2
+       /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+       /usr/share/racket/collects/racket/private/misc.rkt:87:7
+
+... problem turned out to be in the cond/list program in extentions-lib.rkt, (define seq-op Λ) was supposed
+to be (define seq-op 'Λ).   found by stubbing out the program and bring pieces to life one by one.
+
+18. Not sure how we are supposed to know that this error occurs in http-server.rkt, as the
+    top of the trace is the name of a macro in test lib.  Perhaps because it was the
+    module loaded?  When finding the top of the trace, we discover in http-server.rkt,
+    that the macro is only called once, so that narrows it down.  In other examples, a
+    simple macro can be used many times.  Solving these is a real mystery thriller because
+    it bombs on load, so you can't set traces.
+
+    racket@> (enter! "http-server.rkt")
+    string-append: contract violation
+      expected: string?
+      given: 'server-pages-init
+      argument position: 1st
+      other arguments...:
+       "-trace"
+      context...:
+       /home/deep/liquid-extensions/liquid/test-lib.rkt:121:2
+       /usr/share/racket/collects/syntax/wrap-modbeg.rkt:46:4
+       standard-module-name-resolver
+       standard-module-name-resolver
+       /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
+       /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+       /usr/share/racket/collects/racket/private/misc.rkt:87:7
+    racket@> 

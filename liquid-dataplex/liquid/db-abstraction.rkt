@@ -20,7 +20,7 @@
 ;; uses these libraries
 ;;
   (require db)
-  (require "misc-lib.rkt")
+  (require liquid/extensions)
 
 ;;--------------------------------------------------------------------------------
 ;; db-lib as an object shared state
