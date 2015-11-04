@@ -4,11 +4,11 @@
   created: 2014-12-04T07:55:00Z twl
   major revision: 2015-08-22T06:05:02Z twl  
 
-  The problem with the first version of node came when we said an attribute could be
-  anything.  That fomented a need to dynamically pick an equal operation for each attribute
-  when comparing nodes.  Node compares are common in the test code, but we also see them
-  in the parse filters.  Soon we hope to havea  more general pattern compare.
+  a parse tree node type
 
+  provides 'ndwat' - 'node with attributes' 
+
+  
 
 |#
 
@@ -28,52 +28,52 @@
 ;; node
 ;;
   ;; place shared data and functions for all nodes here
-  ;; if there is an enumeration of allowed fields for the node type, it would go in here
+  ;; if there is an enumeration of allowed keys for the node type, it would go in here
   ;;
-    (define nd:field:tag 'nd:field:tag)
-    (define nd:field:children 'nd:field:children) ; set of children
+    (define nd:key:tag 'nd:key:tag)
+    (define nd:key:children 'nd:key:children) ; set of children
 
     (define nd:type 
       (let(
-             [objid (obj:add-type (obj:make) type-type)]
+             [objid (obj:declare-type (obj:make) type-type)]
              )
-        (when obj:debug (obj:name-hook objid "nd:type"))
+        (when (obj-debug) (obj:name-hook objid "nd:type"))
         objid
         ))
 
     (define (nd:is n) (obj:has-type n nd:type))
 
-    (define (nd:make Λfield-vals) 
+    (define (nd:make Λkey-vals) 
       (let(
             [objid (obj:make)]
             )
-        (when obj:debug (obj:name-hook objid "nd"))
-        (obj:add-type objid nd:type)
+        (when (obj-debug) (obj:name-hook objid "nd"))
+        (obj:declare-type objid nd:type)
         (cond
-          [(not (null? Λfield-vals)) (obj:set! nd:type objid Λfield-vals)]
+          [(not (null? Λkey-vals)) (obj:set! nd:type objid Λkey-vals)]
           )))
 
 ;;--------------------------------------------------------------------------------
 ;; attribute set
-;;   an attribute is a field value pair.  We collect them in a hash table.  Each
-;;   attribute can potentially compare differently and the racket has table doesn't
-;;   give us the means to do that, so here we wrap a hash table in an  object
+;;   an attribute is a key value pair.  We collect them in a hash table.  Each
+;;   attribute can potentially compare differently and the racket hash table doesn't
+;;   give us the means to do that, so here we wrap a hash table in another type
 ;;
-  (define atset:field:lexeme (obj:add-type (obj:make) type-type)) ; value is a string
-  (define atset:field:source (obj:add-type (obj:make) type-type)) ; value is a source object
-  (define atset:field:source-nds (obj:add-type (obj:make) type-type)) ; value is a set of nodes
-  (define atset:field:value (obj:add-type (obj:make) type-type))
+  (define at:key:lexeme (obj:declare-type (obj:make) type-type)) ; value is a string
+  (define at:key:source (obj:declare-type (obj:make) type-type)) ; value is a source object
+  (define at:key:source-nds (obj:declare-type (obj:make) type-type)) ; value is a set of nodes
+  (define at:key:value (obj:declare-type (obj:make) type-type))
                 
-  (define atset:type
+  (define at:type
      (let(
-            [objid (obj:add-type (obj:make) type-type)]
+            [objid (obj:declare-type (obj:make) type-type)]
             )
-       (when obj:debug (obj:name-hook objid "atset:type"))
+       (when (obj-debug) (obj:name-hook objid "at:type"))
        objid
        ))
 
-    (define (atset:is as) (obj:has-type as atset:type))
-    (define (atset:make) (obj:add-type (obj:make) atset:type))
+    (define (at:is as) (obj:has-type as at:type))
+    (define (at:make) (obj:declare-type (obj:make) at:type))
 
 
 ;;--------------------------------------------------------------------------------
@@ -81,55 +81,55 @@
 ;;
   (define ndwat:type 
     (let(
-          [objid (obj:add-type (obj:make) type-type)]
+          [objid (obj:declare-type (obj:make) type-type)]
           )
-      (when obj:debug (obj:name-hook objid "ndwat:type"))
+      (when (obj-debug) (obj:name-hook objid "ndwat:type"))
       objid
       ))
 
   (define (ndwat:is n)
     (and
       (obj:has-type n nd:type)
-      (obj:has-type n atset:type)
+      (obj:has-type n at:type)
       ))
 
-  ;; Λattributes alternating field val list, Λchildren list of children
+  ;; Λattributes alternating key val list, Λchildren list of children
   (define (ndwat:make Λattributes Λchildren)
     (let(
           [objid (obj:make)]
           )
-      (when obj:debug (obj:name-hook objid "ndwat"))
-      (obj:add-type objid nd:type)
-      (obj:add-type objid atset:type)
+      (when (obj-debug) (obj:name-hook objid "ndwat"))
+      (obj:declare-type objid nd:type)
+      (obj:declare-type objid at:type)
       (cond
-        [(not (null? Λattributes)) (obj:set! atset:type objid Λattributes)]
-        [(not (null? Λchildren)) (obj:set! nd:type objid (Λ nd:field:children (list->set Λchildren)))]
+        [(not (null? Λattributes)) (obj:set! at:type objid Λattributes)]
+        [(not (null? Λchildren)) (obj:set! nd:type objid (Λ nd:key:children (list->set Λchildren)))]
       )))
 
 
 ;;--------------------------------------------------------------------------------
 ;; atset methods
 ;;
-  (void (obj:set! type-type atset:type
+  (void (obj:set! type-type at:type
     (Λ 
 
-      '= (λ(a b) ; a and b are two data objects that share atset:type
+      '= (λ(a b) ; a and b are two data objects that share at:type
            ;;(displayln (Λ "running equal on two atsets: " a " " b))
            (let(
-                 [a-fields (obj:fields atset:type a)]
-                 [b-fields (obj:fields atset:type b)]
+                 [a-keys (obj:keys at:type a)]
+                 [b-keys (obj:keys at:type b)]
                  )
              (and
-               (equal? a-fields b-fields)
+               (equal? a-keys b-keys)
                (for/and(
-                         [field a-fields]
+                         [key a-keys]
                          )
                  (let(
-                       [a-value (obj:ref* atset:type a field)]
-                       [b-value (obj:ref* atset:type b field)]
+                       [a-value (obj:ref* at:type a key)]
+                       [b-value (obj:ref* at:type b key)]
                        )
                    (cond
-                     [(eqv? field atset:field:source-nds) ; the source-nds attribute holds a set of nodes
+                     [(eqv? key at:key:source-nds) ; the source-nds attribute holds a set of nodes
                        (and
                          (= (set-count a-value) (set-count b-value))
                          (for/and(
@@ -158,10 +158,10 @@
                   [children-a null]
                   [children-b null]
                   )
-              (obj:ref nd:type a nd:field:tag (λ(tag)(set! tag-a tag)) void void)
-              (obj:ref nd:type b nd:field:tag (λ(tag)(set! tag-b tag)) void void)
-              (obj:ref nd:type a nd:field:children (λ(children)(set! children-a children)) void void)
-              (obj:ref nd:type b nd:field:children (λ(children)(set! children-b children)) void void)
+              (obj:ref nd:type a nd:key:tag (λ(tag)(set! tag-a tag)) void void)
+              (obj:ref nd:type b nd:key:tag (λ(tag)(set! tag-b tag)) void void)
+              (obj:ref nd:type a nd:key:children (λ(children)(set! children-a children)) void void)
+              (obj:ref nd:type b nd:key:children (λ(children)(set! children-b children)) void void)
 
               (and
                 (equal? tag-a tag-b)
@@ -190,10 +190,10 @@
       '=  (λ( a b)
             ;;(display "running ndwat::type equal on a/b:")(display a)(display " ")(display b)(newline)
             (and
-              (obj:apply type-type atset:type '= (Λ a b)
+              (obj:apply type-type at:type '= (Λ a b)
                 identity
-                raise:no-such-field-in-elementary
-                (λ() (not (obj:has-type b atset:type)))  ; no-such-field is ok if b doesn't have attributes either
+                raise:no-such-key-in-elementary
+                (λ() (not (obj:has-type b at:type)))  ; no-such-key is ok if b doesn't have attributes either
                 )
               (ndwat-nd-equal a b) ; nodes may have ndwat children, so ndwat has its our own nd equal
               )))))
@@ -205,10 +205,10 @@
             [children-a null]
             [children-b null]
             )
-        (obj:ref nd:type a nd:field:tag (λ(tag)(set! tag-a tag)) void void)
-        (obj:ref nd:type b nd:field:tag (λ(tag)(set! tag-b tag)) void void)
-        (obj:ref nd:type a nd:field:children (λ(children)(set! children-a children)) void void)
-        (obj:ref nd:type b nd:field:children (λ(children)(set! children-b children)) void void)
+        (obj:ref nd:type a nd:key:tag (λ(tag)(set! tag-a tag)) void void)
+        (obj:ref nd:type b nd:key:tag (λ(tag)(set! tag-b tag)) void void)
+        (obj:ref nd:type a nd:key:children (λ(children)(set! children-a children)) void void)
+        (obj:ref nd:type b nd:key:children (λ(children)(set! children-b children)) void void)
 
         (and
           (equal? tag-a tag-b)
@@ -257,15 +257,15 @@
 ;;
   (provide 
 
-    nd:field:tag
-    nd:field:children
+    nd:key:tag
+    nd:key:children
     nd:type
 
-    atset:field:lexeme
-    atset:field:source
-    atset:field:source-nds
-    atset:field:value
-    atset:type
+    at:key:lexeme
+    at:key:source
+    at:key:source-nds
+    at:key:value
+    at:type
 
     ndwat:type
     )
@@ -275,8 +275,8 @@
     nd:is
     nd:make
 
-    atset:is
-    atset:make
+    at:is
+    at:make
 
     ndwat:is
     ndwat:make

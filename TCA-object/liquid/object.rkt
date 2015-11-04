@@ -7,7 +7,6 @@
 
 |#
 
-
 #lang racket
 
 ;;--------------------------------------------------------------------------------
@@ -20,10 +19,10 @@
 ;;--------------------------------------------------------------------------------
 ;;
   ;;(define obj:debug #t)
-  (define obj:debug #f)
+  (define obj:debug (make-parameter #t))
   (define obj:names (make-hash))
   (define (obj:name-hook objid name)
-    (when obj:debug (display "(")(display objid) (display ".")(display name)(displayln ")"))
+    (when (obj:debug) (display "(")(display objid) (display ".")(display name)(displayln ")"))
     (hash-set! obj:names objid name))
   (define (obj:lookup objid)
     (hash-ref obj:names objid (string-append (->string objid) ":not-registered-with-a-name")))
@@ -86,7 +85,7 @@
 ;;--------------------------------------------------------------------------------
 ;; elementary objects have these fields reserved:
 ;;
-  (define field:copied-from 'field:copied-from) ; holds an object
+  (define obj:field:copied-from 'obj:field:copied-from) ; holds an object
 
 
 ;;--------------------------------------------------------------------------------
@@ -100,9 +99,10 @@
           [a-type-manifold (make-hasheqv)]
           )
       (hash-set! obj:tman-table objid a-type-manifold)
-      (when obj:debug (obj:name-hook objid debug-name))
+      (when (obj:debug) (obj:name-hook objid debug-name))
       objid
       ))
+
 
   (define (obj:->string objid [conv-fun display])
     (x-hash-ref (Λ obj:tman-table objid)
@@ -135,16 +135,17 @@
          )))
 
 
-  ;; adds type to the object
+  ;; adds a type attribute (new section) to the compound object specified by 'objid'
+  ;; put another way,  this object now shares the object specified by 'type'
   ;;
-    (define (obj:add-type objid type)
+    (define (obj:declare-type objid type)
 
       ;; check that the objects are valid
       (when (not (obj:is type)) (raise:no-such-type type))
       (when (not (obj:is objid)) (raise:no-such-object objid))
 
       ;; if type isn't already there, add it
-;;;--> integrate the add type code into the has-type form  this has a redundant lookup
+;;;--> integrate the declare type code into the has-type form  this has a redundant lookup
       (when (not (obj:has-type objid type))
         (x-hash-ref (Λ obj:tman-table objid)
           (Λ
@@ -155,24 +156,70 @@
       objid
       )
 
-
 ;;-------------------------------------------------------------------------------- 
 ;;
-;; In this implementation of TCA objects, we have added a constraint to make the
-;; interfaces uniform: we require that all objects be compound objects, i.e. this is a
-;; compound object interface.  In TCA type is sipmly an object that gets shared among
-;; other objects 'of the type', so this constraint really says that all objects must
-;; specify a shared object.
+;; All user visiable objects are compound objects.  All compound objects have sections
+;; and these sections are given the same name as the objids of the type objects the
+;; compound shares.
 ;;
-;; ah, so you might ask what is the type for a type object?  Really it could be any
-;; other object shared among the type objects, and used for operating on them. We
-;; we provide a type that supports the method apply, it is called type-type.
-;; 
-;; ah, so you might ask, what is the type of type-type?  The type of type-type is
-;; type-type.  There is nothing wrong with this, as it just means that the operators in
-;; type-type accept other type-type objects as well as other type objects.
+;; We facilitate the convention that all objects used as type, have a section that shares
+;; the object type-type. Type-type is then the type of type.  As such it is an object,
+;; what type does it have?  It's type is also type-type. There is nothing wrong with this,
+;; as it just means that the operators in type-type accept other type-type objects as well
+;; as other type objects.
 ;;
   (define type-type (obj:make "type-type"))
+  (declare-type type-type type-type)
+
+  ;; a macro to make an object and declare its type to be 'type-type' in one step
+  ;; i.e. make a type object that follows the convention that all type objects have type of 'type-type'
+  ;;
+    (define-syntax (define-type stx)
+      (let(
+            [datum  (syntax->datum stx)]
+            )
+        (let(
+              [type-name (cadr datum)]
+              )
+          (let(
+                [program
+                  (Λ 'define type-name (Λ 'obj:declare-type (Λ 'obj:make (symbol->string type-name)) 'type-type))
+                  ]
+                )
+            (when (obj:debug) (displayln program))
+            (datum->syntax stx program)
+            ))))
+
+    (define-syntax (define-object stx)
+      (let(
+            [datum  (syntax->datum stx)]
+            )
+        (let(
+              [object-name (cadr datum)]
+              [type-name (caddr datum)]
+              )
+          (let*(
+                 [object-specifier (string-append (symbol->string type-name) "::" (symbol->string object-name))]
+                 [program
+                   (Λ 'define object-name (Λ 'obj:declare-type (Λ 'obj:make object-specifier) type-name))
+                   ]
+                 )
+            (when (obj:debug) (displayln program))
+            (datum->syntax stx program)
+            ))))
+
+
+
+  ;; this just adds an elementary field to the type object, but it makes code more readible
+  ;; e.g.  (add-method copmlex:type '== (λ(a b)(equal? a b)))
+  ;;
+    (define (obj:add-method type-name method-name method-def)
+      (void (obj:set! type-name type-type (Λ method-name method-def)))
+      )
+
+    (define (obj:add-method* type-name methods)
+      (void (obj:set! type-name type-type methods))
+      )
 
 
 ;;--------------------------------------------------------------------------------
@@ -180,15 +227,13 @@
 ;;
   
   ;;(require racket/trace)
-  ;;(trace get-elementary)
+  ;;(trace obj:elementary)
 
-  ;; for module use
-  ;;   an 'elementary' object is one without a type manifold.  In this implemetnation
-  ;;   elementary objects only occur inside of compound objects, and are only seen
-  ;;   by our library code.  An elementary object is found at the end of each leg
-  ;;   of a type manifold.
+  ;; for module use an 'elementary' object is one without a type manifold.  In this
+  ;;   implemetnation elementary objects only occur inside of compound objects An
+  ;;   elementary object is found at the end of each leg of a type manifold.
   ;;
-    (mc:define get-elementary (args objid type) (conts c0 c1)
+    (mc:define obj:elementary (args objid type) (conts c0 c1)
       (x-hash-ref (Λ obj:tman-table objid)
         (Λ 
           (λ(tman) (x-hash-ref (Λ tman type) conts)) ; found the manifold, now get the elementary object
@@ -199,8 +244,8 @@
   ;; imposes type on an object, which selects an elementary object, 
   ;; then applies the field-val intiialization list
   ;;
-    (mc:define obj:set! (args type objid Λfield-val) (conts continue-ok continue-no-type)
-      (get-elementary (Λ objid type)
+    (mc:define obj:set! (args objid type Λfield-val) (conts continue-ok continue-no-type)
+      (obj:elementary (Λ objid type)
         (Λ
           (λ(e) (apply hash-set*! (cons e Λfield-val))) ; when elementary object found
           (λ ignore-args (continue-no-type args conts)) ; when objid has no such type
@@ -210,7 +255,7 @@
 
     ;; removes a field from an object, returns the objid
     (define (obj:remove! type objid field)
-      (get-elementary (Λ objid type)
+      (obj:elementary (Λ objid type)
         (λ(an-elementary-object) (hash-remove! an-elementary-object field))
         (be objid)
         ))
@@ -222,37 +267,37 @@
   ;;
   ;;   note that the field name and object type are invarient in the recursion
   ;;
-    (mc:define obj:ref (args type objid field) (conts continue-ok continue-no-field continue-no-such-type)
+    (mc:define obj:ref (args objid type field) (conts continue-ok continue-no-field continue-no-such-type)
       (define (lookup-field-elementary e-obj) ;; given an elementary object, looks up the given field 
         (define (lookup-field-indirect . ignored-args) 
-          (x-hash-ref (Λ e-obj field:copied-from)
+          (x-hash-ref (Λ e-obj obj:field:copied-from)
             (Λ
               (λ(objid-of-copied-from) (lookup-field-compound objid-of-copied-from)) ; found the copied-from object, now try accessing it
               (λ ignore-args (continue-no-field args conts)) ; ut oh ...  no copied-from object
               )))
-        (when obj:debug (trace lookup-field-indirect))
+        (when (obj:debug) (trace lookup-field-indirect))
         (x-hash-ref (Λ e-obj field)
           (Λ
             continue-ok
             lookup-field-indirect 
             ))
         )
-      (when obj:debug (trace lookup-field-elementary))
+      (when (obj:debug) (trace lookup-field-elementary))
 
       (define (lookup-field-compound objid) 
-        (get-elementary (Λ objid type) ; reduce compound to elementary
+        (obj:elementary (Λ objid type) ; reduce compound to elementary
           (Λ
             lookup-field-elementary
             (λ ignore-args (continue-no-such-type args conts)) ; no such type in the type manifold for this compund
             )))
-      (when obj:debug (trace lookup-field-compound))
+      (when (obj:debug) (trace lookup-field-compound))
 
       (lookup-field-compound objid)
       )
   
   ;; returns looked up value or throws an exception
-  (define (obj:ref* type objid field)
-    (obj:ref (Λ type objid field) 
+  (define (obj:ref* objid type field)
+    (obj:ref (Λ objid type field) 
       (Λ 
         identity 
         (λ ignore-args (raise:no-such-field-in-elementary objid field))
@@ -268,12 +313,12 @@
   ;;
   ;;
     (mc:define obj:apply (args type method-name method-args) (conts continue-ok continue-no-field continue-no-type)
-       (when obj:debug
+       (when (obj:debug)
          (displayln (Λ "obj:apply args:" (obj:lookup type) method-name method-args))
          (displayln (Λ "obj:apply conts:" continue-ok continue-no-field continue-no-type))
          )
 
-       (obj:ref (Λ type-type type method-name)
+       (obj:ref (Λ type type-type method-name)
          (Λ
            (λ(method-proc) (continue-ok (apply method-proc method-args)))
            (λ ignore-args (continue-no-field args conts))
@@ -292,7 +337,7 @@
 
   (define (obj:copy-element type source-objid target-objid)
     (obj:add-type target-objid type)
-    (obj:set! (Λ type target-objid (Λ field:copied-from source-objid))
+    (obj:set! (Λ target-objid type (Λ obj:field:copied-from source-objid))
       (Λ
         (be source-objid)
         raise:unreachable
@@ -319,14 +364,14 @@
     )
     
   (define (obj:fields type objid)
-    (get-elementary (Λ objid type)
+    (obj:elementary (Λ objid type)
       (Λ
         (λ(e)
           (let*(
                  [fields-list (hash-keys e)]
                  [fields (apply mutable-seteqv fields-list)]
                  )
-            (x-hash-ref (Λ e field:copied-from)
+            (x-hash-ref (Λ e obj:field:copied-from)
               (Λ
                 (λ(source) (set-union! fields (obj:fields type source)))
                 (be fields)
@@ -335,12 +380,12 @@
         )))
     
    (define (obj:has-field type objid field)
-     (get-elementary (Λ objid type)
+     (obj:elementary (Λ objid type)
        (Λ
          (λ(e)
            (or
              (hash-has-key? e field)
-             (x-hash-ref (Λ e field:copied-from)
+             (x-hash-ref (Λ e obj:field:copied-from)
                (Λ
                  (λ(source) (obj:has-field type source field))
                  (be false)
@@ -360,8 +405,8 @@
           )
 
       (obj:add-type obj1 summable) ; endows the object with type 'summable'
-      (obj:set! (Λ summable obj1 (Λ 'x 5 'y 7)) (Λ void raise:unreachable)) ; gives obj1 fields x and y initialized to 5 and 7
-      (obj:ref (Λ summable obj1 'x)
+      (obj:set! (Λ obj1 summable (Λ 'x 5 'y 7)) (Λ void raise:unreachable)) ; gives obj1 fields x and y initialized to 5 and 7
+      (obj:ref (Λ obj1 summable 'x)
         (Λ
           (λ(x) (= x 5))
           (λ ignore-args (raise 'exception:obj-test-0-1))
@@ -378,28 +423,28 @@
 
       (define (plus a b)
         (define (plus-1 ax) ;; adds ax to the value in the x field of b
-          (obj:ref (Λ summable b 'x)
+          (obj:ref (Λ b summable 'x)
             (Λ
               (λ(bx) (+ ax bx))
               (λ ignore-args (raise 'exception:obj-test-0-1))
               (λ ignore-args (raise 'exception:obj-test-0-2))
               )))
-        (when obj:debug (trace plus-1))
+        (when (obj:debug) (trace plus-1))
           
-        (obj:ref (Λ summable a 'x)
+        (obj:ref (Λ a summable 'x)
           (Λ
             plus-1
             (λ ignore-args (raise 'exception:obj-test-0-3))
             (λ ignore-args (raise 'exception:obj-test-0-4))
             ))
         )
-      (when obj:debug (trace plus))
+      (when (obj:debug) (trace plus))
 
       (obj:add-type summable type-type)
 
       ;; gives the object summable one field named '+' and intializes it to a function that adds two sumable objects
       (obj:set! 
-        (Λ type-type summable
+        (Λ summable type-type 
           (Λ
             '+ plus
             )
@@ -410,8 +455,8 @@
       (obj:add-type obj1 summable)
       (obj:add-type obj2 summable)
 
-      (obj:set! (Λ summable obj1 (Λ 'x 5)) (Λ void raise:unreachable))
-      (obj:set! (Λ summable obj2 (Λ 'x 7)) (Λ void raise:unreachable))
+      (obj:set! (Λ obj1 summable (Λ 'x 5)) (Λ void raise:unreachable))
+      (obj:set! (Λ obj2 summable (Λ 'x 7)) (Λ void raise:unreachable))
 
       (obj:apply (Λ summable '+ (Λ obj1 obj2)) ; sums the two objects
         (Λ
@@ -431,10 +476,10 @@
     (obj:add-type obj1 summable)
     (obj:add-type obj2 summable)
     
-    (obj:set! (Λ summable obj2 (Λ 'x 21)) (Λ void raise:unreachable))
+    (obj:set! (Λ obj2 summable (Λ 'x 21)) (Λ void raise:unreachable))
     (obj:copy obj2 obj1)
 
-    (obj:ref (Λ summable obj1 'x)
+    (obj:ref (Λ obj1 summable 'x)
       (Λ
         (λ(x) (set! test-result (and test-result (= x 21))))
         (λ ignore-args (raise 'exception:obj-test-0-1))
@@ -443,8 +488,8 @@
       
     ;; note, if we change the original, the lazy copy will continue to read from the original,
     ;; and thus get the updated value
-    (obj:set! (Λ summable obj2 (Λ 'x 11)) (Λ void raise:unreachable))
-    (obj:ref (Λ summable obj1 'x)
+    (obj:set! (Λ obj2 summable (Λ 'x 11)) (Λ void raise:unreachable))
+    (obj:ref (Λ obj1 summable 'x)
       (Λ
         (λ(x) (set! test-result (= x 11)))
         (λ ignore-args (raise 'exception:obj-test-0-1))
@@ -452,8 +497,8 @@
         ))
 
     ;; writing the copy will stop the reading from the original
-    (obj:set! (Λ summable obj1 (Λ 'x 8)) (Λ void raise:unreachable))
-    (obj:ref (Λ summable obj1 'x)
+    (obj:set! (Λ obj1 summable (Λ 'x 8)) (Λ void raise:unreachable))
+    (obj:ref (Λ obj1 summable 'x)
       (Λ
         (λ(x) (set! test-result (and test-result (= x 8))))
         (λ ignore-args (raise 'exception:obj-test-0-1))
@@ -484,34 +529,39 @@
 ;; provides the following
 ;;    
   (provide
-    obj:debug
+    (obj:debug)
     obj:name-hook
     obj:lookup
-    field:copied-from
+    obj:field:copied-from
     obj:exception:no-such-field-in-elementary
     obj:exception:no-such-object
     obj:exception:no-such-type-in-compound
     type-type
+    define-type
+    define-object
     )
 
   (provide-with-trace "object"
-    obj:has-type
-    obj:add-type
+    obj:->string
+    obj:add-method
+    obj:add-method*
     obj:apply
     obj:apply*
     obj:construct
     obj:copy
     obj:copy-element
-    obj:types
-    obj:has-field
-    obj:is
+    obj:declare-type
+    obj:elementary     
     obj:fields
+    obj:has-field
+    obj:has-type
+    obj:is
     obj:make
     obj:ref
     obj:ref*
     obj:remove!
     obj:set!
-    obj:->string
+    obj:types
     )
 
     (provide-with-trace "object-private"
@@ -520,11 +570,10 @@
       raise:object-no-such-type-in-compound
       raise:no-such-field-in-elementary
       raise:unreachable
-      get-elementary     
       list-types
       )
 
-  (when obj:debug
+  (when (obj:debug)
     (object-trace)
     (object-private-trace)
     )
