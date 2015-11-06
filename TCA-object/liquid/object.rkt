@@ -45,7 +45,7 @@
   (define obj:exception:no-such-object 'obj:exception:no-such-object)
   (define obj:exception:no-such-type 'obj:exception:no-such-type)
   (define obj:exception:no-such-type-in-compound 'obj:exception:no-such-type-in-compound)
-  (define obj:exception:no-such-field-in-elementary 'obj:exception:no-such-field-in-elementary)
+  (define obj:exception:no-such-key-in-elementary 'obj:exception:no-such-key-in-elementary)
   (define obj:exception:broken 'obj:exception:broken)
 
   (define (raise:no-such-object the-bad-obj)
@@ -68,12 +68,12 @@
     (newline)
     (raise obj:exception:no-such-type-in-compound))
 
-  (define (raise:no-such-field-in-elementary objid the-bad-field)
+  (define (raise:no-such-key-in-elementary objid the-bad-key)
     (display "object ") (display objid) 
-    (display ",has no such field: ")
-    (display the-bad-field)
+    (display ",has no such key: ")
+    (display the-bad-key)
     (newline)
-    (raise obj:exception:no-such-field-in-elementary))
+    (raise obj:exception:no-such-key-in-elementary))
 
   (define (raise:unreachable . args) ;; when there is just no way this should have been called
     (display "this code should not have been reached, the program has a bug.")
@@ -83,9 +83,9 @@
 
 
 ;;--------------------------------------------------------------------------------
-;; elementary objects have these fields reserved:
+;; elementary objects have these keys reserved:
 ;;
-  (define obj:field:copied-from 'obj:field:copied-from) ; holds an object
+  (define obj:key:copied-from 'obj:key:copied-from) ; holds an object
 
 
 ;;--------------------------------------------------------------------------------
@@ -210,7 +210,7 @@
 
 
 
-  ;; this just adds an elementary field to the type object, but it makes code more readible
+  ;; this just adds an elementary key to the type object, but it makes code more readible
   ;; e.g.  (add-method copmlex:type '== (λ(a b)(equal? a b)))
   ;;
     (define (obj:add-method type-name method-name method-def)
@@ -233,95 +233,103 @@
   ;;   implemetnation elementary objects only occur inside of compound objects An
   ;;   elementary object is found at the end of each leg of a type manifold.
   ;;
-    (mc:define obj:elementary (args objid type) (conts c0 c1)
+    (mc:define obj:get-ele (args objid type) (conts c0 c1)
       (x-hash-ref (Λ obj:tman-table objid)
         (Λ 
           (λ(tman) (x-hash-ref (Λ tman type) conts)) ; found the manifold, now get the elementary object
           (λ ignore-args (raise:no-such-object objid)) ; object not found in tman-table
           )))
 
+    (mc:define obj:ele:ref (args ele key) (conts c-ok c-no-such-key)
+      (x-hash-ref (Λ ele key)(Λ c-ok c-no-such-key))
+      )
+        
+    (define (obj:ele:set! ele key val)
+      (hash-set! ele key val)
+      )
+
 
   ;; imposes type on an object, which selects an elementary object, 
-  ;; then applies the field-val intiialization list
+  ;; then applies the key-val intiialization list
   ;;
-    (mc:define obj:set! (args objid type Λfield-val) (conts continue-ok continue-no-type)
-      (obj:elementary (Λ objid type)
+    (mc:define obj:set! (args objid type Λkey-val) (conts continue-ok continue-no-type)
+      (obj:get-ele (Λ objid type)
         (Λ
-          (λ(e) (apply hash-set*! (cons e Λfield-val))) ; when elementary object found
+          (λ(e) (apply hash-set*! (cons e Λkey-val))) ; when elementary object found
           (λ ignore-args (continue-no-type args conts)) ; when objid has no such type
           ))
       (continue-ok objid)
       )
 
-    ;; removes a field from an object, returns the objid
-    (define (obj:remove! type objid field)
-      (obj:elementary (Λ objid type)
-        (λ(an-elementary-object) (hash-remove! an-elementary-object field))
+    ;; removes a key from an object, returns the objid
+    (define (obj:remove! type objid key)
+      (obj:get-ele (Λ objid type)
+        (λ(an-elementary-object) (hash-remove! an-elementary-object key))
         (be objid)
         ))
 
 
-  ;; imposes type and a field on the object, returns the value
+  ;; imposes type and a key on the object, returns the value
   ;;    we pass the calling arguments to the error continuations, independent of where they are are
   ;;    invoked in the call tree.
   ;;
-  ;;   note that the field name and object type are invarient in the recursion
+  ;;   note that the key name and object type are invarient in the recursion
   ;;
-    (mc:define obj:ref (args objid type field) (conts continue-ok continue-no-field continue-no-such-type)
-      (define (lookup-field-elementary e-obj) ;; given an elementary object, looks up the given field 
-        (define (lookup-field-indirect . ignored-args) 
-          (x-hash-ref (Λ e-obj obj:field:copied-from)
+    (mc:define obj:ref (args objid type key) (conts continue-ok continue-no-key continue-no-such-type)
+      (define (lookup-key-elementary e-obj) ;; given an elementary object, looks up the given key 
+        (define (lookup-key-indirect . ignored-args) 
+          (x-hash-ref (Λ e-obj obj:key:copied-from)
             (Λ
-              (λ(objid-of-copied-from) (lookup-field-compound objid-of-copied-from)) ; found the copied-from object, now try accessing it
-              (λ ignore-args (continue-no-field args conts)) ; ut oh ...  no copied-from object
+              (λ(objid-of-copied-from) (lookup-key-compound objid-of-copied-from)) ; found the copied-from object, now try accessing it
+              (λ ignore-args (continue-no-key args conts)) ; ut oh ...  no copied-from object
               )))
-        (when (obj:debug) (trace lookup-field-indirect))
-        (x-hash-ref (Λ e-obj field)
+        (when (obj:debug) (trace lookup-key-indirect))
+        (x-hash-ref (Λ e-obj key)
           (Λ
             continue-ok
-            lookup-field-indirect 
+            lookup-key-indirect 
             ))
         )
-      (when (obj:debug) (trace lookup-field-elementary))
+      (when (obj:debug) (trace lookup-key-elementary))
 
-      (define (lookup-field-compound objid) 
-        (obj:elementary (Λ objid type) ; reduce compound to elementary
+      (define (lookup-key-compound objid) 
+        (obj:get-ele (Λ objid type) ; reduce compound to elementary
           (Λ
-            lookup-field-elementary
+            lookup-key-elementary
             (λ ignore-args (continue-no-such-type args conts)) ; no such type in the type manifold for this compund
             )))
-      (when (obj:debug) (trace lookup-field-compound))
+      (when (obj:debug) (trace lookup-key-compound))
 
-      (lookup-field-compound objid)
+      (lookup-key-compound objid)
       )
   
   ;; returns looked up value or throws an exception
-  (define (obj:ref* objid type field)
-    (obj:ref (Λ objid type field) 
+  (define (obj:ref* objid type key)
+    (obj:ref (Λ objid type key) 
       (Λ 
         identity 
-        (λ ignore-args (raise:no-such-field-in-elementary objid field))
+        (λ ignore-args (raise:no-such-key-in-elementary objid key))
         (λ ignore-args (raise:object-no-such-type-in-compound objid type))
         )))
 
   ;; in conventional object oriented programming, this would be a 'method call' where the
-  ;; field the type object provides the method code or possibly method data.  Here the method
+  ;; key the type object provides the method code or possibly method data.  Here the method
   ;;  must be a function that operates on the provided arg-objids.
   ;;
   ;; this routine first references the type object to find the method, then it applies the methods
   ;; to the given objects.  
   ;;
   ;;
-    (mc:define obj:apply (args type method-name method-args) (conts continue-ok continue-no-field continue-no-type)
+    (mc:define obj:apply (args type method-name method-args) (conts continue-ok continue-no-key continue-no-type)
        (when (obj:debug)
          (displayln (Λ "obj:apply args:" (obj:lookup type) method-name method-args))
-         (displayln (Λ "obj:apply conts:" continue-ok continue-no-field continue-no-type))
+         (displayln (Λ "obj:apply conts:" continue-ok continue-no-key continue-no-type))
          )
 
        (obj:ref (Λ type type-type method-name)
          (Λ
            (λ(method-proc) (continue-ok (apply method-proc method-args)))
-           (λ ignore-args (continue-no-field args conts))
+           (λ ignore-args (continue-no-key args conts))
            (λ ignore-args (continue-no-type args conts))
            )))
 
@@ -330,14 +338,14 @@
       (obj:apply (Λ type method method-args) 
         (Λ
           identity 
-          (λ ignore-args (raise:no-such-field-in-elementary type method))
+          (λ ignore-args (raise:no-such-key-in-elementary type method))
           (λ ignore-args (raise:object-no-such-type-in-compound type-type type))
           )))
 
 
   (define (obj:copy-element type source-objid target-objid)
     (obj:add-type target-objid type)
-    (obj:set! (Λ target-objid type (Λ obj:field:copied-from source-objid))
+    (obj:set! (Λ target-objid type (Λ obj:key:copied-from source-objid))
       (Λ
         (be source-objid)
         raise:unreachable
@@ -363,31 +371,31 @@
     target-objid
     )
     
-  (define (obj:fields type objid)
-    (obj:elementary (Λ objid type)
+  (define (obj:keys type objid)
+    (obj:get-ele (Λ objid type)
       (Λ
         (λ(e)
           (let*(
-                 [fields-list (hash-keys e)]
-                 [fields (apply mutable-seteqv fields-list)]
+                 [keys-list (hash-keys e)]
+                 [keys (apply mutable-seteqv keys-list)]
                  )
-            (x-hash-ref (Λ e obj:field:copied-from)
+            (x-hash-ref (Λ e obj:key:copied-from)
               (Λ
-                (λ(source) (set-union! fields (obj:fields type source)))
-                (be fields)
+                (λ(source) (set-union! keys (obj:keys type source)))
+                (be keys)
                 ))))
         (be (mutable-seteqv)) ; returns an empty set
         )))
     
-   (define (obj:has-field type objid field)
-     (obj:elementary (Λ objid type)
+   (define (obj:has-key type objid key)
+     (obj:get-ele (Λ objid type)
        (Λ
          (λ(e)
            (or
-             (hash-has-key? e field)
-             (x-hash-ref (Λ e obj:field:copied-from)
+             (hash-has-key? e key)
+             (x-hash-ref (Λ e obj:key:copied-from)
                (Λ
-                 (λ(source) (obj:has-field type source field))
+                 (λ(source) (obj:has-key type source key))
                  (be false)
                  ))))
          (be false)
@@ -405,7 +413,7 @@
           )
 
       (obj:add-type obj1 summable) ; endows the object with type 'summable'
-      (obj:set! (Λ obj1 summable (Λ 'x 5 'y 7)) (Λ void raise:unreachable)) ; gives obj1 fields x and y initialized to 5 and 7
+      (obj:set! (Λ obj1 summable (Λ 'x 5 'y 7)) (Λ void raise:unreachable)) ; gives obj1 keys x and y initialized to 5 and 7
       (obj:ref (Λ obj1 summable 'x)
         (Λ
           (λ(x) (= x 5))
@@ -422,7 +430,7 @@
           )
 
       (define (plus a b)
-        (define (plus-1 ax) ;; adds ax to the value in the x field of b
+        (define (plus-1 ax) ;; adds ax to the value in the x key of b
           (obj:ref (Λ b summable 'x)
             (Λ
               (λ(bx) (+ ax bx))
@@ -442,7 +450,7 @@
 
       (obj:add-type summable type-type)
 
-      ;; gives the object summable one field named '+' and intializes it to a function that adds two sumable objects
+      ;; gives the object summable one key named '+' and intializes it to a function that adds two sumable objects
       (obj:set! 
         (Λ summable type-type 
           (Λ
@@ -532,8 +540,8 @@
     (obj:debug)
     obj:name-hook
     obj:lookup
-    obj:field:copied-from
-    obj:exception:no-such-field-in-elementary
+    obj:key:copied-from
+    obj:exception:no-such-key-in-elementary
     obj:exception:no-such-object
     obj:exception:no-such-type-in-compound
     type-type
@@ -551,9 +559,9 @@
     obj:copy
     obj:copy-element
     obj:declare-type
-    obj:elementary     
-    obj:fields
-    obj:has-field
+    obj:get-ele     
+    obj:keys
+    obj:has-key
     obj:has-type
     obj:is
     obj:make
@@ -568,7 +576,7 @@
       raise:no-such-object
       raise:no-such-type
       raise:object-no-such-type-in-compound
-      raise:no-such-field-in-elementary
+      raise:no-such-key-in-elementary
       raise:unreachable
       list-types
       )

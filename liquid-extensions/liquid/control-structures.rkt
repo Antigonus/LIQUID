@@ -264,7 +264,11 @@
       (let(
             [program 
               (if (check-mc:define "upon expansion" source-location datum)
-                (mc:define-1 source-location datum)
+                (match-let(
+                            [(list _  mcr-fun-name mc-args mc-conts mcr-body ...) datum]
+                            )
+                  (mc:define-1 source-location mcr-fun-name mc-args mc-conts mcr-body)
+                  )
                 (broken-syntax source-location (car datum))
                 )]
             )
@@ -272,14 +276,37 @@
         (datum->syntax stx program)
         )))
 
+  (define-syntax (mc:λ stx) 
+    (let*(
+           [datum  (syntax->datum stx)]
+           [source-location
+             (if (length≥ datum 2)
+               (Λ 'mc:λ (syntax-source stx) (syntax-line stx) (syntax-column stx))
+               (Λ (syntax-source stx) (syntax-line stx) (syntax-column stx))
+               )]
+           )
+      (let(
+            [program 
+              (if (check-mc:define "upon expansion" source-location datum)
+                (match-let(
+                            [(list _  mc-args mc-conts mcr-body ...) datum]
+                            )
+                  (mc:define-1 source-location 'λ mc-args mc-conts mcr-body)
+                  )
+                (broken-syntax source-location (car datum))
+                )]
+            )
+        (when (extensions-debug) (displayln (Λ "mc:λ -> " program)))
+        (datum->syntax stx program)
+        )))
+
       
-  (define-for-syntax (mc:define-1 source-location datum)
+  (define-for-syntax (mc:define-1 source-location  mcr-fun-name mc-args mc-conts mcr-body)
     ;; this match-let should not have errors because of the gaurd (check-mc:define) before the call
-    (match-let*(
-                 [(list _  mcr-fun-name mc-args mc-conts mcr-body ...) datum]
-                 [(list  r-args-list-name r-args ...) mc-args]
-                 [(list  r-conts-list-name r-conts ...) mc-conts]
-                 )
+    (match-let(
+                [(list  r-args-list-name r-args ...) mc-args]
+                [(list  r-conts-list-name r-conts ...) mc-conts]
+                )
       (let(
             [mc-args-length (-- (length mc-args))]  ; don't count the list name (first items)
             [mc-conts-length (-- (length mc-conts))] ; don't count the list name (first items)

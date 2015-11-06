@@ -13,9 +13,12 @@
 #lang racket
 
 ;;--------------------------------------------------------------------------------
-;; global parameters
+;; parser parameters
 ;;    
-  (define current-file-name (make-parameter "test-session")); filename for test parsing of data
-   (provide current-file-name) ; the source file we are reading from for the query parser
+  (define current-file-name (make-parameter "placeholder-or-test-session")); filename for test parsing of data
+  (provide current-file-name) ; the source file we are reading from for the query parser
 
+  ;; this is set low so that we will see a lot of block boundaries for debug
+  (define current-block-length (make-parameter 16)); 
+  (provide current-block-length)
 

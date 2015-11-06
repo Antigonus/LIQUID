@@ -15,6 +15,4 @@
 ;;--------------------------------------------------------------------------------
 ;; global parameters
 ;;    
-  (define current-byte-stream-block-length (make-parameter 1024)); should synch this with the port buffering
-  (provide current-byte-stream-block-length)
 
