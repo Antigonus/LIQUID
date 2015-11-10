@@ -116,7 +116,7 @@
 ;;--------------------------------------------------------------------------------
 ;;
 
-(provide
+(provide-with-trace "check"
   check
   check-length=
   check-length≥

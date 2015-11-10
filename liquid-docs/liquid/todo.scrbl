@@ -89,6 +89,12 @@ hash tables rather keep the space as part of the key.
    the seantic table ... are these necessary, rather just lookup the sm-id and see what
    is found.
 
+@section{objects}
+
+   I added a public method to pull out the elementary object, woops does ele-ref play
+   well with the lazy copy overhead?
+
+
 @table-of-contents[]
 
 

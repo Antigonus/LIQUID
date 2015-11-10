@@ -406,7 +406,7 @@
 
   ;; functions
   ;;
-    (provide-with-trace "extensions-lib" ;; this context continues to the bottom of the page
+    (provide-with-trace "control-structures" ;; this context continues to the bottom of the page
 
       ;; fundamental functions
       ;;

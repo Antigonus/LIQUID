@@ -27,3 +27,23 @@
 
 (require "test-lib.rkt")
 (provide (all-from-out "test-lib.rkt"))
+
+(define (extensions-trace)
+  (allocator-lib-trace)
+  (arith-lib-trace)
+  (check-trace)
+  (control-structures-trace)
+  (sequence-trace)
+  (strings-etc-trace)
+  (test-lib-trace)
+  )
+
+(define (extensions-untrace)
+  (allocator-lib-untrace)
+  (arith-lib-untrace)
+  (check-untrace)
+  (control-structures-untrace)
+  (sequence-untrace)
+  (strings-etc-untrace)
+  (test-lib-untrace)
+  )
