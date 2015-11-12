@@ -28,13 +28,18 @@
 
   (require "check.rkt")
   (require (for-syntax "check.rkt"))
+  (provide (all-from-out "check.rkt"))
+
+  (require "mc-lambda.rkt")
+  (require (for-syntax "mc-lambda.rkt"))
+  (provide (all-from-out "mc-lambda.rkt"))
 
 ;;--------------------------------------------------------------------------------
 ;; turns on printing of syntax programs ,etc.
 ;;    
-  (define extensions-debug (make-parameter #f))
-  (provide extensions-debug) 
-  (define-for-syntax extensions-debug (make-parameter #f))
+  (define control-structures-debug (make-parameter #f))
+  (provide control-structures-debug) 
+  (define-for-syntax control-structures-debug (make-parameter #t))
 
 ;;--------------------------------------------------------------------------------
 ;; some utility functions
@@ -51,37 +56,6 @@
     (define (be . it) 
       (define (beit . args) (apply values it))
       beit)
-
-
-;;--------------------------------------------------------------------------------
-;; bind a name index on to a sequence
-;; 
-  (define-syntax (name stx) 
-    (let(
-          [datum  (syntax->datum stx)]
-          )
-      (match-let(
-                  [(list _  container names body ...) datum]
-                  )
-        (let(
-              [program
-                (Λ 'match-let (Λ
-                               [Λ (cons 'list names) container]
-                                )
-                  ,body
-                  )
-                ]
-              )
-          (when (extensions-debug) (displayln (Λ "name -> " program)))
-          (datum->syntax stx program)
-          ))))
-
-  (define (test-name-0)
-    (define al '(1 2 3))
-    (=
-      (name al (one two three) (+ one two three))
-      6
-      ))
 
 
 ;;--------------------------------------------------------------------------------
@@ -131,7 +105,7 @@
 
                  ]
                )        
-          (when (extensions-debug) (displayln (Λ  "cond* -> " program)))
+          (when (control-structures-debug) (displayln (Λ  "cond* -> " program)))
           (datum->syntax stx program)
           ))))
 
@@ -251,7 +225,6 @@
 ;;  argument form checks.  I've pulled the position information from the syntax so error
 ;;  messages can be printed in context.  This proved to be necessary for code stability.
 ;;
-
   (define-syntax (mc:define stx) 
     (let*(
            [datum  (syntax->datum stx)]
@@ -267,68 +240,26 @@
                 (match-let(
                             [(list _  mcr-fun-name mc-args mc-conts mcr-body ...) datum]
                             )
-                  (mc:define-1 source-location mcr-fun-name mc-args mc-conts mcr-body)
+                  (Λ 'define mcr-fun-name (Λ 'mc:λ mc-args mc-conts ,mcr-body))
                   )
                 (broken-syntax source-location (car datum))
                 )]
             )
-        (when (extensions-debug) (displayln (Λ "mc:define -> " program)))
+        (when (control-structures-debug) (displayln (Λ "mc:define -> " program)))
         (datum->syntax stx program)
         )))
 
-  (define-syntax (mc:λ stx) 
-    (let*(
-           [datum  (syntax->datum stx)]
-           [source-location
-             (if (length≥ datum 2)
-               (Λ 'mc:λ (syntax-source stx) (syntax-line stx) (syntax-column stx))
-               (Λ (syntax-source stx) (syntax-line stx) (syntax-column stx))
-               )]
-           )
-      (let(
-            [program 
-              (if (check-mc:define "upon expansion" source-location datum)
-                (match-let(
-                            [(list _  mc-args mc-conts mcr-body ...) datum]
-                            )
-                  (mc:define-1 source-location 'λ mc-args mc-conts mcr-body)
-                  )
-                (broken-syntax source-location (car datum))
-                )]
-            )
-        (when (extensions-debug) (displayln (Λ "mc:λ -> " program)))
-        (datum->syntax stx program)
-        )))
-
-      
-  (define-for-syntax (mc:define-1 source-location  mcr-fun-name mc-args mc-conts mcr-body)
-    ;; this match-let should not have errors because of the gaurd (check-mc:define) before the call
-    (match-let(
-                [(list  r-args-list-name r-args ...) mc-args]
-                [(list  r-conts-list-name r-conts ...) mc-conts]
+  (define (mc:define-test-0)
+    (mc:define f (args x) (conts cont-odd cont-even)
+                (if (odd? x) (cont-odd) (cont-even))
                 )
-      (let(
-            [mc-args-length (-- (length mc-args))]  ; don't count the list name (first items)
-            [mc-conts-length (-- (length mc-conts))] ; don't count the list name (first items)
-            )
-        (let(
-              [program
-                (Λ 'define (Λ mcr-fun-name r-args-list-name r-conts-list-name) 
-                  (Λ 'define 'mc:source-location (Λ 'quote source-location)) ; programmer may use mc:source-location
-                  (Λ 'if
-
-                    (Λ 'check-mc:define-args-on-call "upon call" 'mc:source-location r-args-list-name r-conts-list-name mc-args-length mc-conts-length)
-                    
-                    (Λ 'name r-args-list-name r-args
-                      (Λ 'name r-conts-list-name r-conts
-                        ,mcr-body
-                        ))
-
-                    (Λ 'raise (Λ 'quote 'exception:mc:define-arity))
-                    ))]
-              )
-          program
-          ))))
+    (mc:define g (args x) (conts cont-odd cont-even)
+                (f args conts)
+                )
+    (and
+      (f (Λ 3) (Λ (λ()#t) (λ()#f)))
+      (not (g (Λ 4) (Λ (λ()#t) (λ()#f))))
+      ))
 
 ;;--------------------------------------------------------------------------------
 ;;  wrappers and adaptors
@@ -376,32 +307,30 @@
             (x-hash-ref (Λ h0 'b) (Λ (λ(e) e) (λ(a c) 7)))
             ))))
 
-    (test-hook test-x-hash-ref-0)
-
 
 ;;--------------------------------------------------------------------------------
 ;; initialize module
 ;;    
-  (define (ext:construct)
-    (test-hook test-name-0)
+  (define (ext:init)
     (test-hook cond*-test-0)
     (test-hook cond*-test-1)
     (test-hook cond*-test-2)
     (test-hook begin-always-test-0)
     (test-hook begin-always-test-1)
+    (test-hook mc:define-test-0)
+    (test-hook test-x-hash-ref-0)
     )
-  (ext:construct)
+  (ext:init)
 
 ;;--------------------------------------------------------------------------------
 ;; provides the following
 ;;    
 
   (provide
-    mc:define
-    name
-    cond*
-    with-semaphore
     begin-always
+    cond*
+    mc:define
+    with-semaphore
     )
 
   ;; functions

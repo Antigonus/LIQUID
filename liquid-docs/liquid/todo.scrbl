@@ -41,6 +41,10 @@ hash tables rather keep the space as part of the key.
   assign the iterator rather than a value, and return the for loop value and the iterators.
   We could have multiple exit paths depending on how the loop is terminated .. hmm.
 
+  Need a define form that takes as a first arg a list of places to hook the funciton, e.g.s
+  test and provide, so that we don't have to edit multiple places to move a function.
+
+
 @section{module init code}
 
   Module init code is code that runs when a module is loaded.  I have found it is a bad
@@ -93,6 +97,11 @@ hash tables rather keep the space as part of the key.
 
    I added a public method to pull out the elementary object, woops does ele-ref play
    well with the lazy copy overhead?
+
+@section{producer}
+   Need to create an abstract packet type, so that byte strings or such can be packed
+   in byte strings etc.  Need to add a custodian to clean up resources after the producer
+   goes out of scope. 
 
 
 @table-of-contents[]

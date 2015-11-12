@@ -13,9 +13,6 @@
 (require "arith-lib.rkt")
 (provide (all-from-out "arith-lib.rkt"))
 
-(require "check.rkt")
-(provide (all-from-out "check.rkt"))
-
 (require "control-structures.rkt")
 (provide (all-from-out "control-structures.rkt"))
 
@@ -31,7 +28,6 @@
 (define (extensions-trace)
   (allocator-lib-trace)
   (arith-lib-trace)
-  (check-trace)
   (control-structures-trace)
   (sequence-trace)
   (strings-etc-trace)
@@ -41,7 +37,6 @@
 (define (extensions-untrace)
   (allocator-lib-untrace)
   (arith-lib-untrace)
-  (check-untrace)
   (control-structures-untrace)
   (sequence-untrace)
   (strings-etc-untrace)

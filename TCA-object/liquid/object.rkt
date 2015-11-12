@@ -24,7 +24,7 @@
 ;; debug stuff
 ;;
   (define obj:debug (make-parameter #f))
-  (define-for-syntax  obj:debug (make-parameter #t))
+  (define-for-syntax  obj:debug (make-parameter #f))
 
   (define obj:names (make-hash))
   (define (obj:name-hook objid name)
@@ -32,7 +32,6 @@
     (hash-set! obj:names objid name))
   (define (obj:lookup objid)
     (hash-ref obj:names objid (string-append (->string objid) ":not-registered-with-a-name")))
-
 
 
 ;;--------------------------------------------------------------------------------
@@ -110,6 +109,14 @@
                   )
                 cont-no-such-key
               ))))))
+
+     (define (obj:ele:ref% ele key)
+       (obj:ele:ref (Λ ele key)
+         (Λ
+           identity
+           (λ ignore-args (raise:no-such-key-in-elementary))
+           )))
+
 
   ;; this will once again expose the copied from object
   (define (obj:ele:remove! ele key)
@@ -276,7 +283,7 @@
                   (Λ 'begin
                     (Λ 'define type-name (Λ 'obj:make (symbol->string type-name)))
                     (Λ 'obj:declare-type type-name 'type-type)
-                    type-name
+                    (Λ 'void)
                     )]
                 )
             (when (obj:debug) (displayln program))
@@ -293,12 +300,12 @@
               [type-name (caddr datum)]
               )
           (let*(
-                 [object-specifier (string-append (symbol->string type-name) "::" (symbol->string object-name))]
+                 [object-specifier (string->symbol (string-append (symbol->string type-name) "::" (symbol->string object-name)))]
                  [program
                    (Λ 'begin
                      (Λ 'define object-name (Λ 'obj:make (symbol->string object-specifier)))
                      (Λ 'obj:declare-type object-name type-name)
-                     object-name
+                     (Λ 'void)
                      )]
                  )
             (when (obj:debug) (displayln program))
@@ -395,6 +402,7 @@
       (obj:set! type type-type methods)
       )
 
+  ;; here 'type'  is the object holding the methods.  It goes no further than that.
   (mc:define obj:apply (args type method-name method-args) (conts continue-ok continue-no-key continue-no-type)
      (when (obj:debug)
        (displayln (Λ "obj:apply args:" (obj:lookup type) method-name method-args))
@@ -408,7 +416,7 @@
          )))
 
   ;; returns the value from applying the method, or throws an exception
-  (define (obj:apply* type method method-args)
+  (define (obj:apply% type method method-args)
     (obj:apply (Λ type method method-args) 
       (Λ
         identity 
@@ -582,6 +590,7 @@
     raise:unreachable
 
     obj:ele:ref
+    obj:ele:ref%
     obj:ele:remove!
     obj:ele:set!
     obj:ele:keys
@@ -608,7 +617,7 @@
     obj:add-method
     obj:add-method*
     obj:apply
-    obj:apply*
+    obj:apply%
     )
 
     (provide-with-trace "object-private"

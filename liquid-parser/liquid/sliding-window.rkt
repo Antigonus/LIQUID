@@ -117,7 +117,7 @@
 ;; types
 ;;
   ;; by keeping a separate parcel and item address we avoid having to do a divide to recover an index
-  (struct address-type (parcel-address offset) #:mutable #:transparent)  ; address-0 = parcel address,  address-1 offset
+  (struct window-address-type (parcel-address offset) #:mutable #:transparent)  ; address-0 = parcel address,  address-1 offset
 
   ;; status 'unitialized 'empty 'not-empty
   ;; when status is empty,  max holds the prior max address
@@ -147,7 +147,7 @@
             [next-parcel sliding-window:end-cap]
             [complete-parcel sliding-window:end-cap] ; hopefully this doesn't get called often
             [parcel-length (current-parcel-length)]
-            [initial-address (address-type 0 0)]
+            [initial-address (window-address-type 0 0)]
             )
     (define-object the-new-sliding-window sliding-window:type)
     (let*(
@@ -197,8 +197,8 @@
                  (full (Λ 
                    
              (let*(
-                    [parcel-address (address-type-parcel-address rightmost)]
-                    [offset (address-type-offset rightmost)]
+                    [parcel-address (window-address-type-parcel-address rightmost)]
+                    [offset (window-address-type-offset rightmost)]
                     [next-dex (++ offset)]
                     )                       
                (cond
