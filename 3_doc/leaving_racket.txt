@@ -1,0 +1,102 @@
+20k lines of code, load it and get an error message from Racket with no hint as to
+where it occured.
+
+Debugging has become tedious. This is because racket does not always report location
+information, but just gives out an error message.  As another reason, it leaves functions
+out of traces because traces are of tail call optimized code.
+
+It appears to me that racket programmers engage in a guard code development, sometimes
+putting in redundant checks as a means to avoid having to debug.
+
+Debugging of local, "I just wrote it" code is not so bad, as when an error occurs one has
+a good idea where it is.  But as the program gets larger the lack of locating information
+becomes more of a burden, and finding and fixing bugs more time consuming.
+
+As a second thing that has been time comsuming, apparently because I'm just dense, was
+trying to figure out the module, library, collection, package *thing*.  Terms were
+inconsistently used, and thus the documentation was confusing.
+
+It appears to me that in this constext racket programmers rely heavily on use cases rather
+than coming to understanding about a conceptual framework, and then deducing how to use it.
+
+I liked the idea of the syntax object, but it played by such different rules that I
+had a hard time figuring out how to use it.
+
+
+(+
+  473
+93
+374
+405
+405
+368
+430
+142
+5
+109
+395
+50
+26
+211
+100
+395
+100
+6820
+67
+114
+7
+643
+7
+12
+7
+20
+930
+59
+1231
+13
+7
+44
+129
+223
+7
+476
+336
+19
+87
+250
+223
+70
+143
+51
+26
+26
+12
+12
+7
+139
+162
+124
+24
+46
+286
+306
+353
+34
+180
+173
+276
+312
+18
+7
+373
+59
+97
+106
+104
+18
+162
+45
+10
+32
+)
+19605

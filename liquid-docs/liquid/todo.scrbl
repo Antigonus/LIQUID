@@ -44,6 +44,13 @@ hash tables rather keep the space as part of the key.
   Need a define form that takes as a first arg a list of places to hook the funciton, e.g.s
   test and provide, so that we don't have to edit multiple places to move a function.
 
+@section{multiple continuations)
+
+  Probably need to go through the code and put a '%' on the end of all multiple
+  continuation functions - and take the percent off of the couple of functions I've
+  already added it to in order to distinguish.  -- to many % functions gets tiring, added
+  % where necessary to denote the mc varation, and $ when needing to distinguish a non mc
+  function
 
 @section{module init code}
 
@@ -62,6 +69,10 @@ hash tables rather keep the space as part of the key.
 
   When we do this, we can talke the phase test code out of the test module, and instead
   have @racket[test-hook] code etc, wrapped in phase checks in the relevent constructors.
+
+   .. module init is not a constructor call.  A constructor call would correspond to a
+   make routine that returns state to be operated on by other functions in the module.
+   Rather it is something for initializing the module.
 
 @section{define-syntax function guard checks with locations}
 

@@ -17,23 +17,23 @@
 ;;
   (require racket/set)
   (require unstable/syntax) ; for (phase-of-enclosing-module)
-  (require liquid/extensions)
-  (require (for-syntax liquid/extensions))
 
-  (require racket/date)
 
+  (require "extensions.rkt")
+  (require (for-syntax "extensions.rkt"))
+  
 ;;--------------------------------------------------------------------------------
 ;; debug stuff
 ;;
-  (define obj:debug (make-parameter #t))
-  (define-for-syntax  obj:debug (make-parameter #t))
+  (define obj:debug (make-parameter #f))
+  (define-for-syntax  obj:debug (make-parameter #f))
 
   (define obj:names (make-hash))
   (define (obj:name-hook objid name)
     (when (obj:debug) (display "(")(display objid) (display ".")(display name)(displayln ")"))
     (hash-set! obj:names objid name))
   (define (obj:lookup objid)
-    (hash-ref obj:names objid (string-append (->string objid) ":not-name-registered")))
+    (hash-ref obj:names objid (string-append (->string objid) ":not-registered-with-a-name")))
 
 
 ;;--------------------------------------------------------------------------------
@@ -88,8 +88,6 @@
     (raise obj:exception:broken))
 
 
-
-
 ;;--------------------------------------------------------------------------------
 ;;  elementary object - aka ele
 ;;
@@ -111,10 +109,10 @@
                 (λ(copied-from-this-ele) 
                   (obj:ele:ref (Λ copied-from-this-ele key) conts)
                   )
-                cont-no-such-key ; (cont-fun args conts)
+                cont-no-such-key
               ))))))
 
-     (define (obj:ele:ref$ ele key)
+     (define (obj:ele:ref% ele key)
        (obj:ele:ref (Λ ele key)
          (Λ
            identity
@@ -162,8 +160,6 @@
         (obj:ele:set! this-ele (Λ obj:key:copied-from copied-from-ele))
         this-ele
         ))
-
-
 
 ;;--------------------------------------------------------------------------------
 ;;  compound object
@@ -214,7 +210,6 @@
           cont-ok
           cont-no-such-type
           ))))
-
 
 ;;-------------------------------------------------------------------------------- 
 ;;  type manipulation
@@ -341,13 +336,6 @@
     (continue-ok objid)
     )
 
-  (define (obj:set$! objid type Λkey-val)
-    (obj:set! (Λ objid type Λkey-val) 
-      (Λ 
-        identity 
-        (λ ignore-args (raise:object-no-such-type-in-compound objid type))
-        )))
-
   ;; returns a value from the object
   (mc:define obj:ref (args objid type key) (conts cont-ok cont-no-such-key cont-no-such-type)
     (obj:get-ele (Λ objid type)
@@ -409,11 +397,11 @@
   ;; e.g.  (add-method copmlex:type '== (λ(a b)(equal? a b)))
   ;;
     (define (obj:add-method type method-name method-def)
-      (obj:set$! type type-type (Λ method-name method-def))
+      (obj:set! type type-type (Λ method-name method-def))
       )
-     
+
     (define (obj:add-method* type methods)
-      (obj:set$! type type-type methods)
+      (obj:set! type type-type methods)
       )
 
   ;; here 'type'  is the object holding the methods.  It goes no further than that.
@@ -430,13 +418,14 @@
          )))
 
   ;; returns the value from applying the method, or throws an exception
-  (define (obj:apply$ type method method-args)
+  (define (obj:apply% type method method-args)
     (obj:apply (Λ type method method-args) 
       (Λ
         identity 
         (λ ignore-args (raise:no-such-key-in-elementary type method))
         (λ ignore-args (raise:object-no-such-type-in-compound type-type type))
         )))
+
 
 
 ;;--------------------------------------------------------------------------------
@@ -572,12 +561,14 @@
 ;;--------------------------------------------------------------------------------
 ;; provides the following
 ;;    
+  #|
     (provide
       obj:name-hook
       obj:lookup
       obj:key:copied-from
       obj:key:type
       )
+  |#
 
     (provide
       obj:debug
@@ -601,7 +592,7 @@
     raise:unreachable
 
     obj:ele:ref
-    obj:ele:ref$
+    obj:ele:ref%
     obj:ele:remove!
     obj:ele:set!
     obj:ele:keys
@@ -621,7 +612,6 @@
     
     obj:remove!
     obj:set!
-    obj:set$!
     obj:ref
     obj:copy-from-ele
     obj:copy-from
@@ -629,7 +619,7 @@
     obj:add-method
     obj:add-method*
     obj:apply
-    obj:apply$
+    obj:apply%
     )
 
     (provide-with-trace "object-private"

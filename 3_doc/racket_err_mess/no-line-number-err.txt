@@ -61,3 +61,19 @@ name: unbound identifier in module
 
 2015-11-12T07:26:40Z
 
+3. another one.  Unfortunately 'in' is a common word in the comments and strings, hard to grep for.  I will grep
+for port ...
+
+
+   §lambda1:/home/deep/3_doc/snap-p> ls
+   allocator-lib.rkt  check.rkt		   extensions.rkt  log-default.txt  object.rkt	  sequence.rkt	   test-lib.rkt
+   arith-lib.rkt	   control-structures.rkt  info.rkt	   mc-lambda.rkt    producer.rkt  strings-etc.rkt
+
+   §lambda1:/home/deep/3_doc/snap-p> racket -l errortrace -t producer.rkt
+   in: unbound identifier in module
+     in: in
+     errortrace...:
+
+   §lambda1:/home/deep/3_doc/snap-p> Z
+   2015-11-12T10:23:06Z
+

@@ -1,90 +1,3 @@
-#|
-  Producer
-   
-  created: 2015-11-08T05:59:49Z twl
-
-  This defines the type for an abstract producer and gives a simple example.
-
-  Because the producer-type is abstract it has no methods of its own; however objects are
-  still declared to have producer-type.  Such objects are then operated on by methods
-  found in concerete producer-types, such as the byte-producer-type described in this
-  module.
-
-  Producer types must have the following methods: status, duration,
-  parcel-length, next, and finish-up.
-
-  A consumer may use the 'next' or 'finish-up' calls to request parcels of items from a
-  producer object.
-
-  A parcel is an allocation for 'parcel-length' number of items.  Currently, the
-  parcel length is fixed upon construction of the producer and does not change.  An empty
-  parcel contains no items.  A 'full' parcel contains 'parcel-length' number of
-  items.  A 'partial' parcel contains at least one item, but fewer items than a full
-  parcel.
-
-  The producer normally delivers full parcels, but in exceptional circumstances it may
-  produce a partial parcel. Two such exceptional circumstances are: a time out, and upon
-  exhausting the supply for more items.  The producer never produces an empty parcel;
-  instead error continuation paths are used.  If a producer is delivering very many partial
-  parcels it is an indication of a design problem or a performance bottleneck.
-
-  It is intended that the producer will work ahead to complete a parcel before it is
-  requested by the consumer.  This assures that the overhead of a parcel request is merely
-  that of returning a reference to the block. Consequently, most producers will employ
-  threads.  A producer could even be runing in another process, or be located remotely.
-
-  When the producer delivers a partial block, it continues to work to fill it.  Upon
-  request from the consumer, the producer will then update the block length.
-
-  ----
-
-  Normally in our code the type of an object is literally given in the method call.
-  Take the summable example in object.rkt as an example:  
-
-      (declare-type obj1 summable)
-      (delcare-type obj2 summable)
-
-       ...
-      (obj:apply (Λ summable '+ (Λ obj1 obj2)) ; sums the two objects
-
-  An abstract type defines only an interface.  For sake of discussion suppose our summable
-  type is abstract and is required only to have the method '+ that takes two arguments and
-  returns a sum.  We would then need some concrete summable types.  Say we have summable-float
-  which does a floating-point sum, and sumable-vector, which does a vector sum.  The code
-  would appear as:
-
-      (declare-type obj1 summable)
-      (delcare-type obj2 summable)
-      (define the-summable-type summable-float)
-     
-       ...
-      (obj:apply (Λ the-summable-type '+ (Λ obj1 obj2)) ; sums the two objects
-
-  and,
-      (declare-type obj1 summable)
-      (delcare-type obj2 summable)
-      (define the-summable-type summable-vector)
-
-     ...
-      (obj:apply (Λ the-summable-type '+ (Λ obj1 obj2)) ; sums the two objects
-
-  Note in both of these cases the last line, where obj:apply is used, is the exact same.
-  Thus we have successfully abstracted the summable type simply by using a variable to 
-  hold the type rather than coding the type as a constant.
-
-  But what if we wanted infomation in the operands to determine which type should 
-  be used?  This would have the advantage of the programmer not having to do the 
-  book keeping of matching type and operands.  Though it would also be an additional
-  calculation that in many cases would be superfluous. 
-
-  Suppose that the abstract type, in our example the summable-type, looked at the operands
-  then decided which of the concrete types should be used.  For this purpose the
-  key obj:ele:type has been reserved.  Sumable elementary objects would then have this
-  field set.
-
-
-|#
-
 
 
 #lang racket
@@ -92,8 +5,8 @@
 ;;--------------------------------------------------------------------------------
 ;; uses these libraries
 ;;
-  (require liquid/extensions)
-  (require liquid/object)
+  (require "extensions.rkt")
+  (require "object.rkt")
 
 ;;--------------------------------------------------------------------------------
 ;; this is all that is required to declare an abstract type
@@ -125,7 +38,7 @@
 
   (define (make-simple-byte-producer duration parcel-length port-in)
     (define-object a-simple-byte-producer producer-type)
-    (obj:set$! a-simple-byte-producer producer-type
+    (obj:set! a-simple-byte-producer producer-type
       (Λ
         'status (mutable-seteqv producer-type:available)
         'duration duration ;  max time from a request to  delivery of a parcel, ignored here
@@ -170,9 +83,9 @@
             [e (obj:get-ele a-simple-byte-producer producer-type)]
             )
         (let(
-              [status (obj:ele:ref$ e 'status)]
-              [parcel-length (obj:ele:ref$ e 'parcel-length)]
-              [port-in (obj:ele:ref$ e 'port-in)]
+              [status (obj:ele:ref% e 'status)]
+              [parcel-length (obj:ele:ref% e 'parcel-length)]
+              [port-in (obj:ele:ref% e 'port-in)]
               )
           (cond
             [(set-member? status producer-type:stopped)
@@ -197,18 +110,18 @@
                 (define (fill-parcel-loop)
                   (cond
                     [(= offset parcel-length) (cont-normal parcel)]
-                    [(port-closed? port-in) (stop producer-type:closed)]
+                    [(port-closed? in) (stop producer-type:closed)]
                     [else
                       (let(
-                            [ch (peek-byte port-in)]
+                            [ch (peek-byte in)]
                             )
                         (cond
                           [(eof-object? ch)
-                            (read-byte port-in) ; toss out the eof
+                            (read-byte in) ; toss out the eof
                             (stop producer-type:eof)]
                           [else
                             (vector-set! parcel (++ offset) ch)
-                            (read-byte port-in) ; toss that byte we peeked while hoping for no exceptions
+                            (read-byte in) ; toss that byte we peeked while hoping for no exceptions
                             (++! offset)
                             (fill-parcel-loop)
                             ]))
@@ -241,7 +154,7 @@
             [e (obj:get-ele a-simple-byte-producer producer-type)]
             )
         (let(
-              [status (obj:ele:ref$ e 'status)]
+              [status (obj:ele:ref% e 'status)]
               )
           (cond
             [(set-member? status producer-type:stopped)
@@ -264,13 +177,12 @@
            [bp (make-simple-byte-producer 0 8 ip)]
            )
        (let(
-             [a-parcel (obj:apply$ simple-byte-producer-type 'next (Λ bp))]
+             [a-parcel (obj:apply% simple-byte-producer-type 'next (Λ bp))]
              )
          (display a-parcel)
          ))))
-
                    
-  (test-hook simple-byte-producer-test-0)      
+       
 
      
                            

@@ -1,0 +1,6 @@
+
+(defun h (x y) (+ x y))
+(defmacro plus (x y) `(h ,x ,y))
+(defun f (x y) (g x y))
+(defun g (x y) (plus x y))
+

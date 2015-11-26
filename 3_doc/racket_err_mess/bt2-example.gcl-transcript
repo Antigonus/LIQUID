@@ -1,0 +1,40 @@
+
+§growler:/home/deep/3_doc/racket_err_mess> gcl
+GCL (GNU Common Lisp)  2.6.12 CLtL1    Oct 29 2015 15:26:54
+Source License: LGPL(gcl,gmp), GPL(unexec,bfd,xgcl)
+Binary License:  GPL due to GPL'ed components: (XGCL READLINE UNEXEC)
+Modifications of this banner must retain notice of a compatible license
+Dedicated to the memory of W. Schelter
+
+Use (help) to get some basic information on how to use GCL.
+Temporary directory for compiler files:
+/tmp/
+
+>(load "bt2-example.gcl")
+
+Loading bt2-example.gcl
+Finished loading bt2-example.gcl
+T
+
+>(f 3 2)
+
+5
+
+>(f 3 'a)
+
+Error: TYPE-ERROR :DATUM A :EXPECTED-TYPE NUMBER
+Fast links are on: do (si::use-fast-links nil) for debugging
+Signalled by +.
+TYPE-ERROR :DATUM A :EXPECTED-TYPE NUMBER
+
+Broken at +.  Type :H for Help.
+    1  Return to top level. 
+>>:bt
+
+#0   + {loc0=3,loc1=a,loc2=type-error,loc3=nil,loc4=+,loc5="",loc6="",loc7=:datum,loc8=...} [ihs=7]
+#1   H {} [ihs=6]
+#2   G {} [ihs=5]
+#3   F {} [ihs=4]
+#4   EVAL {loc0=nil,loc1=nil,loc2=nil,loc3=(system:lambda-block f (x y) ...),loc4=3,loc5=a} [ihs=3]
+NIL
+>>

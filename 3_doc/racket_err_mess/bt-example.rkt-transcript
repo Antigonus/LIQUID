@@ -1,0 +1,16 @@
+§growler:/home/deep/3_doc/racket_err_mess> racket -l errortrace -t "bt-example.rkt"
+5
++: contract violation
+  expected: number?
+  given: 'a
+  argument position: 2nd
+  other arguments...:
+   3
+  errortrace...:
+   /home/deep/3_doc/racket_err_mess/bt-example.rkt:15:16: (g x y)
+   /home/deep/3_doc/racket_err_mess/bt-example.rkt:19:0: (f 3 (quote a))
+  context...:
+   /home/deep/3_doc/racket_err_mess/bt-example.rkt:15:0: f
+   /home/deep/3_doc/racket_err_mess/bt-example.rkt: [running body]
+
+§growler:/home/deep/3_doc/racket_err_mess>

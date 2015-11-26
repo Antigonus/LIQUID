@@ -1,0 +1,18 @@
+racket@> (enter! "name.rkt")
+name.rkt:46:16: build-location: unbound identifier in module (in phase 1, transformer environment)
+  in: build-location
+  context...:
+   standard-module-name-resolver
+   /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
+   /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+   /usr/share/racket/collects/racket/private/misc.rkt:87:7
+racket@> (enter! "name.rkt")
+n: identifier used out of context
+  in: n
+  context...:
+   standard-module-name-resolver
+   /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
+   /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+   /usr/share/racket/collects/racket/private/misc.rkt:87:7
+racket@>
+

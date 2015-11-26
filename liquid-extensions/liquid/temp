@@ -1,0 +1,59 @@
+Alex, yes thank you, the quote-srcloc works at run time, so for example:
+
+  (define-syntax (here3 stx) 
+      (let(
+             [program `(quote-srcloc ,stx)]
+            )
+
+        (datum->syntax stx program)
+        ))
+
+Will print the call point.  What the heck is this macro, as it is being passed the same argument, stx, in both cases (syntax time and run time).
+
+Yep! build-source-location works here.
+
+  (define-syntax (here2 stx) 
+      (let(
+            [a-location (build-source-location stx)]
+            )
+        (datum->syntax stx a-location)
+        ))
+
+I hadn't thought to try it because firstly I had expected to find a location accessor function in the syntax object definition,  but also because in section 9.1 of the reference manual none of the many examples given show syntax objects.  And the manual made it sound like it makes syntax objects, but said nothing it accepting them:
+
+   These procedures combine multiple (zero or more) source 
+   locations, merging locations within the same source and 
+   reporting #f for locations that span sources. They also 
+   convert the result to the desired representation: srcloc, 
+   list, vector, or syntax object, respectively.
+
+Greg, syntax/loc is beautiful (so far ;-) it goes beyond my hopes, and I hope it becomes more prominent in the docs.
+
+  (define-syntax (messup4 stx) 
+    (syntax/loc stx
+      (let (
+             [a 7]
+             [b 9]
+             )
+        (^ a b)
+       )))
+        
+  (messup4)
+
+  racket@test-here.rkt> (enter! "test-macro-dev-error.rkt")
+  test-macro-dev-error.rkt:62:35: ^: unbound identifier in module
+    in: ^
+    errortrace...:
+    context...:
+     /usr/share/racket/pkgs/errortrace-lib/errortrace/errortrace-lib.rkt:434:2: errortrace-annotate
+     /usr/share/racket/pkgs/errortrace-lib/errortrace/errortrace-lib.rkt:482:4
+     standard-module-name-resolver
+     /usr/share/racket/collects/racket/rerequire.rkt:18:0: rerequire
+     /usr/share/racket/collects/racket/enter.rkt:54:0: dynamic-enter!6
+     /usr/share/racket/collects/racket/private/misc.rkt:87:7
+  racket@test-here.rkt>
+
+The error message points right at the caret in the quoted string. (who knows maybe
+our programmer thought that meant xor?)
+
+However I totally don't get the description in the docs. For example the 'immediate'.  It did not stop tat the let, but descended to the caret.  In your blog post example it descended to the divide - but did not descend through the begin ???

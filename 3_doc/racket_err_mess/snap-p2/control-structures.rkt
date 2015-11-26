@@ -13,8 +13,6 @@
 ;;--------------------------------------------------------------------------------
 ;; uses these libraries
 ;;    
-  (require syntax/location)
-
   (require "test-lib.rkt")
 
   (require "arith-lib.rkt")
@@ -107,7 +105,7 @@
 
                  ]
                )        
-          (when (control-structures-debug) (write (Λ  "cond* -> " program)) (newline))
+          (when (control-structures-debug) (displayln (Λ  "cond* -> " program)))
           (datum->syntax stx program)
           ))))
 
@@ -216,34 +214,50 @@
 ;;
 ;;  (mc:define fun-name (arg-list-name arg ...) (cont-list-name cont...) body ...)
 ;;
+;;  terminology can get confusing when writing a syntax transform function that transforms an mc function
+;;  into a racket function ;-)   So we introduce some prefixs:
+;;    mc-  these are the provided syntax input and syntax program local variables
+;;    r-   these are parts of the output (which is a program for the reader)
+;;
+;;   I combine prefixes for things that apply to more than one domain
+;;
+;;  I've gone back to do the programmer the favor of reporting both static and dynamic
+;;  argument form checks.  I've pulled the position information from the syntax so error
+;;  messages can be printed in context.  This proved to be necessary for code stability.
+;;
   (define-syntax (mc:define stx) 
-
-        [else
-          (let(
-                [program 
-                  (if (check-mc:define "upon expansion" source-location datum)
-                    (match-let(
-                                [(list _  mcr-fun-name mc-args mc-conts mcr-body ...) datum]
-                                )
-                      (Λ 'define mcr-fun-name (Λ 'mc:λ mc-args mc-conts ,mcr-body))
-                      )
-                    (broken-syntax source-location (car datum))
-                    )]
-                )
-            (when (control-structures-debug) (write (Λ "mc:define -> " program)))
-            (datum->syntax stx program)
-            )))
+    (let*(
+           [datum  (syntax->datum stx)]
+           [source-location
+             (if (length≥ datum 2)
+               (Λ (cadr datum) (syntax-source stx) (syntax-line stx) (syntax-column stx))
+               (Λ (syntax-source stx) (syntax-line stx) (syntax-column stx))
+               )]
+           )
+      (let(
+            [program 
+              (if (check-mc:define "upon expansion" source-location datum)
+                (match-let(
+                            [(list _  mcr-fun-name mc-args mc-conts mcr-body ...) datum]
+                            )
+                  (Λ 'define mcr-fun-name (Λ 'mc:λ mc-args mc-conts ,mcr-body))
+                  )
+                (broken-syntax source-location (car datum))
+                )]
+            )
+        (datum->syntax stx program)
+        )))
 
   (define (mc:define-test-0)
-    (mc:define f% (args x) (conts cont-odd cont-even)
+    (mc:define f (args x) (conts cont-odd cont-even)
                 (if (odd? x) (cont-odd) (cont-even))
                 )
-    (mc:define g% (args x) (conts cont-odd cont-even)
-                (f% args conts)
+    (mc:define g (args x) (conts cont-odd cont-even)
+                (f args conts)
                 )
     (and
-      (f% (Λ 3) (Λ (λ()#t) (λ()#f)))
-      (not (g% (Λ 4) (Λ (λ()#t) (λ()#f))))
+      (f (Λ 3) (Λ (λ()#t) (λ()#f)))
+      (not (g (Λ 4) (Λ (λ()#t) (λ()#f))))
       ))
 
 ;;--------------------------------------------------------------------------------
@@ -320,7 +334,7 @@
 
   ;; functions
   ;;
-    (provide-with-trace "control-structures" ;; this context continues to the bottom of the page
+    (provide ;; this context continues to the bottom of the page
 
       ;; fundamental functions
       ;;
